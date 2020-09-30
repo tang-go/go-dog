@@ -75,6 +75,7 @@ func (f *Fusing) AddMethod(servicekey, methodname string) {
 func (f *Fusing) OpenFusing(servicekey, method string) {
 	f.lock.Lock()
 	f.forced[servicekey+"@"+method] = method
+	log.Tracef("| 服务%s | 方法%s | 开启强制熔断 |", servicekey, method)
 	f.lock.Unlock()
 }
 
@@ -91,7 +92,7 @@ func (f *Fusing) IsFusing(servicekey, method string) bool {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 	if _, ok := f.forced[servicekey+"@"+method]; ok {
-		log.Tracef("| 服务%s | 方法%s | 已经强制熔断 |", servicekey, method)
+		//log.Tracef("| 服务%s | 方法%s | 已经强制熔断 |", servicekey, method)
 		return true
 	}
 	if _, ok := f.auto[servicekey+"@"+method]; ok {

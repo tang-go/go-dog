@@ -48,3 +48,9 @@ type API struct {
 	Path     string //http请求路径
 	Kind     string //请求类型 POST GET DELETE PUT
 }
+
+//Flusing 熔断
+type Flusing struct {
+	ServiceKey string
+	Method     string
+}

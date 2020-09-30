@@ -31,7 +31,6 @@ type Client struct {
 //NewClient  新建一个客户端
 func NewClient(param ...interface{}) plugins.Client {
 	client := new(Client)
-
 	for _, plugin := range param {
 		if cfg, ok := plugin.(plugins.Cfg); ok {
 			client.cfg = cfg
@@ -77,6 +76,7 @@ func NewClient(param ...interface{}) plugins.Client {
 		client.codec = codec.NewCodec()
 	}
 	client.managerclient = NewManagerClient(client.codec)
+	//开始RPC监听服务上下线
 	client.discovery.RegRPCServiceOnlineNotice(client.ServiceOnlineNotice)
 	client.discovery.RegRPCServiceOfflineNotice(client.ServiceOfflineNotice)
 	client.discovery.WatchRPCService()
