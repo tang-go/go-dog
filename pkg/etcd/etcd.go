@@ -3,7 +3,7 @@ package etcd
 import (
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 )
 
 var gEtcdClient *_EtcdClient

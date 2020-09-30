@@ -8,10 +8,7 @@ import (
 
 //GetToken 获取token
 func GetToken() string {
-	token, err := uuid.NewV4()
-	if err != nil {
-		panic(err.Error())
-	}
+	token := uuid.NewV4()
 	t := fmt.Sprintf("%s", token)
 	return t
 }
