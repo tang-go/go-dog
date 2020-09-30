@@ -107,7 +107,7 @@ func (g *Gateway) Run() {
 		router.Use(g.cors())
 		router.Use(g.logger())
 		//静态文件夹
-		router.StaticFS("/web", http.Dir("./static"))
+		router.StaticFS("/", http.Dir("./static"))
 		//添加路由
 		router.Any("api/*router", g.routerResolution)
 		log.Tracef("网管启动 0.0.0.0:%d", g.cfg.GetPort())

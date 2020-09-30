@@ -128,9 +128,9 @@ func (pointer *Router) Call(ctx plugins.Context, req *header.Request) ([]byte, e
 func (pointer *Router) new(t reflect.Type) interface{} {
 	var argv reflect.Value
 	if t.Kind() == reflect.Ptr {
-		argv = reflect.New(t.Elem())
+		argv = reflect.New(t.Elem()).Elem()
 	} else {
-		argv = reflect.New(t)
+		argv = reflect.New(t).Elem()
 	}
 	return argv.Interface()
 }
