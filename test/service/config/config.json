@@ -11,6 +11,6 @@
     ],
     //本机地址
     "host":"192.168.0.64",
-    //运行模式 trace打印框架流程 dev开发模式 info 内网测试模式 pro 线上模式
-    "runmode" : "trace"
+    //运行日志等级 panic fatal error warn info debug trace
+    "runmode" : "warn"
 }

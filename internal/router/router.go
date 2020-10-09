@@ -1,15 +1,13 @@
 package router
 
 import (
-	"go-dog/error"
+	customerror "go-dog/error"
 	"go-dog/header"
 	"go-dog/plugins"
 	"reflect"
 	"strings"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/micro/go-micro/api"
 )
 
 //定义错误类型
@@ -17,8 +15,6 @@ var typeOfError = reflect.TypeOf(new(error)).Elem()
 
 //定义context类型
 var typeOfContext = reflect.TypeOf(new(plugins.Context)).Elem()
-
-var typeOfService = reflect.TypeOf(new(api.Service)).Elem()
 
 //子服务处理方法
 type methodstruct struct {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"common/rand"
 	"go-dog/internal/service"
 	"go-dog/pkg/log"
 	"go-dog/plugins"
@@ -66,10 +65,6 @@ type Arg struct {
 func (e *EchoService) Add(ctx plugins.Context, arg Arg) (int, error) {
 	atomic.AddInt32(&e.count, 1)
 	time.Sleep(1 * time.Second)
-	sl := rand.RandInt(0, 6)
-	if sl >= 4 {
-		return arg.A + arg.B, nil
-	}
 	return arg.A + arg.B, nil
 }
 

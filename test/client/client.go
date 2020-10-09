@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"go-dog/client"
-	"go-dog/context"
-	"go-dog/error"
+	customerror "go-dog/error"
+	"go-dog/internal/client"
 	"go-dog/internal/config"
+	"go-dog/internal/context"
 	"go-dog/pkg/log"
 	"go-dog/plugins"
 	"sync"

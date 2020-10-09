@@ -48,7 +48,7 @@ type Config struct {
 	WriteMysql *MysqlCfg `json:"write_mysql"`
 	//本机地址
 	Host string `json:"host"`
-	//运行模式
+	//运行日志等级 panic fatal error warn info debug trace
 	Runmode string `json:"runmode"`
 }
 

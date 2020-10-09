@@ -2,13 +2,14 @@ package client
 
 import (
 	"go-dog/define"
-	"go-dog/error"
+	customerror "go-dog/error"
 	"go-dog/internal/codec"
 	"go-dog/internal/config"
 	"go-dog/internal/discovery"
 	"go-dog/internal/fusing"
 	"go-dog/internal/limit"
 	"go-dog/internal/selector"
+	"go-dog/pkg/log"
 	"go-dog/pkg/recover"
 	"go-dog/plugins"
 	"go-dog/serviceinfo"
@@ -74,6 +75,33 @@ func NewClient(param ...interface{}) plugins.Client {
 	if client.codec == nil {
 		//使用默认的参数编码
 		client.codec = codec.NewCodec()
+	}
+	//初始化日志
+	switch client.cfg.GetRunmode() {
+	case "panic":
+		log.SetLevel(log.PanicLevel)
+		break
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+		break
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+		break
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+		break
+	case "info":
+		log.SetLevel(log.InfoLevel)
+		break
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+		break
+	case "trace":
+		log.SetLevel(log.TraceLevel)
+		break
+	default:
+		log.SetLevel(log.TraceLevel)
+		break
 	}
 	client.managerclient = NewManagerClient(client.codec)
 	//开始RPC监听服务上下线
