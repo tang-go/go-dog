@@ -1,10 +1,10 @@
 package main
 
 import (
-	"go-dog/cmd/go-dog-ctl/controller"
+	"go-dog/cmd/go-dog-ctl/api"
 )
 
 func main() {
-	s := controller.NewController()
+	s := api.NewService()
 	s.Run()
 }

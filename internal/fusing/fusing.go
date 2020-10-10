@@ -1,7 +1,7 @@
 package fusing
 
 import (
-	"go-dog/error"
+	customerror "go-dog/error"
 	"go-dog/pkg/log"
 	"go-dog/pkg/recover"
 	"sync"
@@ -35,6 +35,11 @@ func NewFusing(ttl time.Duration) *Fusing {
 	fulsing.close = make(chan bool)
 	go fulsing.eventloop()
 	return fulsing
+}
+
+//SetFusingTTL 设置熔断统计时间
+func (f *Fusing) SetFusingTTL(ttl time.Duration) {
+	f.ttl = ttl
 }
 
 //AddErrorMethod 添加请求发生错误的方法
@@ -92,11 +97,9 @@ func (f *Fusing) IsFusing(servicekey, method string) bool {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 	if _, ok := f.forced[servicekey+"@"+method]; ok {
-		//log.Tracef("| 服务%s | 方法%s | 已经强制熔断 |", servicekey, method)
 		return true
 	}
 	if _, ok := f.auto[servicekey+"@"+method]; ok {
-		//log.Tracef("| 服务%s | 方法%s | 已经自动熔断 |", servicekey, method)
 		return true
 	}
 	return false

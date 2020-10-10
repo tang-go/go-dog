@@ -93,7 +93,7 @@ func (e *EchoService) IsOk(ctx plugins.Context, ok bool) (bool, error) {
 }
 
 func main() {
-	ser := service.CreateService()
+	ser := service.CreateService(10)
 	service := &EchoService{count: 0}
 	ser.RegisterAPI("Add", "v1", "add", plugins.POST, 3, false, "测试Add", service.Add)
 	ser.RegisterRPC("Echo", 3, false, "测试Echo", service.Echo)

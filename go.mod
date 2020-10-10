@@ -12,6 +12,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
@@ -19,9 +20,12 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
+	github.com/jinzhu/gorm v1.9.16
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/mojocn/base64Captcha v1.3.1
 	github.com/prometheus/client_golang v1.1.0 // indirect
+	github.com/prometheus/common v0.6.0
 	github.com/prometheus/procfs v0.0.5 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v2.20.8+incompatible
@@ -33,7 +37,6 @@ require (
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.uber.org/zap v1.12.0 // indirect
-	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5 // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/genproto v0.0.0-20191108220845-16a3f7862a1a // indirect
 	google.golang.org/grpc v1.25.1 // indirect

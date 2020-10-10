@@ -40,7 +40,7 @@ func NewRouter(codec plugins.Codec) *Router {
 }
 
 //RegisterByMethod 注册方法
-func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg interface{}, reply interface{}) {
+func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[string]interface{}, reply map[string]interface{}) {
 	if _, ok := pointer.methods[name]; ok {
 		panic("此函数名称已经存在")
 	}
@@ -72,7 +72,40 @@ func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg interf
 		panic("第二个返回值必须为error")
 	}
 	pointer.methods[strings.ToLower(name)] = &methodstruct{name: name, method: method, ctxType: ctxType, argType: argType}
-	return pointer.new(argType), pointer.new(replyType)
+	return pointer.analysisStruct(pointer.new(argType)), pointer.analysisStruct(pointer.new(replyType))
+}
+
+//analysisStruct 解析参数
+func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} {
+	t := reflect.TypeOf(class)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		panic(t.Kind())
+	}
+	fieldNum := t.NumField()
+	explain := make(map[string]interface{})
+	for i := 0; i < fieldNum; i++ {
+		name := t.Field(i).Name
+		kind := t.Field(i).Type.Kind()
+		if kind == reflect.Struct {
+			panic(name)
+		}
+		if kind == reflect.Slice {
+			class := pointer.new(t.Field(i).Type.Elem())
+			tg := pointer.analysisStruct(class)
+			explain[name] = tg
+			continue
+		}
+		tags := strings.Split(string(t.Field(i).Tag), "\"")
+		tg := ""
+		for i := 0; i < len(tags); i++ {
+			tg += tags[i]
+		}
+		explain[name] = tg
+	}
+	return explain
 }
 
 //GetMethodArg 获取方法请求的参数

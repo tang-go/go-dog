@@ -32,7 +32,7 @@ type Back struct {
 }
 
 func main() {
-	cli := client.NewClient(config.NewConfig())
+	cli := client.NewClient(10, config.NewConfig())
 A:
 	now := time.Now()
 	var count int32

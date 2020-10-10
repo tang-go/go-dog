@@ -1,7 +1,13 @@
 package plugins
 
+import "time"
+
 //Fusing 客户端熔断插件
 type Fusing interface {
+
+	//SetFusingTTL 设置熔断统计时间
+	SetFusingTTL(ttl time.Duration)
+
 	//AddErrorMethod 添加请求发生错误的方法
 	AddErrorMethod(servicekey, methodname string, err error)
 

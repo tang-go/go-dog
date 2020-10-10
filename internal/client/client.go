@@ -1,7 +1,6 @@
 package client
 
 import (
-	"go-dog/define"
 	customerror "go-dog/error"
 	"go-dog/internal/codec"
 	"go-dog/internal/config"
@@ -17,6 +16,10 @@ import (
 	"time"
 )
 
+const (
+	_MaxClientRequestCount = 100000
+)
+
 //Client 客户端
 type Client struct {
 	cfg           plugins.Cfg
@@ -30,7 +33,7 @@ type Client struct {
 }
 
 //NewClient  新建一个客户端
-func NewClient(param ...interface{}) plugins.Client {
+func NewClient(discoveryTTL int64, param ...interface{}) plugins.Client {
 	client := new(Client)
 	for _, plugin := range param {
 		if cfg, ok := plugin.(plugins.Cfg); ok {
@@ -58,11 +61,11 @@ func NewClient(param ...interface{}) plugins.Client {
 	}
 	if client.discovery == nil {
 		//使用默认服务发现中心
-		client.discovery = discovery.NewEtcdDiscovery(client.cfg.GetEtcd(), define.TTL)
+		client.discovery = discovery.NewEtcdDiscovery(client.cfg.GetEtcd(), discoveryTTL)
 	}
 	if client.fusing == nil {
 		//使用默认的熔断插件
-		client.fusing = fusing.NewFusing(time.Duration(define.TTL) * time.Second)
+		client.fusing = fusing.NewFusing(time.Duration(discoveryTTL) * time.Second)
 	}
 	if client.selector == nil {
 		//使用默认的选择器
@@ -70,7 +73,7 @@ func NewClient(param ...interface{}) plugins.Client {
 	}
 	if client.limit == nil {
 		//使用默认的流量限制
-		client.limit = limit.NewLimit(define.MaxClientRequestCount)
+		client.limit = limit.NewLimit(_MaxClientRequestCount)
 	}
 	if client.codec == nil {
 		//使用默认的参数编码
@@ -111,14 +114,34 @@ func NewClient(param ...interface{}) plugins.Client {
 	return client
 }
 
+//GetCfg 获取配置
+func (c *Client) GetCfg() plugins.Cfg {
+	return c.cfg
+}
+
+//GetDiscovery 获取服务发现
+func (c *Client) GetDiscovery() plugins.Discovery {
+	return c.discovery
+}
+
+//GetFusing 获取熔断插件
+func (c *Client) GetFusing() plugins.Fusing {
+	return c.fusing
+}
+
+//GetLimit 获取限流插件
+func (c *Client) GetLimit() plugins.Limit {
+	return c.limit
+}
+
+//GetCodec 获取编码插件
+func (c *Client) GetCodec() plugins.Codec {
+	return c.codec
+}
+
 //GetAllService 获取所有服务
 func (c *Client) GetAllService() (services []*serviceinfo.ServiceInfo) {
 	return c.selector.GetAllService()
-}
-
-//SetFlowLimit 设置最大流量限制
-func (c *Client) SetFlowLimit(max int64) {
-	c.limit.SetLimit(max)
 }
 
 //ServiceOnlineNotice 服务上线

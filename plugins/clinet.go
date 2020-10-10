@@ -19,17 +19,23 @@ const (
 //Client 客户端
 type Client interface {
 
+	//GetCodec 获取编码插件
+	GetCodec() Codec
+
+	//GetCfg 获取配置
+	GetCfg() Cfg
+
+	//GetDiscovery 获取服务发现
+	GetDiscovery() Discovery
+
+	//GetFusing 获取熔断插件
+	GetFusing() Fusing
+
+	//GetLimit 获取限流插件
+	GetLimit() Limit
+
 	//GetAllService 获取所有服务
 	GetAllService() (services []*serviceinfo.ServiceInfo)
-
-	//SetFlowLimit 设置最大流量限制
-	SetFlowLimit(max int64)
-
-	//ServiceOnlineNotice 服务上线
-	ServiceOnlineNotice(key string, info *serviceinfo.ServiceInfo)
-
-	//ServiceOfflineNotice 服务下线
-	ServiceOfflineNotice(key string)
 
 	//Call 调用函数
 	Call(ctx Context, mode Mode, name string, method string, args interface{}, reply interface{}) error

@@ -11,10 +11,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 )
 
-const (
-	timeout = 5
-)
-
 //EtcdRegister Etcd 服务注册
 type EtcdRegister struct {
 	rpcID clientv3.LeaseID //rpc服务接口注册id

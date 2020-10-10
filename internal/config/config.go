@@ -62,6 +62,14 @@ type MysqlCfg struct {
 	DbName string `json:"db_name"`
 	//数据库用户
 	DbUser string `json:"db_user"`
+	//最大空闲连接数
+	MaxIdleConns int `json:"max_idle_conns"`
+	//最大连接数
+	MaxOpenConns int `json:"max_open_conns"`
+	//链接可重用时间
+	ConnMaxLifetime int `json:"conn_max_lifetime"`
+	//日志开关
+	OpenLog bool `json:"open_log"`
 }
 
 //GetServerName 获取服务名称

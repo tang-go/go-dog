@@ -2,14 +2,10 @@ package gateway
 
 import (
 	"errors"
-	"fmt"
-	"go-dog/define"
-	"go-dog/error"
+	"go-dog/cmd/define"
+	customerror "go-dog/error"
 	"go-dog/internal/client"
-	"go-dog/internal/codec"
-	"go-dog/internal/config"
 	"go-dog/internal/context"
-	"go-dog/internal/discovery"
 	"go-dog/pkg/log"
 	"go-dog/plugins"
 	"go-dog/serviceinfo"
@@ -33,13 +29,10 @@ type apiservice struct {
 
 //Gateway 服务发现
 type Gateway struct {
-	cfg       plugins.Cfg
-	clinet    plugins.Client
-	discovery plugins.Discovery
-	codec     plugins.Codec
-	apis      map[string]*apiservice
-	services  map[string]*serviceinfo.APIServiceInfo
-	lock      sync.RWMutex
+	client   plugins.Client
+	apis     map[string]*apiservice
+	services map[string]*serviceinfo.APIServiceInfo
+	lock     sync.RWMutex
 }
 
 //NewGateway  新建发现服务
@@ -47,13 +40,16 @@ func NewGateway() *Gateway {
 	gateway := new(Gateway)
 	gateway.apis = make(map[string]*apiservice)
 	gateway.services = make(map[string]*serviceinfo.APIServiceInfo)
-	gateway.cfg = config.NewConfig()
-	gateway.codec = codec.NewCodec()
-	gateway.discovery = discovery.NewEtcdDiscovery(gateway.cfg.GetEtcd(), define.TTL)
-	gateway.clinet = client.NewClient(gateway.cfg, gateway.discovery)
-	gateway.discovery.RegAPIServiceOnlineNotice(gateway.APIServiceOnline)
-	gateway.discovery.RegAPIServiceOfflineNotice(gateway.APIServiceOffline)
-	gateway.discovery.WatchAPIService()
+	//初始化客户端
+	gateway.client = client.NewClient(define.TTL)
+	//设置客户端最大访问量
+	gateway.client.GetLimit().SetLimit(define.MaxClientRequestCount)
+	//注册API上线事件
+	gateway.client.GetDiscovery().RegAPIServiceOnlineNotice(gateway.APIServiceOnline)
+	//注册API下线事件
+	gateway.client.GetDiscovery().RegAPIServiceOfflineNotice(gateway.APIServiceOffline)
+	//开启API事件监听
+	gateway.client.GetDiscovery().WatchAPIService()
 	return gateway
 }
 
@@ -110,8 +106,8 @@ func (g *Gateway) Run() {
 		//router.StaticFS("/", http.Dir("./static"))
 		//添加路由
 		router.Any("/api/*router", g.routerResolution)
-		log.Tracef("网管启动 0.0.0.0:%d", g.cfg.GetPort())
-		err := router.Run(fmt.Sprintf(":%d", g.cfg.GetPort()))
+		log.Tracef("网管启动 0.0.0.0:80")
+		err := router.Run(":80")
 		if err != nil {
 			panic(err.Error())
 		}
@@ -128,7 +124,11 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 	apiservice, ok := g.apis[url]
 	g.lock.RUnlock()
 	if !ok {
-		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, url))
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		return
+	}
+	if c.Request.Method != apiservice.method.Kind {
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
 		return
 	}
 	timeoutstr := c.Request.Header.Get("TimeOut")
@@ -169,16 +169,16 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 	ctx.SetAddress(c.ClientIP())
 	ctx.SetIsTest(isTest)
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
-	back, err := g.clinet.SendRequest(ctx, plugins.RandomMode, apiservice.name, apiservice.method.Name, body)
+	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.name, apiservice.method.Name, body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
 		c.JSON(e.Code, e)
 		return
 	}
 	resp := new(interface{})
-	g.codec.DeCode(back, resp)
+	g.client.GetCodec().DeCode(back, resp)
 	c.JSON(http.StatusOK, gin.H{
-		"Code": 10000,
+		"Code": define.SuccessCode,
 		"Body": resp,
 		"Time": time.Now().Unix(),
 	})
@@ -186,24 +186,20 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 }
 
 //validation 验证参数
-func (g *Gateway) validation(param, tem string) ([]byte, error) {
+func (g *Gateway) validation(param string, tem map[string]interface{}) ([]byte, error) {
 	p := make(map[string]interface{})
-	if err := g.codec.DeCode([]byte(param), &p); err != nil {
+	if err := g.client.GetCodec().DeCode([]byte(param), &p); err != nil {
 		return nil, err
 	}
-	t := make(map[string]interface{})
-	if err := g.codec.DeCode([]byte(tem), &t); err != nil {
-		return nil, err
-	}
-	if len(t) != len(p) {
+	if len(tem) != len(p) {
 		return nil, errors.New("参数不正确")
 	}
 	for key := range p {
-		if _, ok := t[key]; !ok {
+		if _, ok := tem[key]; !ok {
 			return nil, errors.New("参数内容不正确")
 		}
 	}
-	return g.codec.EnCode(p)
+	return g.client.GetCodec().EnCode(p)
 }
 
 //logger 自定义日志输出

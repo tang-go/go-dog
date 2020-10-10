@@ -1,9 +1,7 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
-	"go-dog/define"
 	customerror "go-dog/error"
 	"go-dog/header"
 	"go-dog/internal/client"
@@ -28,8 +26,14 @@ import (
 	"time"
 )
 
+const (
+	_MaxServiceRequestCount = 100000
+)
+
 //Service 服务
 type Service struct {
+	//服务名称
+	name string
 	//配置插件
 	cfg plugins.Cfg
 	//注册中心插件
@@ -55,7 +59,7 @@ type Service struct {
 }
 
 //CreateService 创建一个服务
-func CreateService(param ...interface{}) plugins.Service {
+func CreateService(ttl int64, param ...interface{}) plugins.Service {
 	service := &Service{
 		close: 0,
 	}
@@ -92,7 +96,7 @@ func CreateService(param ...interface{}) plugins.Service {
 	}
 	if service.register == nil {
 		//使用默认注册中心
-		service.register = register.NewEtcdRegister(service.cfg.GetEtcd(), define.TTL)
+		service.register = register.NewEtcdRegister(service.cfg.GetEtcd(), ttl)
 	}
 	if service.router == nil {
 		//默认路由
@@ -100,7 +104,7 @@ func CreateService(param ...interface{}) plugins.Service {
 	}
 	if service.limit == nil {
 		//默认限流插件
-		service.limit = limit.NewLimit(define.MaxServiceRequestCount)
+		service.limit = limit.NewLimit(_MaxServiceRequestCount)
 	}
 	if service.interceptor == nil {
 		//默认拦截器
@@ -108,7 +112,7 @@ func CreateService(param ...interface{}) plugins.Service {
 	}
 	if service.client == nil {
 		//默认客户端
-		service.client = client.NewClient(service.cfg)
+		service.client = client.NewClient(ttl, service.cfg)
 	}
 	//初始化日志
 	switch service.cfg.GetRunmode() {
@@ -140,50 +144,56 @@ func CreateService(param ...interface{}) plugins.Service {
 	return service
 }
 
+//SetName 设置服务名称
+func (s *Service) SetName(name string) {
+	s.name = name
+}
+
 //GetClient 获取客户端
 func (s *Service) GetClient() plugins.Client {
 	return s.client
 }
 
-//SetServiceFlowLimit 设置服务端最大流量限制
-func (s *Service) SetServiceFlowLimit(max int64) {
-	s.limit.SetLimit(max)
+//GetCfg 获取配置
+func (s *Service) GetCfg() plugins.Cfg {
+	return s.cfg
 }
 
-//SetClientFlowLimit 设置客户端最大流量限制
-func (s *Service) SetClientFlowLimit(max int64) {
-	s.client.SetFlowLimit(max)
+//GetLimit 获取限流插件
+func (s *Service) GetLimit() plugins.Limit {
+	return s.limit
+}
+
+//GetCodec 获取编码插件
+func (s *Service) GetCodec() plugins.Codec {
+	return s.codec
 }
 
 //RegisterRPC 注册RPC方法
 func (s *Service) RegisterRPC(name string, level int8, isAuth bool, explain string, fn interface{}) {
-	arg, reply := s.router.RegisterByMethod(name, fn)
-	req, _ := json.Marshal(arg)
-	rep, _ := json.Marshal(reply)
+	req, rep := s.router.RegisterByMethod(name, fn)
 	method := &serviceinfo.Method{
 		Name:     name,
 		Level:    level,
 		Explain:  explain,
 		IsAuth:   isAuth,
-		Request:  string(req),
-		Response: string(rep),
+		Request:  req,
+		Response: rep,
 	}
 	s.methods = append(s.methods, method)
-	log.Traceln("注册RPC方法", method)
+	log.Traceln("注册RPC方法:", method.Name, "说明:", method.Explain)
 }
 
 //RegisterAPI 注册API方法--注册给网管
 func (s *Service) RegisterAPI(methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
-	arg, reply := s.router.RegisterByMethod(methodname, fn)
-	req, _ := json.Marshal(arg)
-	rep, _ := json.Marshal(reply)
+	req, rep := s.router.RegisterByMethod(methodname, fn)
 	api := &serviceinfo.API{
 		Name:     methodname,
 		Level:    level,
 		Explain:  explain,
 		IsAuth:   isAuth,
-		Request:  string(req),
-		Response: string(rep),
+		Request:  req,
+		Response: rep,
 		Version:  version,
 		Path:     path,
 		Kind:     string(kind),
@@ -193,17 +203,12 @@ func (s *Service) RegisterAPI(methodname, version, path string, kind plugins.HTT
 		Level:    level,
 		Explain:  explain,
 		IsAuth:   isAuth,
-		Request:  string(req),
-		Response: string(rep),
+		Request:  req,
+		Response: rep,
 	}
 	s.methods = append(s.methods, method)
 	s.api = append(s.api, api)
-	log.Traceln("注册API接口", api)
-}
-
-//GetCfg 获取配置
-func (s *Service) GetCfg() plugins.Cfg {
-	return s.cfg
+	log.Tracef("注册API接口:%s,路由:api/%s/%s/%s", api.Name, s.name, api.Version, api.Path)
 }
 
 //Run 启动服务
@@ -229,10 +234,14 @@ func (s *Service) run() error {
 		return err
 	}
 	defer l.Close()
+	name := s.name
+	if name == "" {
+		name = s.cfg.GetServerName()
+	}
 	//注册RPC方法到etcd
 	if len(s.methods) > 0 {
 		info := serviceinfo.ServiceInfo{
-			Name:    s.cfg.GetServerName(),
+			Name:    name,
 			Address: s.cfg.GetHost(),
 			Port:    s.cfg.GetPort(),
 			Explain: s.cfg.GetExplain(),
@@ -244,7 +253,7 @@ func (s *Service) run() error {
 	//注册API方法到etcd
 	if len(s.api) > 0 {
 		info := serviceinfo.APIServiceInfo{
-			Name:    s.cfg.GetServerName(),
+			Name:    name,
 			Address: s.cfg.GetHost(),
 			Port:    s.cfg.GetPort(),
 			API:     s.api,

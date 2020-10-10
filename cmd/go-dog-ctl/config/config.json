@@ -11,6 +11,44 @@
     "redis":[
         "127.0.0.1:6379"
     ],
+    //读数据库
+    "read_mysql":{
+        //数据库地址
+        "db_ip":"127.0.0.1:3306",
+        //数据库密码
+        "db_pwd":"123456",
+        //数据库用户
+        "db_user":"root",
+        //数据库名称
+        "db_name":"iotsaas",
+       //最大空闲连接数
+        "max_idle_conns":10,
+        //最大连接数
+        "max_open_conns":10,
+        //链接可重用时间
+        "conn_max_lifetime":5,
+        //日志开关
+        "open_log":true
+    },
+    //写数据库
+    "write_mysql":{
+        //数据库地址
+        "db_ip":"127.0.0.1:3306",
+        //数据库密码
+        "db_pwd":"123456",
+        //数据库用户
+        "db_user":"root",
+        //数据库名称
+        "db_name":"iotsaas",
+        //最大空闲连接数
+        "max_idle_conns":10,
+        //最大连接数
+        "max_open_conns":10,
+        //链接可重用时间
+        "conn_max_lifetime":5,
+        //日志开关
+        "open_log":true
+    },
     //运行模式 trace打印框架流程 dev开发模式 info 内网测试模式 pro 线上模式
     "runmode" : "trace"
 }
