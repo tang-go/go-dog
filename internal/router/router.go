@@ -95,7 +95,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 		if kind == reflect.Slice {
 			class := pointer.new(t.Field(i).Type.Elem())
 			tg := pointer.analysisStruct(class)
-			explain[name] = tg
+			explain[strings.ToLower(name)] = tg
 			continue
 		}
 		tags := strings.Split(string(t.Field(i).Tag), "\"")
@@ -103,7 +103,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 		for i := 0; i < len(tags); i++ {
 			tg += tags[i]
 		}
-		explain[name] = tg
+		explain[strings.ToLower(name)] = tg
 	}
 	return explain
 }

@@ -36,7 +36,8 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 	read.DB().SetConnMaxLifetime(time.Duration(cfg.GetReadMysql().ConnMaxLifetime) * time.Second)
 	//设置日志
 	read.LogMode(cfg.GetReadMysql().OpenLog)
-
+	//不为表增加s
+	read.SingularTable(true)
 	//初始化写数据库
 	writeurl := fmt.Sprintf(`%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local`,
 		cfg.GetWriteMysql().DbUser,
@@ -55,6 +56,8 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 	write.DB().SetConnMaxLifetime(time.Duration(cfg.GetWriteMysql().ConnMaxLifetime) * time.Second)
 	//设置日志
 	write.LogMode(cfg.GetWriteMysql().OpenLog)
+	//不为表增加s
+	write.SingularTable(true)
 	mysql.write = write
 	mysql.read = read
 	return mysql

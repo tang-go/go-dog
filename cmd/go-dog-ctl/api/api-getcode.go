@@ -1,7 +1,9 @@
 package api
 
 import (
+	"go-dog/cmd/define"
 	"go-dog/cmd/go-dog-ctl/param"
+	customerror "go-dog/error"
 	"go-dog/pkg/log"
 	"go-dog/pkg/rand"
 	"go-dog/plugins"
@@ -17,6 +19,7 @@ func (pointer *Service) GetCode(ctx plugins.Context, request param.GetCodeReq) (
 	id, b64s, err := code.Generate()
 	if err != nil {
 		log.Errorln(err.Error())
+		err = customerror.EnCodeError(define.GetCodeErr, err.Error())
 		return
 	}
 	response.ID = id

@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -150,6 +151,11 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "istest不能为空"))
 		return
 	}
+	traceID := c.Request.Header.Get("TraceID")
+	if traceID == "" {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
+		return
+	}
 	isTest, err := strconv.ParseBool(istest)
 	if err != nil {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
@@ -168,11 +174,13 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 	ctx := context.Background()
 	ctx.SetAddress(c.ClientIP())
 	ctx.SetIsTest(isTest)
+	ctx.SetTraceID(traceID)
+	ctx.SetData("URL", url)
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
 	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.name, apiservice.method.Name, body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
-		c.JSON(e.Code, e)
+		c.JSON(http.StatusOK, e)
 		return
 	}
 	resp := new(interface{})
@@ -195,7 +203,7 @@ func (g *Gateway) validation(param string, tem map[string]interface{}) ([]byte, 
 		return nil, errors.New("参数不正确")
 	}
 	for key := range p {
-		if _, ok := tem[key]; !ok {
+		if _, ok := tem[strings.ToLower(key)]; !ok {
 			return nil, errors.New("参数内容不正确")
 		}
 	}

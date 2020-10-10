@@ -1,19 +1,15 @@
 package table
 
 const (
-	//LowAdmin 低级管理员
-	LowAdmin = 0
-	//GeneralAdmin 普通管理员---能添加管理
-	GeneralAdmin = 1
-	//SuperAdmin 超级管理员---拥有所有权限
-	SuperAdmin = 2
+	//AdminDisable  管理员禁用
+	AdminDisable = true
+	//AdminAvailable 管理员可用
+	AdminAvailable = false
 )
 
 //Admin 超级管理员
 type Admin struct {
-	//自增ID
-	ID int64
-	//账号自动生成--规程ID加随机6位数
+	//账号 唯一主键
 	AdminID int64
 	//名称
 	Name string
@@ -29,6 +25,6 @@ type Admin struct {
 	OwnerID int64
 	//是否被禁用
 	IsDisable bool
-	//注册时间
+	//注册事件
 	Time int64
 }

@@ -20,7 +20,7 @@
         //数据库用户
         "db_user":"root",
         //数据库名称
-        "db_name":"iotsaas",
+        "db_name":"controller",
        //最大空闲连接数
         "max_idle_conns":10,
         //最大连接数
@@ -39,7 +39,7 @@
         //数据库用户
         "db_user":"root",
         //数据库名称
-        "db_name":"iotsaas",
+        "db_name":"controller",
         //最大空闲连接数
         "max_idle_conns":10,
         //最大连接数
