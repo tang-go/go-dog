@@ -197,7 +197,6 @@ func (s *Service) GET(methodname, version, path string, level int8, isAuth bool,
 //RegisterAPI 注册API方法--注册给网管
 func (s *Service) RegisterAPI(methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
-	fmt.Println(rep)
 	api := &serviceinfo.API{
 		Name:     methodname,
 		Level:    level,

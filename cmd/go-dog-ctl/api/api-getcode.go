@@ -13,7 +13,8 @@ import (
 
 //GetCode 验证图片验证码
 func (pointer *Service) GetCode(ctx plugins.Context, request param.GetCodeReq) (response param.GetCodeRes, err error) {
-	d := base64Captcha.NewDriverString(80, 240, 80, base64Captcha.OptionShowHollowLine, 5, rand.StringRand(6), nil, []string{})
+	number := rand.StringRand(6)
+	d := base64Captcha.NewDriverString(80, 240, 80, base64Captcha.OptionShowHollowLine, 6, number, nil, []string{})
 	driver := d.ConvertFonts()
 	code := base64Captcha.NewCaptcha(driver, pointer)
 	id, b64s, err := code.Generate()

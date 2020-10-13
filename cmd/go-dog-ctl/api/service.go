@@ -5,6 +5,7 @@ import (
 	"go-dog/cache"
 	"go-dog/cmd/define"
 	"go-dog/cmd/go-dog-ctl/table"
+	customerror "go-dog/error"
 	"go-dog/internal/service"
 	"go-dog/mysql"
 	"go-dog/pkg/log"
@@ -17,6 +18,7 @@ import (
 	"net"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -131,6 +133,15 @@ func (pointer *Service) InitAPI() {
 		true,
 		"获取服务列表",
 		pointer.GetServiceList)
+}
+
+//_Auth 权限验证
+func (pointer *Service) _Auth(token string) (admin *table.Admin, err *customerror.Error) {
+	admin = new(table.Admin)
+	if e := pointer.cache.GetCache().Get(token, admin); e != nil {
+		err = customerror.EnCodeError(define.AdminTokenErr, "token失效或者不正确")
+	}
+	return
 }
 
 //_InitMysql 第一次加载初始化数据库数据
@@ -275,7 +286,7 @@ func (pointer *Service) Get(id string, clear bool) (vali string) {
 //Verify 验证验证码
 func (pointer *Service) Verify(id, answer string, clear bool) bool {
 	vali := pointer.Get(id, clear)
-	if vali != answer {
+	if strings.ToLower(vali) != strings.ToLower(answer) {
 		return false
 	}
 	return true

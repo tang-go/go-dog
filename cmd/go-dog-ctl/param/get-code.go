@@ -2,7 +2,7 @@ package param
 
 //GetCodeReq 获取验证码请求
 type GetCodeReq struct {
-	Code int64 `description:"随机码" type:"int64"`
+	Code string `description:"随机码" type:"string"`
 }
 
 //GetCodeRes 获取验证码响应

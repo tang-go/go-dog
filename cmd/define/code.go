@@ -10,4 +10,6 @@ const (
 	VerfiyCodeErr = 10002
 	//AdminLoginErr 管理员登录失败
 	AdminLoginErr = 10003
+	//AdminTokenErr 管理员Token验证失败
+	AdminTokenErr = 10004
 )

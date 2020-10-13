@@ -7,6 +7,10 @@ import (
 
 //GetAPIList 获取api列表
 func (pointer *Service) GetAPIList(ctx plugins.Context, req param.GetAPIListReq) (res param.GetAPIListRes, err error) {
+	_, err = pointer._Auth(req.Token)
+	if err != nil {
+		return
+	}
 	list := make(map[string]*param.Service)
 	pointer.lock.RLock()
 	for key, api := range pointer.apis {
