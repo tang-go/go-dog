@@ -38,18 +38,27 @@ type Service interface {
 	//isAuth		是否需要鉴权
 	//explain		方法说明
 	//fn			注册的方法
-	RegisterRPC(name string, level int8, isAuth bool, explain string, fn interface{})
+	RPC(name string, level int8, isAuth bool, explain string, fn interface{})
 
-	//RegisterAPI 	注册API方法--注册给网管
+	//POST 			注册POST方法
 	//methodname 	API方法名称
 	//version 		API方法版本
 	//path 			API路由
-	//kind 			HTTP请求方法
 	//level 		API等级
 	//isAuth 		是否需要鉴权
 	//explain		方法描述
 	//fn 			注册的方法
-	RegisterAPI(methodname, version, path string, kind HTTPKind, level int8, isAuth bool, explain string, fn interface{})
+	POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{})
+
+	//GET GET方法
+	//methodname 	API方法名称
+	//version 		API方法版本
+	//path 			API路由
+	//level 		API等级
+	//isAuth 		是否需要鉴权
+	//explain		方法描述
+	//fn 			注册的方法
+	GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{})
 
 	//Run 启动服务
 	Run() error

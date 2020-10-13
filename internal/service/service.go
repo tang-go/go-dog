@@ -169,8 +169,8 @@ func (s *Service) GetCodec() plugins.Codec {
 	return s.codec
 }
 
-//RegisterRPC 注册RPC方法
-func (s *Service) RegisterRPC(name string, level int8, isAuth bool, explain string, fn interface{}) {
+//RPC 注册RPC方法
+func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(name, fn)
 	method := &serviceinfo.Method{
 		Name:     name,
@@ -184,9 +184,20 @@ func (s *Service) RegisterRPC(name string, level int8, isAuth bool, explain stri
 	log.Traceln("注册RPC方法:", method.Name, "说明:", method.Explain)
 }
 
+//POST POST方法
+func (s *Service) POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
+	s.RegisterAPI(methodname, version, path, plugins.POST, level, isAuth, explain, fn)
+}
+
+//GET GET方法
+func (s *Service) GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
+	s.RegisterAPI(methodname, version, path, plugins.GET, level, isAuth, explain, fn)
+}
+
 //RegisterAPI 注册API方法--注册给网管
 func (s *Service) RegisterAPI(methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
+	fmt.Println(rep)
 	api := &serviceinfo.API{
 		Name:     methodname,
 		Level:    level,

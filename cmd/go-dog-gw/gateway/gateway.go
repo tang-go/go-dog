@@ -20,18 +20,22 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"github.com/swaggo/swag"
 )
 
-type apiservice struct {
-	method *serviceinfo.API
-	name   string
-	count  int32
+//ServcieAPI api列表
+type ServcieAPI struct {
+	Method *serviceinfo.API
+	Name   string
+	Count  int32
 }
 
 //Gateway 服务发现
 type Gateway struct {
 	client   plugins.Client
-	apis     map[string]*apiservice
+	apis     map[string]*ServcieAPI
 	services map[string]*serviceinfo.APIServiceInfo
 	lock     sync.RWMutex
 }
@@ -39,7 +43,7 @@ type Gateway struct {
 //NewGateway  新建发现服务
 func NewGateway() *Gateway {
 	gateway := new(Gateway)
-	gateway.apis = make(map[string]*apiservice)
+	gateway.apis = make(map[string]*ServcieAPI)
 	gateway.services = make(map[string]*serviceinfo.APIServiceInfo)
 	//初始化客户端
 	gateway.client = client.NewClient(define.TTL)
@@ -51,6 +55,8 @@ func NewGateway() *Gateway {
 	gateway.client.GetDiscovery().RegAPIServiceOfflineNotice(gateway.APIServiceOffline)
 	//开启API事件监听
 	gateway.client.GetDiscovery().WatchAPIService()
+	//初始化文档
+	swag.Register(swag.Name, gateway)
 	return gateway
 }
 
@@ -60,12 +66,12 @@ func (g *Gateway) APIServiceOnline(key string, service *serviceinfo.APIServiceIn
 	for _, method := range service.API {
 		url := "/api/" + service.Name + "/" + method.Version + "/" + method.Path
 		if api, ok := g.apis[url]; ok {
-			api.count++
+			api.Count++
 		} else {
-			g.apis[url] = &apiservice{
-				method: method,
-				name:   service.Name,
-				count:  1,
+			g.apis[url] = &ServcieAPI{
+				Method: method,
+				Name:   service.Name,
+				Count:  1,
 			}
 			log.Traceln("收到API上线", key, method.Name, url, method.Request)
 		}
@@ -81,8 +87,8 @@ func (g *Gateway) APIServiceOffline(key string) {
 		for _, method := range service.API {
 			url := "/api/" + service.Name + "/" + method.Version + "/" + method.Path
 			if api, ok := g.apis[url]; ok {
-				api.count--
-				if api.count <= 0 {
+				api.Count--
+				if api.Count <= 0 {
 					delete(g.apis, url)
 					log.Traceln("收到API下线", key, method.Name, url, method.Request)
 				}
@@ -105,8 +111,12 @@ func (g *Gateway) Run() {
 		router.Use(g.logger())
 		//静态文件夹
 		//router.StaticFS("/", http.Dir("./static"))
+		//swagger 文档
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 		//添加路由
-		router.Any("/api/*router", g.routerResolution)
+		router.POST("/api/*router", g.routerPostResolution)
+		//GET请求
+		router.GET("/api/*router", g.routerGetResolution)
 		log.Tracef("网管启动 0.0.0.0:80")
 		err := router.Run(":80")
 		if err != nil {
@@ -117,8 +127,98 @@ func (g *Gateway) Run() {
 	<-c
 }
 
-// routerResolution 路由解析
-func (g *Gateway) routerResolution(c *gin.Context) {
+//routerGetResolution get路由解析
+func (g *Gateway) routerGetResolution(c *gin.Context) {
+	url := "/api" + c.Param("router")
+	g.lock.RLock()
+	apiservice, ok := g.apis[url]
+	g.lock.RUnlock()
+	if !ok {
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		return
+	}
+	if c.Request.Method != apiservice.Method.Kind {
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		return
+	}
+	timeoutstr := c.Request.Header.Get("TimeOut")
+	if timeoutstr == "" {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout不能为空"))
+		return
+	}
+	timeout, err := strconv.Atoi(timeoutstr)
+	if err != nil {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
+		return
+	}
+	if timeout <= 0 {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout必须大于0"))
+		return
+	}
+	istest := c.Request.Header.Get("IsTest")
+	if istest == "" {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "istest不能为空"))
+		return
+	}
+	traceID := c.Request.Header.Get("TraceID")
+	if traceID == "" {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
+		return
+	}
+	isTest, err := strconv.ParseBool(istest)
+	if err != nil {
+		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
+		return
+	}
+	p := make(map[string]interface{})
+	for key, value := range apiservice.Method.Request {
+		data := c.Query(key)
+		if data == "" {
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "参数不正确"))
+			return
+		}
+		vali, ok := value.(map[string]interface{})
+		if !ok {
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "参数不正确"))
+			return
+		}
+		tp, ok2 := vali["type"].(string)
+		if !ok2 {
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "参数不正确"))
+			return
+		}
+		v, err := _Transformation(tp, data)
+		if err != nil {
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
+			return
+		}
+		p[key] = v
+	}
+	body, _ := g.client.GetCodec().EnCode(p)
+	ctx := context.Background()
+	ctx.SetAddress(c.ClientIP())
+	ctx.SetIsTest(isTest)
+	ctx.SetTraceID(traceID)
+	ctx.SetData("URL", url)
+	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
+	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, body)
+	if err != nil {
+		e := customerror.DeCodeError(err)
+		c.JSON(http.StatusOK, e)
+		return
+	}
+	resp := new(interface{})
+	g.client.GetCodec().DeCode(back, resp)
+	c.JSON(http.StatusOK, gin.H{
+		"Code": define.SuccessCode,
+		"Body": resp,
+		"Time": time.Now().Unix(),
+	})
+	return
+}
+
+// routerPostResolution post路由解析
+func (g *Gateway) routerPostResolution(c *gin.Context) {
 	//路由解析
 	url := c.Request.URL.String()
 	g.lock.RLock()
@@ -128,7 +228,7 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
 		return
 	}
-	if c.Request.Method != apiservice.method.Kind {
+	if c.Request.Method != apiservice.Method.Kind {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
 		return
 	}
@@ -166,7 +266,7 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
 	}
-	body, err = g.validation(string(body), apiservice.method.Request)
+	body, err = g.validation(string(body), apiservice.Method.Request)
 	if err != nil {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
@@ -177,7 +277,7 @@ func (g *Gateway) routerResolution(c *gin.Context) {
 	ctx.SetTraceID(traceID)
 	ctx.SetData("URL", url)
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
-	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.name, apiservice.method.Name, body)
+	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
 		c.JSON(http.StatusOK, e)

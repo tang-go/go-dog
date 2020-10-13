@@ -77,33 +77,64 @@ func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[st
 
 //analysisStruct 解析参数
 func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} {
+	explain := make(map[string]interface{})
 	t := reflect.TypeOf(class)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
-		panic(t.Kind())
+		//panic(t.Kind())
+		//explain["type"] =
+		//explain["description"] = fmt.Sprintf("%v", t.Kind())
+		// tgs := map[string]string{
+		// 	"name":
+		// 	"type":        t.Kind().String(),
+		// 	"description": t.Kind().String(),
+		// }
+		tgs := map[string]string{
+			"type":        t.Kind().String(),
+			"description": t.Kind().String(),
+		}
+		explain[strings.ToLower(t.Name())] = tgs
+		return explain
 	}
 	fieldNum := t.NumField()
-	explain := make(map[string]interface{})
 	for i := 0; i < fieldNum; i++ {
 		name := t.Field(i).Name
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
-			panic(name)
+			panic("暂时不支持嵌套struct参数")
 		}
 		if kind == reflect.Slice {
 			class := pointer.new(t.Field(i).Type.Elem())
-			tg := pointer.analysisStruct(class)
-			explain[strings.ToLower(name)] = tg
+			classType := reflect.TypeOf(class)
+			if classType.Kind() == reflect.Ptr {
+				classType = classType.Elem()
+			}
+			kind := classType.Kind()
+			if kind == reflect.Struct {
+				tg := pointer.analysisStruct(class)
+				tgs := map[string]interface{}{
+					"type":        "array",
+					"description": t.Field(i).Tag.Get("description"),
+					"slice":       tg,
+				}
+				explain[strings.ToLower(name)] = tgs
+			} else {
+				tgs := map[string]interface{}{
+					"type":        "array",
+					"description": t.Field(i).Tag.Get("description"),
+					"slice":       kind.String(),
+				}
+				explain[strings.ToLower(name)] = tgs
+			}
 			continue
 		}
-		tags := strings.Split(string(t.Field(i).Tag), "\"")
-		tg := ""
-		for i := 0; i < len(tags); i++ {
-			tg += tags[i]
+		tgs := map[string]string{
+			"type":        t.Field(i).Tag.Get("type"),
+			"description": t.Field(i).Tag.Get("description"),
 		}
-		explain[strings.ToLower(name)] = tg
+		explain[strings.ToLower(name)] = tgs
 	}
 	return explain
 }
