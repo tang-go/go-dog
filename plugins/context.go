@@ -39,6 +39,12 @@ type Context interface {
 	//GetTraceID 获取traceid
 	GetTraceID() string
 
+	//SetToken 设置token
+	SetToken(token string)
+
+	//GetToken 获取token
+	GetToken() string
+
 	//SetData  设置自定义data
 	SetData(key string, val interface{})
 

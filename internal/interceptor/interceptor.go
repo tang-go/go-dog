@@ -22,7 +22,7 @@ func (t *Interceptor) Request(ctx plugins.Context, servicename, method string, r
 }
 
 //Respone 响应
-func (t *Interceptor) Respone(ctx plugins.Context, servicename, method string, respone interface{}) {
+func (t *Interceptor) Respone(ctx plugins.Context, servicename, method string, respone interface{}, err error) {
 	start := ctx.GetDataByKey("Request-Time")
 	tm, ok := start.(time.Time)
 	if !ok {

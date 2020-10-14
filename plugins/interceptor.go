@@ -6,5 +6,5 @@ type Interceptor interface {
 	Request(ctx Context, servicename, method string, request interface{})
 
 	//Respone 响应
-	Respone(ctx Context, servicename, method string, respone interface{})
+	Respone(ctx Context, servicename, method string, respone interface{}, err error)
 }

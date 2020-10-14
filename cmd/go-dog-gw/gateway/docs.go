@@ -143,7 +143,7 @@ func _Transformation(tp string, value string) (interface{}, error) {
 }
 
 //CreatePOSTAPI 创建一个POSTAPI
-func _CreatePOSTAPI(tags, summary, name string, request, respone map[string]interface{}) (a POSTAPI, definitions []Definitions) {
+func _CreatePOSTAPI(tags, summary, name string, isAuth bool, request, respone map[string]interface{}) (a POSTAPI, definitions []Definitions) {
 	api := POSTAPI{Post: Body{
 		Consumes: []string{"application/json"},
 		Produces: []string{"application/json"},
@@ -184,8 +184,17 @@ func _CreatePOSTAPI(tags, summary, name string, request, respone map[string]inte
 			In:          "header",
 			Required:    true,
 		},
-		parameters,
 	}
+	if isAuth {
+		api.Post.Parameters = append(api.Post.Parameters, Parameters{
+			Type:        "string",
+			Description: "验证Token",
+			Name:        "Token",
+			In:          "header",
+			Required:    true,
+		})
+	}
+	api.Post.Parameters = append(api.Post.Parameters, parameters)
 
 	responeName := strings.Replace(tags+"."+name+"Respone", "/", ".", -1)
 	responeProperties := _CreateDefinitions(responeName, respone)
@@ -199,7 +208,7 @@ func _CreatePOSTAPI(tags, summary, name string, request, respone map[string]inte
 }
 
 //_CreateGETAPI 创建一个GETAPI
-func _CreateGETAPI(tags, summary, name string, request, respone map[string]interface{}) (a GETAPI, definitions []Definitions) {
+func _CreateGETAPI(tags, summary, name string, isAuth bool, request, respone map[string]interface{}) (a GETAPI, definitions []Definitions) {
 	api := GETAPI{Get: Body{
 		Consumes: []string{"application/json"},
 		Tags:     []string{tags},
@@ -242,6 +251,15 @@ func _CreateGETAPI(tags, summary, name string, request, respone map[string]inter
 			In:          "header",
 			Required:    true,
 		})
+	if isAuth {
+		api.Get.Parameters = append(api.Get.Parameters, Parameters{
+			Type:        "string",
+			Description: "验证Token",
+			Name:        "Token",
+			In:          "header",
+			Required:    true,
+		})
+	}
 
 	responeName := strings.Replace(tags+"."+name+"Respone", "/", ".", -1)
 	responeProperties := _CreateDefinitions(responeName, respone)
@@ -345,6 +363,7 @@ func (g *Gateway) _AssembleDocs() string {
 				api.Name,
 				api.Method.Explain,
 				api.Method.Name,
+				api.Method.IsAuth,
 				api.Method.Request,
 				api.Method.Response)
 			paths[url] = api
@@ -357,6 +376,7 @@ func (g *Gateway) _AssembleDocs() string {
 				api.Name,
 				api.Method.Explain,
 				api.Method.Name,
+				api.Method.IsAuth,
 				api.Method.Request,
 				api.Method.Response)
 			paths[url] = api

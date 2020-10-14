@@ -60,6 +60,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 	req.TraceID = ctx.GetTraceID()
 	req.Address = ctx.GetAddress()
 	req.Data = ctx.GetData()
+	req.Token = ctx.GetToken()
 
 	req.ID = uuid.GetToken()
 	req.Name = name
@@ -107,6 +108,7 @@ func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, code s
 	req.TraceID = ctx.GetTraceID()
 	req.Address = ctx.GetAddress()
 	req.Data = ctx.GetData()
+	req.Token = ctx.GetToken()
 
 	req.ID = uuid.GetToken()
 	req.Name = name

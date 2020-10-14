@@ -9,6 +9,7 @@ type Request struct {
 	TTL     int64
 	TimeOut int64
 	TraceID string
+	Token   string
 	IsTest  bool
 	Address string
 	Data    map[string]interface{}

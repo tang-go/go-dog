@@ -2,7 +2,7 @@ package param
 
 //GetServiceReq 获取服务列表请求
 type GetServiceReq struct {
-	Token string `description:"用户token" type:"string"`
+	Code string `description:"业务随机码" type:"string"`
 }
 
 //GetServiceRes 获取服务响应

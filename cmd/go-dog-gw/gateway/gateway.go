@@ -141,6 +141,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
 		return
 	}
+
 	timeoutstr := c.Request.Header.Get("TimeOut")
 	if timeoutstr == "" {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout不能为空"))
@@ -169,6 +170,14 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	if err != nil {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
+	}
+	token := ""
+	if apiservice.Method.IsAuth {
+		token = c.Request.Header.Get("Token")
+		if token == "" {
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不能为空"))
+			return
+		}
 	}
 	p := make(map[string]interface{})
 	for key, value := range apiservice.Method.Request {
@@ -199,6 +208,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	ctx.SetAddress(c.ClientIP())
 	ctx.SetIsTest(isTest)
 	ctx.SetTraceID(traceID)
+	ctx.SetToken(token)
 	ctx.SetData("URL", url)
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
 	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, "json", body)

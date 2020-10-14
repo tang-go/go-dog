@@ -20,6 +20,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -34,6 +35,8 @@ const (
 type Service struct {
 	//服务名称
 	name string
+	//验证插件
+	auth plugins.Auth
 	//配置插件
 	cfg plugins.Cfg
 	//注册中心插件
@@ -46,6 +49,8 @@ type Service struct {
 	interceptor plugins.Interceptor
 	//方法
 	methods []*serviceinfo.Method
+	//鉴权方法
+	authMethod map[string]string
 	//对网管注册的api
 	api []*serviceinfo.API
 	//客户端
@@ -61,8 +66,9 @@ type Service struct {
 //CreateService 创建一个服务
 func CreateService(name string, ttl int64, param ...interface{}) plugins.Service {
 	service := &Service{
-		close: 0,
-		name:  name,
+		close:      0,
+		name:       name,
+		authMethod: make(map[string]string),
 	}
 	for _, plugin := range param {
 		if cfg, ok := plugin.(plugins.Cfg); ok {
@@ -85,6 +91,9 @@ func CreateService(name string, ttl int64, param ...interface{}) plugins.Service
 		}
 		if client, ok := plugin.(plugins.Client); ok {
 			service.client = client
+		}
+		if auth, ok := plugin.(plugins.Auth); ok {
+			service.auth = auth
 		}
 	}
 	if service.cfg == nil {
@@ -177,6 +186,9 @@ func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn i
 		Response: rep,
 	}
 	s.methods = append(s.methods, method)
+	if isAuth {
+		s.authMethod[strings.ToLower(name)] = name
+	}
 	log.Traceln("注册RPC方法:", method.Name, "说明:", method.Explain)
 }
 
@@ -214,6 +226,9 @@ func (s *Service) _RegisterAPI(methodname, version, path string, kind plugins.HT
 	}
 	s.methods = append(s.methods, method)
 	s.api = append(s.api, api)
+	if isAuth {
+		s.authMethod[strings.ToLower(methodname)] = methodname
+	}
 	log.Tracef("注册API接口:%s,路由:api/%s/%s/%s", api.Name, s.name, api.Version, api.Path)
 }
 
@@ -293,6 +308,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			rep.Method = req.Method
 			rep.Name = req.Name
 			rep.Code = req.Code
+
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
 				rep.Error = customerror.EnCodeError(customerror.InternalServerError, "服务器关闭")
@@ -318,23 +334,35 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			ctx.SetAddress(req.Address)
 			ctx.SetTraceID(req.TraceID)
 			ctx.SetIsTest(req.IsTest)
+			ctx.SetToken(req.Token)
+
 			ctx.SetClient(s.client)
 			for key, value := range req.Data {
 				ctx.SetData(key, value)
 			}
 			ctx = context.WithTimeout(ctx, ttl)
-			if s.interceptor != nil {
-				s.interceptor.Request(ctx, req.Name, req.Method, req.Arg)
-			}
+
 			if argv, ok := s.router.GetMethodArg(req.Method); ok {
 				err := s.codec.DeCode(req.Code, req.Arg, argv)
 				if err != nil {
 					rep.Error = customerror.EnCodeError(customerror.ParamError, "参数不合法")
 					return rep
 				}
+				//先判断此方法是否需要鉴权
+				if _, o := s.authMethod[strings.ToLower(req.Method)]; o {
+					if s.auth != nil {
+						if err := s.auth.Auth(ctx, req.Token); err != nil {
+							rep.Error = customerror.DeCodeError(err)
+							return rep
+						}
+					}
+				}
+				if s.interceptor != nil {
+					s.interceptor.Request(ctx, req.Name, req.Method, argv)
+				}
 				back, err := s.router.Call(ctx, req.Method, argv)
 				if s.interceptor != nil {
-					s.interceptor.Respone(ctx, req.Name, req.Method, back)
+					s.interceptor.Respone(ctx, rep.Name, rep.Method, back, err)
 				}
 				if err != nil {
 					rep.Error = customerror.DeCodeError(err)

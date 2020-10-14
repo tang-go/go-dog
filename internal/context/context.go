@@ -14,6 +14,7 @@ type MyContext struct {
 	traceID string
 	isTest  bool
 	address string
+	token   string
 	cancel  base.CancelFunc
 	client  plugins.Client
 	data    map[string]interface{}
@@ -63,6 +64,16 @@ func (c *MyContext) SetIsTest(test bool) {
 //GetIsTest 是否是测试请求
 func (c *MyContext) GetIsTest() bool {
 	return c.isTest
+}
+
+//SetToken 设置token
+func (c *MyContext) SetToken(token string) {
+	c.token = token
+}
+
+//GetToken 获取token
+func (c *MyContext) GetToken() string {
+	return c.token
 }
 
 //SetAddress  设置请求ip

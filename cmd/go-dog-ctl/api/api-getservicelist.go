@@ -7,10 +7,6 @@ import (
 
 //GetServiceList 获取服务列表
 func (pointer *Service) GetServiceList(ctx plugins.Context, req param.GetServiceReq) (res param.GetServiceRes, err error) {
-	_, err = pointer._Auth(req.Token)
-	if err != nil {
-		return
-	}
 	services := pointer.service.GetClient().GetAllService()
 	for _, service := range services {
 		s := &param.ServiceInfo{
