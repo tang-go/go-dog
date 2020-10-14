@@ -8,7 +8,6 @@ import (
 	"go-dog/internal/codec"
 	"go-dog/internal/config"
 	"go-dog/internal/context"
-	"go-dog/internal/interceptor"
 	"go-dog/internal/limit"
 	"go-dog/internal/register"
 	"go-dog/internal/router"
@@ -36,7 +35,7 @@ type Service struct {
 	//服务名称
 	name string
 	//验证插件
-	auth plugins.Auth
+	auth func(ctx plugins.Context, token string) error
 	//配置插件
 	cfg plugins.Cfg
 	//注册中心插件
@@ -92,9 +91,6 @@ func CreateService(name string, ttl int64, param ...interface{}) plugins.Service
 		if client, ok := plugin.(plugins.Client); ok {
 			service.client = client
 		}
-		if auth, ok := plugin.(plugins.Auth); ok {
-			service.auth = auth
-		}
 	}
 	if service.cfg == nil {
 		//默认配置
@@ -115,10 +111,6 @@ func CreateService(name string, ttl int64, param ...interface{}) plugins.Service
 	if service.limit == nil {
 		//默认限流插件
 		service.limit = limit.NewLimit(_MaxServiceRequestCount)
-	}
-	if service.interceptor == nil {
-		//默认拦截器
-		service.interceptor = interceptor.NewInterceptor()
 	}
 	if service.client == nil {
 		//默认客户端
@@ -232,6 +224,11 @@ func (s *Service) _RegisterAPI(methodname, version, path string, kind plugins.HT
 	log.Tracef("注册API接口:%s,路由:api/%s/%s/%s", api.Name, s.name, api.Version, api.Path)
 }
 
+//Auth 验证函数
+func (s *Service) Auth(fun func(ctx plugins.Context, token string) error) {
+	s.auth = fun
+}
+
 //Run 启动服务
 func (s *Service) Run() error {
 	c := make(chan os.Signal)
@@ -303,11 +300,34 @@ func (s *Service) _ServeConn(conn net.Conn) {
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
 			defer recover.Recover()
+
 			rep := new(header.Response)
 			rep.ID = req.ID
 			rep.Method = req.Method
 			rep.Name = req.Name
 			rep.Code = req.Code
+			if s.GetCfg().GetRunmode() == "trace" {
+				start := time.Now()
+				defer func() {
+					if rep.Error != nil {
+						log.Tracef("| %s | %s | %13v | %s | %s ",
+							req.Address,
+							rep.Error.Error(),
+							time.Now().Sub(start),
+							req.Name,
+							req.Method,
+						)
+					} else {
+						log.Tracef("| %s | %s | %13v | %s | %s ",
+							req.Address,
+							"成功",
+							time.Now().Sub(start),
+							req.Name,
+							req.Method,
+						)
+					}
+				}()
+			}
 
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
@@ -351,7 +371,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 				//先判断此方法是否需要鉴权
 				if _, o := s.authMethod[strings.ToLower(req.Method)]; o {
 					if s.auth != nil {
-						if err := s.auth.Auth(ctx, req.Token); err != nil {
+						if err := s.auth(ctx, req.Token); err != nil {
 							rep.Error = customerror.DeCodeError(err)
 							return rep
 						}

@@ -29,6 +29,9 @@ type Service interface {
 	//GetClient 获取客户端
 	GetClient() Client
 
+	//Auth 验证函数
+	Auth(fun func(ctx Context, token string) error)
+
 	//RegisterRPC 	注册RPC方法
 	//name			方法名称
 	//level			方法等级

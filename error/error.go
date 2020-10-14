@@ -3,6 +3,8 @@ package customerror
 import "time"
 
 const (
+	//SuccessCode 成功
+	SuccessCode = 200
 	//ConnectClose 链接关闭
 	ConnectClose = 400
 	//RPCNotFind 没有找到方法
