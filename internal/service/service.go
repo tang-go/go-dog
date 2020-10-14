@@ -284,7 +284,7 @@ func (s *Service) _Run() error {
 
 // ServeConn 拦截一个链接
 func (s *Service) _ServeConn(conn net.Conn) {
-	serviceRPC := rpc.NewServiceRPC(conn)
+	serviceRPC := rpc.NewServiceRPC(conn, s.codec)
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
 			defer recover.Recover()

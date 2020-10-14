@@ -6,7 +6,6 @@ import (
 
 //Request MsgPack请求
 type Request struct {
-	MsgPackCode
 	TTL     int64
 	TimeOut int64
 	TraceID string
@@ -22,7 +21,6 @@ type Request struct {
 
 //Response MsgPack响应
 type Response struct {
-	MsgPackCode
 	ID     string
 	Name   string
 	Method string

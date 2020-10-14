@@ -179,7 +179,7 @@ func (c *ClientRPC) send(request *header.Request, response chan *header.Response
 			//超时请求就没必要发起了
 			return
 		}
-		buff, err := request.EnCode(request)
+		buff, err := c.codec.EnCode("msgpack", request)
 		if err == nil {
 			_, err = io.Write(c.conn, buff)
 			if err != nil {
@@ -225,7 +225,7 @@ func (c *ClientRPC) eventloop() {
 			return
 		}
 		response := new(header.Response)
-		err = response.DeCode(buff, response)
+		err = c.codec.DeCode("msgpack", buff, response)
 		if err != nil {
 			continue
 		}

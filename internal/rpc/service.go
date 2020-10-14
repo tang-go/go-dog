@@ -4,6 +4,7 @@ import (
 	"go-dog/header"
 	"go-dog/lib/io"
 	"go-dog/log"
+	"go-dog/plugins"
 	"go-dog/recover"
 	"net"
 	"sync"
@@ -13,6 +14,7 @@ import (
 
 //ServiceRPC 服务
 type ServiceRPC struct {
+	codec      plugins.Codec
 	conn       net.Conn
 	isClose    int32
 	callNotice func(*header.Request) *header.Response
@@ -20,10 +22,11 @@ type ServiceRPC struct {
 }
 
 // NewServiceRPC 初始化一个service端rpc
-func NewServiceRPC(conn net.Conn) *ServiceRPC {
+func NewServiceRPC(conn net.Conn, codec plugins.Codec) *ServiceRPC {
 	s := &ServiceRPC{
 		conn:    conn,
 		isClose: 0,
+		codec:   codec,
 	}
 	go s.eventloop()
 	return s
@@ -52,7 +55,7 @@ func (s *ServiceRPC) call(req *header.Request) {
 //Send 发送
 func (s *ServiceRPC) send(response *header.Response) {
 	if atomic.LoadInt32(&s.isClose) == 0 {
-		buff, err := response.EnCode(response)
+		buff, err := s.codec.EnCode("msgpack", response)
 		if err != nil {
 			return
 		}
@@ -78,7 +81,7 @@ func (s *ServiceRPC) eventloop() {
 			return
 		}
 		request := new(header.Request)
-		err = request.DeCode(buff, request)
+		err = s.codec.DeCode("msgpack", buff, request)
 		if err != nil {
 			log.Traceln(err.Error())
 			continue
