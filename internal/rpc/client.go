@@ -1,13 +1,13 @@
 package rpc
 
 import (
-	"go-dog/error"
+	customerror "go-dog/error"
 	"go-dog/header"
-	"go-dog/pkg/io"
-	"go-dog/pkg/log"
-	"go-dog/pkg/recover"
-	"go-dog/pkg/uuid"
+	"go-dog/lib/io"
+	"go-dog/lib/uuid"
+	"go-dog/log"
 	"go-dog/plugins"
+	"go-dog/recover"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -64,7 +64,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 	req.ID = uuid.GetToken()
 	req.Name = name
 	req.Method = method
-	req.Arg, e = c.codec.EnCode(request)
+	req.Arg, e = c.codec.EnCode("", request)
 	if e != nil {
 		return customerror.EnCodeError(customerror.ParamError, "参数不正确")
 	}
@@ -79,7 +79,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 		if rep.Error != nil {
 			return rep.Error
 		}
-		c.codec.DeCode(rep.Reply, response)
+		c.codec.DeCode("", rep.Reply, response)
 		return nil
 	case <-ctx.Done():
 		c.lock.Lock()
@@ -90,7 +90,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 }
 
 //SendRequest 发送请求
-func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, arg []byte) (reply []byte, e error) {
+func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, code string, arg []byte) (reply []byte, e error) {
 	defer recover.Recover()
 	c.wait.Add(1)
 	defer c.wait.Done()
@@ -112,6 +112,7 @@ func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, arg []
 	req.Name = name
 	req.Method = method
 	req.Arg = arg
+	req.Code = code
 	done := make(chan *header.Response, 1)
 	c.wait.Add(1)
 	go c.call(ctx, req, done)

@@ -1,7 +1,7 @@
 package limit
 
 import (
-	"go-dog/pkg/recover"
+	"go-dog/recover"
 	"sync/atomic"
 	"time"
 )

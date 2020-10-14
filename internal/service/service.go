@@ -13,9 +13,9 @@ import (
 	"go-dog/internal/register"
 	"go-dog/internal/router"
 	"go-dog/internal/rpc"
-	"go-dog/pkg/log"
-	"go-dog/pkg/recover"
+	"go-dog/log"
 	"go-dog/plugins"
+	"go-dog/recover"
 	"go-dog/serviceinfo"
 	"net"
 	"os"
@@ -59,9 +59,10 @@ type Service struct {
 }
 
 //CreateService 创建一个服务
-func CreateService(ttl int64, param ...interface{}) plugins.Service {
+func CreateService(name string, ttl int64, param ...interface{}) plugins.Service {
 	service := &Service{
 		close: 0,
+		name:  name,
 	}
 	for _, plugin := range param {
 		if cfg, ok := plugin.(plugins.Cfg); ok {
@@ -100,7 +101,7 @@ func CreateService(ttl int64, param ...interface{}) plugins.Service {
 	}
 	if service.router == nil {
 		//默认路由
-		service.router = router.NewRouter(service.codec)
+		service.router = router.NewRouter()
 	}
 	if service.limit == nil {
 		//默认限流插件
@@ -144,11 +145,6 @@ func CreateService(ttl int64, param ...interface{}) plugins.Service {
 	return service
 }
 
-//SetName 设置服务名称
-func (s *Service) SetName(name string) {
-	s.name = name
-}
-
 //GetClient 获取客户端
 func (s *Service) GetClient() plugins.Client {
 	return s.client
@@ -186,16 +182,16 @@ func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn i
 
 //POST POST方法
 func (s *Service) POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
-	s.RegisterAPI(methodname, version, path, plugins.POST, level, isAuth, explain, fn)
+	s._RegisterAPI(methodname, version, path, plugins.POST, level, isAuth, explain, fn)
 }
 
 //GET GET方法
 func (s *Service) GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
-	s.RegisterAPI(methodname, version, path, plugins.GET, level, isAuth, explain, fn)
+	s._RegisterAPI(methodname, version, path, plugins.GET, level, isAuth, explain, fn)
 }
 
 //RegisterAPI 注册API方法--注册给网管
-func (s *Service) RegisterAPI(methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
+func (s *Service) _RegisterAPI(methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
 	api := &serviceinfo.API{
 		Name:     methodname,
@@ -227,7 +223,7 @@ func (s *Service) Run() error {
 	//监听指定信号
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		err := s.run()
+		err := s._Run()
 		if err != nil {
 			panic(err.Error())
 		}
@@ -238,7 +234,8 @@ func (s *Service) Run() error {
 	return fmt.Errorf("收到kill信号:%s", msg)
 }
 
-func (s *Service) run() error {
+//_Run 启动
+func (s *Service) _Run() error {
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.cfg.GetHost(), s.cfg.GetPort()))
 	if err != nil {
 		return err
@@ -281,23 +278,23 @@ func (s *Service) run() error {
 			log.Errorln(err.Error())
 			continue
 		}
-		go s.serveConn(conn)
+		go s._ServeConn(conn)
 	}
 }
 
 // ServeConn 拦截一个链接
-func (s *Service) serveConn(conn net.Conn) {
+func (s *Service) _ServeConn(conn net.Conn) {
 	serviceRPC := rpc.NewServiceRPC(conn)
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
 			defer recover.Recover()
+			rep := new(header.Response)
+			rep.ID = req.ID
+			rep.Method = req.Method
+			rep.Name = req.Name
+			rep.Code = req.Code
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
-				rep := new(header.Response)
-				rep.ID = req.ID
-				rep.Method = req.Method
-				rep.Name = req.Name
-				rep.Reply = nil
 				rep.Error = customerror.EnCodeError(customerror.InternalServerError, "服务器关闭")
 				return rep
 			}
@@ -306,19 +303,9 @@ func (s *Service) serveConn(conn net.Conn) {
 			defer s.wait.Done()
 
 			if s.limit.IsLimit() {
-				rep := new(header.Response)
-				rep.ID = req.ID
-				rep.Method = req.Method
-				rep.Name = req.Name
-				rep.Reply = nil
 				rep.Error = customerror.EnCodeError(customerror.SeviceLimitError, "超过服务每秒限制流量")
 				return rep
 			}
-
-			rep := new(header.Response)
-			rep.ID = req.ID
-			rep.Method = req.Method
-			rep.Name = req.Name
 			now := time.Now().UnixNano()
 			ttl := req.TimeOut - now
 			if ttl < 0 {
@@ -339,15 +326,29 @@ func (s *Service) serveConn(conn net.Conn) {
 			if s.interceptor != nil {
 				s.interceptor.Request(ctx, req.Name, req.Method, req.Arg)
 			}
-			back, err := s.router.Call(ctx, req)
-			if s.interceptor != nil {
-				s.interceptor.Respone(ctx, req.Name, req.Method, back)
-			}
-			if err != nil {
-				rep.Error = customerror.DeCodeError(err)
+			if argv, ok := s.router.GetMethodArg(req.Method); ok {
+				err := s.codec.DeCode(req.Code, req.Arg, argv)
+				if err != nil {
+					rep.Error = customerror.EnCodeError(customerror.ParamError, "参数不合法")
+					return rep
+				}
+				back, err := s.router.Call(ctx, req.Method, argv)
+				if s.interceptor != nil {
+					s.interceptor.Respone(ctx, req.Name, req.Method, back)
+				}
+				if err != nil {
+					rep.Error = customerror.DeCodeError(err)
+					return rep
+				}
+				reply, err := s.codec.EnCode(req.Code, back)
+				if err != nil {
+					rep.Error = customerror.EnCodeError(customerror.ParamError, "返回参数不合法")
+					return rep
+				}
+				rep.Reply = reply
 				return rep
 			}
-			rep.Reply = back
+			rep.Error = customerror.EnCodeError(customerror.RPCNotFind, "方法不存在")
 			return rep
 		})
 }

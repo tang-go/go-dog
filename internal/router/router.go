@@ -2,7 +2,6 @@ package router
 
 import (
 	customerror "go-dog/error"
-	"go-dog/header"
 	"go-dog/plugins"
 	"reflect"
 	"strings"
@@ -27,15 +26,13 @@ type methodstruct struct {
 
 //Router api接口对象
 type Router struct {
-	codec   plugins.Codec
 	methods map[string]*methodstruct
 }
 
 //NewRouter 创建路由
-func NewRouter(codec plugins.Codec) *Router {
+func NewRouter() *Router {
 	return &Router{
 		methods: make(map[string]*methodstruct),
-		codec:   codec,
 	}
 }
 
@@ -83,14 +80,6 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
-		//panic(t.Kind())
-		//explain["type"] =
-		//explain["description"] = fmt.Sprintf("%v", t.Kind())
-		// tgs := map[string]string{
-		// 	"name":
-		// 	"type":        t.Kind().String(),
-		// 	"description": t.Kind().String(),
-		// }
 		tgs := map[string]string{
 			"type":        t.Kind().String(),
 			"description": t.Kind().String(),
@@ -140,22 +129,17 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 }
 
 //GetMethodArg 获取方法请求的参数
-func (pointer *Router) GetMethodArg(method string) interface{} {
-	if vali, ok := pointer.methods[method]; ok {
-		return pointer.new(vali.argType)
+func (pointer *Router) GetMethodArg(method string) (interface{}, bool) {
+	if vali, ok := pointer.methods[strings.ToLower(method)]; ok {
+		return pointer.new(vali.argType), true
 	}
-	return nil
+	return nil, false
 }
 
 //Call 调用方法
-func (pointer *Router) Call(ctx plugins.Context, req *header.Request) ([]byte, error) {
-	val, ok := pointer.methods[strings.ToLower(req.Method)]
+func (pointer *Router) Call(ctx plugins.Context, method string, argv interface{}) (interface{}, error) {
+	val, ok := pointer.methods[strings.ToLower(method)]
 	if ok {
-		argv := pointer.new(val.argType)
-		err := pointer.codec.DeCode(req.Arg, argv)
-		if err != nil {
-			return nil, customerror.EnCodeError(customerror.ParamError, "参数不合法")
-		}
 		if val.argType.Kind() != reflect.Ptr {
 			returnValues := val.method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(argv).Elem()})
 			errInter := returnValues[1].Interface()
@@ -163,11 +147,7 @@ func (pointer *Router) Call(ctx plugins.Context, req *header.Request) ([]byte, e
 				return nil, errInter.(error)
 			}
 			back := returnValues[0].Interface()
-			reply, err := pointer.codec.EnCode(back)
-			if err != nil {
-				return nil, customerror.EnCodeError(customerror.ParamError, "返回参数不合法")
-			}
-			return reply, nil
+			return back, nil
 		}
 		returnValues := val.method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(argv)})
 		errInter := returnValues[1].Interface()
@@ -175,11 +155,7 @@ func (pointer *Router) Call(ctx plugins.Context, req *header.Request) ([]byte, e
 			return nil, errInter.(error)
 		}
 		back := returnValues[0].Interface()
-		reply, err := pointer.codec.EnCode(back)
-		if err != nil {
-			return nil, customerror.EnCodeError(customerror.InternalServerError, "返回参数不合法")
-		}
-		return reply, nil
+		return back, nil
 
 	}
 	return nil, customerror.EnCodeError(customerror.RPCNotFind, "没有找到RPC函数方法")

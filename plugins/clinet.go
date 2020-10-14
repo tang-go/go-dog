@@ -41,7 +41,7 @@ type Client interface {
 	Call(ctx Context, mode Mode, name string, method string, args interface{}, reply interface{}) error
 
 	//SendRequest 发生请求
-	SendRequest(ctx Context, mode Mode, name string, method string, args []byte) (reply []byte, e error)
+	SendRequest(ctx Context, mode Mode, name string, method string, code string, args []byte) (reply []byte, e error)
 
 	//Close 关闭
 	Close()

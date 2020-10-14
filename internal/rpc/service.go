@@ -2,9 +2,9 @@ package rpc
 
 import (
 	"go-dog/header"
-	"go-dog/pkg/io"
-	"go-dog/pkg/log"
-	"go-dog/pkg/recover"
+	"go-dog/lib/io"
+	"go-dog/log"
+	"go-dog/recover"
 	"net"
 	"sync"
 	"sync/atomic"

@@ -6,7 +6,7 @@ import (
 	customerror "go-dog/error"
 	"go-dog/internal/client"
 	"go-dog/internal/context"
-	"go-dog/pkg/log"
+	"go-dog/log"
 	"go-dog/plugins"
 	"go-dog/serviceinfo"
 	"io/ioutil"
@@ -194,21 +194,21 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		}
 		p[key] = v
 	}
-	body, _ := g.client.GetCodec().EnCode(p)
+	body, _ := g.client.GetCodec().EnCode("json", p)
 	ctx := context.Background()
 	ctx.SetAddress(c.ClientIP())
 	ctx.SetIsTest(isTest)
 	ctx.SetTraceID(traceID)
 	ctx.SetData("URL", url)
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
-	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, body)
+	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, "json", body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
 		c.JSON(http.StatusOK, e)
 		return
 	}
 	resp := new(interface{})
-	g.client.GetCodec().DeCode(back, resp)
+	g.client.GetCodec().DeCode("json", back, resp)
 	c.JSON(http.StatusOK, gin.H{
 		"Code": define.SuccessCode,
 		"Body": resp,
@@ -277,14 +277,14 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	ctx.SetTraceID(traceID)
 	ctx.SetData("URL", url)
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
-	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, body)
+	back, err := g.client.SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, "json", body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
 		c.JSON(http.StatusOK, e)
 		return
 	}
 	resp := new(interface{})
-	g.client.GetCodec().DeCode(back, resp)
+	g.client.GetCodec().DeCode("json", back, resp)
 	c.JSON(http.StatusOK, gin.H{
 		"Code": define.SuccessCode,
 		"Body": resp,
@@ -296,7 +296,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 //validation 验证参数
 func (g *Gateway) validation(param string, tem map[string]interface{}) ([]byte, error) {
 	p := make(map[string]interface{})
-	if err := g.client.GetCodec().DeCode([]byte(param), &p); err != nil {
+	if err := g.client.GetCodec().DeCode("json", []byte(param), &p); err != nil {
 		return nil, err
 	}
 	if len(tem) != len(p) {
@@ -307,7 +307,7 @@ func (g *Gateway) validation(param string, tem map[string]interface{}) ([]byte, 
 			return nil, errors.New("参数内容不正确")
 		}
 	}
-	return g.client.GetCodec().EnCode(p)
+	return g.client.GetCodec().EnCode("json", p)
 }
 
 //logger 自定义日志输出

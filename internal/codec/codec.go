@@ -1,6 +1,10 @@
 package codec
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/vmihailenco/msgpack"
+)
 
 //Codec 编码器
 type Codec struct {
@@ -13,11 +17,22 @@ func NewCodec() *Codec {
 }
 
 //EnCode 编码
-func (c *Codec) EnCode(v interface{}) ([]byte, error) {
-	return json.Marshal(v)
+func (c *Codec) EnCode(code string, v interface{}) ([]byte, error) {
+	switch code {
+	case "json":
+		return json.Marshal(v)
+	default:
+		return msgpack.Marshal(v)
+	}
+
 }
 
 //DeCode 编码
-func (c *Codec) DeCode(buff []byte, v interface{}) error {
-	return json.Unmarshal(buff, v)
+func (c *Codec) DeCode(code string, buff []byte, v interface{}) error {
+	switch code {
+	case "json":
+		return json.Unmarshal(buff, v)
+	default:
+		return msgpack.Unmarshal(buff, v)
+	}
 }

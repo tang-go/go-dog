@@ -17,9 +17,6 @@ const (
 //Service 服务接口
 type Service interface {
 
-	//SetName 设置服务名称
-	SetName(name string)
-
 	//GetCodec 获取编码插件
 	GetCodec() Codec
 

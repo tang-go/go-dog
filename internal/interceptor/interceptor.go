@@ -1,7 +1,7 @@
 package interceptor
 
 import (
-	"go-dog/pkg/log"
+	"go-dog/log"
 	"go-dog/plugins"
 	"time"
 )

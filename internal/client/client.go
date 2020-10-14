@@ -8,9 +8,9 @@ import (
 	"go-dog/internal/fusing"
 	"go-dog/internal/limit"
 	"go-dog/internal/selector"
-	"go-dog/pkg/log"
-	"go-dog/pkg/recover"
+	"go-dog/log"
 	"go-dog/plugins"
+	"go-dog/recover"
 	"go-dog/serviceinfo"
 	"sync"
 	"time"
@@ -249,7 +249,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 }
 
 //SendRequest 发生请求
-func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string, method string, args []byte) (reply []byte, e error) {
+func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string, method string, code string, args []byte) (reply []byte, e error) {
 	defer recover.Recover()
 	if c.limit.IsLimit() {
 		return nil, customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
@@ -268,7 +268,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			//请求统计添加
 			c.fusing.AddMethod(service.Key, method)
 			//客户端发起请求
-			res, err := client.SendRequest(ctx, name, method, args)
+			res, err := client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
 				c.fusing.AddErrorMethod(service.Key, method, err)
@@ -289,7 +289,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			}
 			//请求统计添加
 			c.fusing.AddMethod(service.Key, method)
-			res, err = client.SendRequest(ctx, name, method, args)
+			res, err = client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
 				c.fusing.AddErrorMethod(service.Key, method, err)
@@ -310,7 +310,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			//请求统计添加
 			c.fusing.AddMethod(service.Key, method)
 			//客户端发起请求
-			res, err := client.SendRequest(ctx, name, method, args)
+			res, err := client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
 				c.fusing.AddErrorMethod(service.Key, method, err)
@@ -330,7 +330,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			//请求统计添加
 			c.fusing.AddMethod(service.Key, method)
 			//客户端发起请求
-			res, err := client.SendRequest(ctx, name, method, args)
+			res, err := client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
 				c.fusing.AddErrorMethod(service.Key, method, err)

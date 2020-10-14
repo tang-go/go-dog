@@ -4,8 +4,8 @@ package plugins
 type Codec interface {
 
 	//EnCode 编码
-	EnCode(v interface{}) ([]byte, error)
+	EnCode(code string, v interface{}) ([]byte, error)
 
 	//DeCode 编码
-	DeCode(buff []byte, v interface{}) error
+	DeCode(code string, buff []byte, v interface{}) error
 }

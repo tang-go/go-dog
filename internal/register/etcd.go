@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-dog/pkg/etcd"
 	"go-dog/serviceinfo"
 	"time"
 
@@ -13,19 +12,25 @@ import (
 
 //EtcdRegister Etcd 服务注册
 type EtcdRegister struct {
-	rpcID clientv3.LeaseID //rpc服务接口注册id
-	apiID clientv3.LeaseID //api服务注册接口id
-	ttl   int64            //时间
+	client *clientv3.Client //etcd 客户端
+	rpcID  clientv3.LeaseID //rpc服务接口注册id
+	apiID  clientv3.LeaseID //api服务注册接口id
+	ttl    int64            //时间
 }
 
 //NewEtcdRegister 初始化一个etcd服务注册中心
 func NewEtcdRegister(address []string, ttl int64) *EtcdRegister {
-	err := etcd.InitEtcdClient(address, time.Duration(ttl)*time.Second)
+	conf := clientv3.Config{
+		Endpoints:   address,
+		DialTimeout: time.Duration(ttl) * time.Second,
+	}
+	client, err := clientv3.New(conf)
 	if err != nil {
 		panic(err.Error())
 	}
 	return &EtcdRegister{
-		ttl: ttl,
+		ttl:    ttl,
+		client: client,
 	}
 }
 
@@ -36,17 +41,17 @@ func (s *EtcdRegister) RegisterRPCService(ctx context.Context, info *serviceinfo
 	val, _ := json.Marshal(info)
 
 	//设置租约时间
-	resp, err := etcd.GetEtcdClient().Grant(ctx, s.ttl)
+	resp, err := s.client.Grant(ctx, s.ttl)
 	if err != nil {
 		panic(err)
 	}
 	//注册服务并绑定租约
-	_, err = etcd.GetEtcdClient().Put(ctx, key, string(val), clientv3.WithLease(resp.ID))
+	_, err = s.client.Put(ctx, key, string(val), clientv3.WithLease(resp.ID))
 	if err != nil {
 		panic(err)
 	}
 	//设置续租 定期发送需求请求
-	leaseRespChan, err := etcd.GetEtcdClient().KeepAlive(ctx, resp.ID)
+	leaseRespChan, err := s.client.KeepAlive(ctx, resp.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -65,17 +70,17 @@ func (s *EtcdRegister) RegisterAPIService(ctx context.Context, info *serviceinfo
 	val, _ := json.Marshal(info)
 
 	//设置租约时间
-	resp, err := etcd.GetEtcdClient().Grant(ctx, s.ttl)
+	resp, err := s.client.Grant(ctx, s.ttl)
 	if err != nil {
 		panic(err)
 	}
 	//注册服务并绑定租约
-	_, err = etcd.GetEtcdClient().Put(ctx, key, string(val), clientv3.WithLease(resp.ID))
+	_, err = s.client.Put(ctx, key, string(val), clientv3.WithLease(resp.ID))
 	if err != nil {
 		panic(err)
 	}
 	//设置续租 定期发送需求请求
-	leaseRespChan, err := etcd.GetEtcdClient().KeepAlive(ctx, resp.ID)
+	leaseRespChan, err := s.client.KeepAlive(ctx, resp.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -91,15 +96,15 @@ func (s *EtcdRegister) RegisterAPIService(ctx context.Context, info *serviceinfo
 func (s *EtcdRegister) Cancellation() error {
 	//撤销api接口注册
 	if s.apiID > 0 {
-		if _, err := etcd.GetEtcdClient().Revoke(context.Background(), s.apiID); err != nil {
+		if _, err := s.client.Revoke(context.Background(), s.apiID); err != nil {
 			return err
 		}
 	}
 	//撤销rpc接口注册
 	if s.rpcID > 0 {
-		if _, err := etcd.GetEtcdClient().Revoke(context.Background(), s.rpcID); err != nil {
+		if _, err := s.client.Revoke(context.Background(), s.rpcID); err != nil {
 			return err
 		}
 	}
-	return etcd.GetEtcdClient().Close()
+	return s.client.Close()
 }

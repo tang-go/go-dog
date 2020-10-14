@@ -2,7 +2,7 @@ package recover
 
 import (
 	"fmt"
-	"go-dog/pkg/log"
+	"go-dog/log"
 	"runtime/debug"
 )
 

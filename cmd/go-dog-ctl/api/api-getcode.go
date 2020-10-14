@@ -4,8 +4,8 @@ import (
 	"go-dog/cmd/define"
 	"go-dog/cmd/go-dog-ctl/param"
 	customerror "go-dog/error"
-	"go-dog/pkg/log"
-	"go-dog/pkg/rand"
+	"go-dog/lib/rand"
+	"go-dog/log"
 	"go-dog/plugins"
 
 	"github.com/mojocn/base64Captcha"

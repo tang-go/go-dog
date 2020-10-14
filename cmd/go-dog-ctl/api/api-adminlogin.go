@@ -5,7 +5,7 @@ import (
 	"go-dog/cmd/go-dog-ctl/param"
 	"go-dog/cmd/go-dog-ctl/table"
 	customerror "go-dog/error"
-	"go-dog/pkg/md5"
+	"go-dog/lib/md5"
 	"go-dog/plugins"
 	"time"
 )

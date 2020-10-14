@@ -1,7 +1,7 @@
 package header
 
 import (
-	"go-dog/error"
+	customerror "go-dog/error"
 )
 
 //Request MsgPack请求
@@ -17,6 +17,7 @@ type Request struct {
 	Name    string
 	Method  string
 	Arg     []byte
+	Code    string
 }
 
 //Response MsgPack响应
@@ -26,6 +27,7 @@ type Response struct {
 	Name   string
 	Method string
 	Reply  []byte
+	Code   string
 	Error  *customerror.Error
 }
 

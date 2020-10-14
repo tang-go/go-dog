@@ -7,11 +7,11 @@ import (
 	"go-dog/cmd/go-dog-ctl/table"
 	customerror "go-dog/error"
 	"go-dog/internal/service"
+	"go-dog/lib/md5"
+	"go-dog/lib/rand"
+	"go-dog/lib/snowflake"
+	"go-dog/log"
 	"go-dog/mysql"
-	"go-dog/pkg/log"
-	"go-dog/pkg/md5"
-	"go-dog/pkg/rand"
-	"go-dog/pkg/snowflake"
 	"go-dog/plugins"
 	"go-dog/serviceinfo"
 	"math/big"
@@ -48,9 +48,7 @@ func NewService() *Service {
 	ctl.apis = make(map[string]*_APIService)
 	ctl.services = make(map[string]*serviceinfo.APIServiceInfo)
 	//初始化rpc服务端
-	ctl.service = service.CreateService(define.TTL)
-	//设置服务名称
-	ctl.service.SetName(define.SvcController)
+	ctl.service = service.CreateService(define.SvcController, define.TTL)
 	//设置服务端最大访问量
 	ctl.service.GetLimit().SetLimit(define.MaxServiceRequestCount)
 	//设置客户端最大访问量

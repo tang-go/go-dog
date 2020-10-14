@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go-dog/pkg/net"
+	"go-dog/lib/net"
 	"io/ioutil"
 	"os"
 	"strconv"

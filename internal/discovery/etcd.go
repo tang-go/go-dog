@@ -3,8 +3,7 @@ package discovery
 import (
 	"context"
 	"encoding/json"
-	"go-dog/pkg/etcd"
-	"go-dog/pkg/log"
+	"go-dog/log"
 	"go-dog/serviceinfo"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 
 //EtcdDiscovery 服务发现
 type EtcdDiscovery struct {
+	client                 *clientv3.Client //etcd 客户端
 	rpcServcieOnlineNotice func(string, *serviceinfo.ServiceInfo)
 	rpcServcieOffineNotice func(string)
 	apiServcieOnlineNotice func(string, *serviceinfo.APIServiceInfo)
@@ -22,12 +22,17 @@ type EtcdDiscovery struct {
 
 //NewEtcdDiscovery  新建发现服务
 func NewEtcdDiscovery(address []string, ttl int64) *EtcdDiscovery {
-	err := etcd.InitEtcdClient(address, time.Duration(ttl)*time.Second)
-	if err != nil {
-		panic(err)
+	conf := clientv3.Config{
+		Endpoints:   address,
+		DialTimeout: time.Duration(ttl) * time.Second,
 	}
-	discovery := new(EtcdDiscovery)
-	return discovery
+	client, err := clientv3.New(conf)
+	if err != nil {
+		panic(err.Error())
+	}
+	return &EtcdDiscovery{
+		client: client,
+	}
 }
 
 //RegRPCServiceOnlineNotice 注册RPC服务上线通知
@@ -53,7 +58,7 @@ func (d *EtcdDiscovery) RegAPIServiceOfflineNotice(f func(string)) {
 //WatchRPCService 开始RPC服务发现
 func (d *EtcdDiscovery) WatchRPCService() {
 	//根据前缀获取现有的key
-	resp, err := etcd.GetEtcdClient().Get(context.Background(), "rpc/", clientv3.WithPrefix())
+	resp, err := d.client.Get(context.Background(), "rpc/", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +72,7 @@ func (d *EtcdDiscovery) WatchRPCService() {
 		}
 	}
 	go func() {
-		rch := etcd.GetEtcdClient().Watch(context.Background(), "rpc/", clientv3.WithPrefix())
+		rch := d.client.Watch(context.Background(), "rpc/", clientv3.WithPrefix())
 		for wresp := range rch {
 			for _, ev := range wresp.Events {
 				switch ev.Type {
@@ -93,7 +98,7 @@ func (d *EtcdDiscovery) WatchRPCService() {
 //WatchAPIService 开始API服务发现
 func (d *EtcdDiscovery) WatchAPIService() {
 	//根据前缀获取现有的key
-	resp, err := etcd.GetEtcdClient().Get(context.Background(), "api/", clientv3.WithPrefix())
+	resp, err := d.client.Get(context.Background(), "api/", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -107,7 +112,7 @@ func (d *EtcdDiscovery) WatchAPIService() {
 		}
 	}
 	go func() {
-		rch := etcd.GetEtcdClient().Watch(context.Background(), "api/", clientv3.WithPrefix())
+		rch := d.client.Watch(context.Background(), "api/", clientv3.WithPrefix())
 		for wresp := range rch {
 			for _, ev := range wresp.Events {
 				switch ev.Type {
@@ -132,5 +137,5 @@ func (d *EtcdDiscovery) WatchAPIService() {
 
 //Close 关闭服务
 func (d *EtcdDiscovery) Close() error {
-	return etcd.GetEtcdClient().Close()
+	return d.client.Close()
 }

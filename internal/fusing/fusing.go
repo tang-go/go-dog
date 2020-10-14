@@ -2,8 +2,8 @@ package fusing
 
 import (
 	customerror "go-dog/error"
-	"go-dog/pkg/log"
-	"go-dog/pkg/recover"
+	"go-dog/log"
+	"go-dog/recover"
 	"sync"
 	"time"
 )
