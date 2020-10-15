@@ -1,0 +1,14 @@
+
+apiVersion: v1
+kind: Service
+metadata: 
+  name: mysql
+  namespace: go-dog
+spec:
+  type: NodePort
+  ports:
+    - port: 3307
+      nodePort: 32307
+      targetPort: 3306
+  selector: 
+    app: mysql

@@ -6,7 +6,7 @@ import (
 	"go-dog/internal/client"
 	"go-dog/internal/config"
 	"go-dog/internal/context"
-	"go-dog/pkg/log"
+	"go-dog/log"
 	"go-dog/plugins"
 	"sync"
 	"sync/atomic"

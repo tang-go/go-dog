@@ -1,0 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    name: redis
+  name: redis
+  namespace: go-dog
+spec:
+  type: NodePort
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    nodePort: 31379
+  selector:
+    name: redis

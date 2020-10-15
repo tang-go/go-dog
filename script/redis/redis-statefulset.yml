@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: go-dog
+spec:
+  replicas: 1
+  serviceName: redis
+  selector:
+    matchLabels:
+      name: redis
+  template:
+    metadata:
+      labels:
+        name: redis
+    spec:
+      initContainers:
+      - name: init-redis
+        image: busybox
+        command: ['sh', '-c', 'mkdir -p /redis/log/;mkdir -p /redis/conf/;mkdir -p /redis/data/']
+        volumeMounts:
+        - name: data
+          mountPath: /redis/
+      containers:
+      - name: redis
+        image: ccr.ccs.tencentyun.com/libs/redis:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - "exec redis-server /redis/conf/redis.conf"
+        ports:
+        - containerPort: 6379
+          name: redis
+          protocol: TCP
+        volumeMounts:
+        - name: redis-config
+          mountPath: /redis/conf/
+        - name: data
+          mountPath: /redis/
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-conf
+      - name: data
+        hostPath:
+          path: /redis/

@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
-	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/coreos/bbolt v1.3.3 // indirect
 	github.com/coreos/etcd v3.3.25+incompatible
 	github.com/coreos/go-semver v0.3.0 // indirect
@@ -26,7 +25,6 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mojocn/base64Captcha v1.3.1
 	github.com/prometheus/client_golang v1.1.0 // indirect
-	github.com/prometheus/common v0.6.0
 	github.com/prometheus/procfs v0.0.5 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v2.20.8+incompatible

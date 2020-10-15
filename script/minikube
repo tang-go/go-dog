@@ -1,0 +1,8 @@
+
+#安装minikube
+brew install minikube
+minikube version
+brew install kubectl
+#两种
+minikube start --vm-driver=virtualbox --image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' --registry-mirror=https://ysmu1ej9.mirror.aliyuncs.com
+minikube start --image-mirror-country=cn   --iso-url=https://kubernetes.oss-cn-hangzhou.aliyuncs.com/minikube/iso/minikube-v1.6.2.iso  --registry-mirror=https://ysmu1ej9.mirror.aliyuncs.com  --image-repository=registry.cn-hangzhou.aliyuncs.com/google_containers

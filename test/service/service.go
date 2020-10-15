@@ -2,7 +2,7 @@ package main
 
 import (
 	"go-dog/internal/service"
-	"go-dog/pkg/log"
+	"go-dog/log"
 	"go-dog/plugins"
 	"runtime"
 	"sync/atomic"
