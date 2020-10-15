@@ -45,6 +45,15 @@ type Context interface {
 	//GetToken 获取token
 	GetToken() string
 
+	//SetShare 设置共享数据
+	SetShare(key string, val interface{})
+
+	//GetShare 获取全部共享数据
+	GetShare() map[string]interface{}
+
+	//GetShareByKey 获取指定共享数据
+	GetShareByKey(key string) interface{}
+
 	//SetData  设置自定义data
 	SetData(key string, val interface{})
 

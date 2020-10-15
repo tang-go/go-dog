@@ -119,7 +119,7 @@ func (f *Fusing) eventloop() {
 			//清空所有统计数量
 			f.lock.Lock()
 			for key, m := range f.methods {
-				if m.total > 100 && m.errnum > 0 {
+				if m.total > 10 && m.errnum > 0 {
 					if m.errnum*100/m.total > 30 {
 						f.auto[key] = m.name
 						log.Tracef("| 服务%s | 方法%s | 开启自动熔断 |", key, m.name)

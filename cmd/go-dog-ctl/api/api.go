@@ -5,7 +5,6 @@ import (
 	"go-dog/cache"
 	"go-dog/cmd/define"
 	"go-dog/cmd/go-dog-ctl/table"
-	customerror "go-dog/error"
 	"go-dog/internal/service"
 	"go-dog/lib/md5"
 	"go-dog/lib/rand"
@@ -22,6 +21,34 @@ import (
 	"time"
 )
 
+//Router 注册路由
+func (pointer *API) Router() {
+	//获取图片验证码
+	pointer.service.GET("GetCode", "v1", "get/code",
+		3,
+		false,
+		"获取图片验证码",
+		pointer.GetCode)
+	//验证码验证码
+	pointer.service.POST("AdminLogin", "v1", "admin/login",
+		3,
+		false,
+		"管理员登录",
+		pointer.AdminLogin)
+	//获取API列表
+	pointer.service.GET("GetAPIList", "v1", "get/api/list",
+		3,
+		true,
+		"获取api列表",
+		pointer.GetAPIList)
+	//获取服务列表
+	pointer.service.GET("GetServiceList", "v1", "get/service/list",
+		3,
+		true,
+		"获取服务列表",
+		pointer.GetServiceList)
+}
+
 //APIService API服务
 type _APIService struct {
 	method  *serviceinfo.API
@@ -30,8 +57,8 @@ type _APIService struct {
 	count   int32
 }
 
-//Service 控制服务
-type Service struct {
+//API 控制服务
+type API struct {
 	service   plugins.Service
 	mysql     *mysql.Mysql
 	snowflake *snowflake.SnowFlake
@@ -42,8 +69,8 @@ type Service struct {
 }
 
 //NewService 初始化服务
-func NewService() *Service {
-	ctl := new(Service)
+func NewService() *API {
+	ctl := new(API)
 	ctl.apis = make(map[string]*_APIService)
 	ctl.services = make(map[string]*serviceinfo.APIServiceInfo)
 	//初始化rpc服务端
@@ -83,28 +110,19 @@ func NewService() *Service {
 	}
 	ctl.snowflake = snowflake.NewSnowFlake(id)
 	//初始化API
-	ctl.InitAPI()
+	ctl.Router()
 	//初始化数据库数据
 	ctl._InitMysql("13688460148", "admin")
 	return ctl
 }
 
 //Run 启动
-func (pointer *Service) Run() error {
+func (pointer *API) Run() error {
 	return pointer.service.Run()
 }
 
-//_Auth 权限验证
-func (pointer *Service) _Auth(token string) (admin *table.Admin, err *customerror.Error) {
-	admin = new(table.Admin)
-	if e := pointer.cache.GetCache().Get(token, admin); e != nil {
-		err = customerror.EnCodeError(define.AdminTokenErr, "token失效或者不正确")
-	}
-	return
-}
-
 //_InitMysql 第一次加载初始化数据库数据
-func (pointer *Service) _InitMysql(phone, pwd string) {
+func (pointer *API) _InitMysql(phone, pwd string) {
 	//读取是否有业主了
 	owner := new(table.Owner)
 	if pointer.mysql.GetReadEngine().Where("phone = ?", phone).First(owner).RecordNotFound() == false {
@@ -184,7 +202,7 @@ func (pointer *Service) _InitMysql(phone, pwd string) {
 }
 
 //apiServiceOnline api服务上线
-func (pointer *Service) _ApiServiceOnline(key string, service *serviceinfo.APIServiceInfo) {
+func (pointer *API) _ApiServiceOnline(key string, service *serviceinfo.APIServiceInfo) {
 	pointer.lock.Lock()
 	for _, method := range service.API {
 		url := "/api/" + service.Name + "/" + method.Version + "/" + method.Path
@@ -204,7 +222,7 @@ func (pointer *Service) _ApiServiceOnline(key string, service *serviceinfo.APISe
 }
 
 //apiServiceOffline api服务下线
-func (pointer *Service) _ApiServiceOffline(key string) {
+func (pointer *API) _ApiServiceOffline(key string) {
 	pointer.lock.Lock()
 	if service, ok := pointer.services[key]; ok {
 		for _, method := range service.API {
@@ -222,14 +240,14 @@ func (pointer *Service) _ApiServiceOffline(key string) {
 }
 
 // Set 设置验证码ID
-func (pointer *Service) Set(id string, value string) {
+func (pointer *API) Set(id string, value string) {
 	if err := pointer.cache.GetCache().SetByTime(id, value, define.CodeValidityTime); err != nil {
 		log.Errorln(err.Error())
 	}
 }
 
 // Get 更具验证ID获取验证码
-func (pointer *Service) Get(id string, clear bool) (vali string) {
+func (pointer *API) Get(id string, clear bool) (vali string) {
 	err := pointer.cache.GetCache().Get(id, &vali)
 	if err != nil {
 		log.Errorln(err.Error())
@@ -241,7 +259,7 @@ func (pointer *Service) Get(id string, clear bool) (vali string) {
 }
 
 //Verify 验证验证码
-func (pointer *Service) Verify(id, answer string, clear bool) bool {
+func (pointer *API) Verify(id, answer string, clear bool) bool {
 	vali := pointer.Get(id, clear)
 	if strings.ToLower(vali) != strings.ToLower(answer) {
 		return false

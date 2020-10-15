@@ -294,41 +294,44 @@ func (s *Service) _Run() error {
 	}
 }
 
+//_Log 日志
+func (s *Service) _Log(address, name, method string, respone *header.Response) func() {
+	start := time.Now()
+	return func() {
+		if respone.Error != nil {
+			log.Tracef("| %s | %s | %13v | %s | %s ",
+				address,
+				respone.Error.Error(),
+				time.Now().Sub(start),
+				name,
+				method,
+			)
+		} else {
+			log.Tracef("| %s | %s | %13v | %s | %s ",
+				address,
+				"成功",
+				time.Now().Sub(start),
+				name,
+				method,
+			)
+		}
+	}
+}
+
 // ServeConn 拦截一个链接
 func (s *Service) _ServeConn(conn net.Conn) {
 	serviceRPC := rpc.NewServiceRPC(conn, s.codec)
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
 			defer recover.Recover()
-
 			rep := new(header.Response)
 			rep.ID = req.ID
 			rep.Method = req.Method
 			rep.Name = req.Name
 			rep.Code = req.Code
 			if s.GetCfg().GetRunmode() == "trace" {
-				start := time.Now()
-				defer func() {
-					if rep.Error != nil {
-						log.Tracef("| %s | %s | %13v | %s | %s ",
-							req.Address,
-							rep.Error.Error(),
-							time.Now().Sub(start),
-							req.Name,
-							req.Method,
-						)
-					} else {
-						log.Tracef("| %s | %s | %13v | %s | %s ",
-							req.Address,
-							"成功",
-							time.Now().Sub(start),
-							req.Name,
-							req.Method,
-						)
-					}
-				}()
+				defer s._Log(req.Address, req.Name, req.Method, rep)()
 			}
-
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
 				rep.Error = customerror.EnCodeError(customerror.InternalServerError, "服务器关闭")

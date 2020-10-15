@@ -12,7 +12,14 @@ import (
 )
 
 //GetCode 验证图片验证码
-func (pointer *Service) GetCode(ctx plugins.Context, request param.GetCodeReq) (response param.GetCodeRes, err error) {
+func (pointer *API) GetCode(ctx plugins.Context, request param.GetCodeReq) (response param.GetCodeRes, err error) {
+	//查看是否是测试接口
+	if ctx.GetIsTest() {
+		response.ID = request.Code
+		response.Img = "123456"
+		pointer.Set(response.ID, response.Img)
+		return
+	}
 	number := rand.StringRand(6)
 	d := base64Captcha.NewDriverString(80, 240, 80, base64Captcha.OptionShowHollowLine, 6, number, nil, []string{})
 	driver := d.ConvertFonts()

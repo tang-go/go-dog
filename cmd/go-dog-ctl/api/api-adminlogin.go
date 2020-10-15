@@ -11,11 +11,7 @@ import (
 )
 
 //AdminLogin 管理员登录
-func (pointer *Service) AdminLogin(ctx plugins.Context, request param.AdminLoginReq) (response param.AdminLoginRes, err error) {
-	if pointer.Verify(request.ID, request.Answer, true) == false {
-		err = customerror.EnCodeError(define.VerfiyCodeErr, "验证码验证码失败")
-		return
-	}
+func (pointer *API) AdminLogin(ctx plugins.Context, request param.AdminLoginReq) (response param.AdminLoginRes, err error) {
 	//查询是否拥有此用户
 	admin := new(table.Admin)
 	if pointer.mysql.GetReadEngine().Where("phone = ?", request.Phone).First(admin).RecordNotFound() == true {

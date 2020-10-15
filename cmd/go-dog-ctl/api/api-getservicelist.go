@@ -1,12 +1,14 @@
 package api
 
 import (
+	"fmt"
 	"go-dog/cmd/go-dog-ctl/param"
 	"go-dog/plugins"
 )
 
 //GetServiceList 获取服务列表
-func (pointer *Service) GetServiceList(ctx plugins.Context, req param.GetServiceReq) (res param.GetServiceRes, err error) {
+func (pointer *API) GetServiceList(ctx plugins.Context, req param.GetServiceReq) (res param.GetServiceRes, err error) {
+	fmt.Println(ctx.GetShareByKey("Admin"))
 	services := pointer.service.GetClient().GetAllService()
 	for _, service := range services {
 		s := &param.ServiceInfo{

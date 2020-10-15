@@ -18,6 +18,7 @@ type MyContext struct {
 	cancel  base.CancelFunc
 	client  plugins.Client
 	data    map[string]interface{}
+	share   map[string]interface{}
 }
 
 //Background 创建一个空context
@@ -94,6 +95,21 @@ func (c *MyContext) SetTraceID(traceID string) {
 //GetTraceID 获取traceid
 func (c *MyContext) GetTraceID() string {
 	return c.traceID
+}
+
+//SetShare 设置共享数据
+func (c *MyContext) SetShare(key string, val interface{}) {
+	c.share[key] = val
+}
+
+//GetShare 获取全部共享数据
+func (c *MyContext) GetShare() map[string]interface{} {
+	return c.share
+}
+
+//GetShareByKey 获取指定共享数据
+func (c *MyContext) GetShareByKey(key string) interface{} {
+	return c.share[key]
 }
 
 //SetData  设置自定义data
