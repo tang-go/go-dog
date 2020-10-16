@@ -10,10 +10,15 @@ const components = {
 const locale = {
   'message': '-',
   'menu.home': '主页',
-  'menu.dashboard': '仪表盘',
-  'menu.dashboard.analysis': '分析页',
-  'menu.dashboard.monitor': '监控页',
-  'menu.dashboard.workplace': '工作台'
+  'menu.index': '首页',
+
+  'menu.admin': '个人中心',
+  'menu.admin.center': '个人中心',
+  'menu.admin.logout': '退出',
+  'menu.admin.set': '个人设置',
+
+  'layouts.usermenu.dialog.title': '提示',
+  'layouts.usermenu.dialog.content': '是否要退出登录'
 }
 
 export default {

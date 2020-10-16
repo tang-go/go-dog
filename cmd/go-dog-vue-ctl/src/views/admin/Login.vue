@@ -240,7 +240,6 @@ export default {
       })
     },
     loginSuccess (res) {
-      console.log(res)
       this.$router.push({ path: '/' })
       // 延迟 1 秒显示欢迎信息
       setTimeout(() => {
@@ -251,13 +250,14 @@ export default {
       }, 1000)
       this.isLoginError = false
     },
-    requestFailed () {
+    requestFailed (err) {
+      console.log(err)
       this.isLoginError = true
-      // this.$notification['error']({
-      //   message: '错误',
-      //   description: ((err.response || {}).data || {}).message || '请求出现错误，请稍后再试',
-      //   duration: 4
-      // })
+      this.$notification['error']({
+        message: '错误',
+        description: err.msg,
+        duration: 4
+      })
     }
   }
 }

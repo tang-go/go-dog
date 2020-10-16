@@ -44,6 +44,7 @@ type Description struct {
 	Description string      `json:"description"`
 	Type        string      `json:"type"`
 	Items       interface{} `json:"items,omitempty"`
+	Ref         string      `json:"$ref,omitempty"`
 }
 
 //Ref 链接
@@ -310,6 +311,21 @@ func _CreateDefinitions(name string, mp map[string]interface{}) (definitions []D
 					properties[key] = description
 				}
 				continue
+			} else if object, ok3 := vali["object"]; ok3 {
+				mp, o := object.(map[string]interface{})
+				if o == true {
+					description := Description{}
+					if ok1 {
+						description.Description = des.(string)
+					}
+					description.Type = "object"
+					son := name + "." + key
+					definitions = append(definitions, _CreateDefinitions(son, mp)...)
+					description.Ref = "#/definitions/" + son
+
+					properties[key] = description
+					continue
+				}
 			}
 			description := Description{}
 			if ok1 {
@@ -319,7 +335,6 @@ func _CreateDefinitions(name string, mp map[string]interface{}) (definitions []D
 				description.Type = _Type(tp.(string))
 			}
 			properties[key] = description
-
 		}
 	}
 	definition := Definitions{
@@ -351,8 +366,8 @@ func (g *Gateway) _AssembleDocs() string {
 		Title:       "go-dog网管API文档",
 		Version:     "{{.Version}}",
 	}
-	// info.Contact.Name = "有bug请联系电话13688460148"
-	// info.Contact.URL = "tel:13688460148"
+	info.Contact.Name = "有bug请联系电话13688460148"
+	info.Contact.URL = "tel:13688460148"
 
 	g.lock.RLock()
 	paths := make(map[string]interface{})

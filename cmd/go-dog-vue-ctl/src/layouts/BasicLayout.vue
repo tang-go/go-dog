@@ -9,16 +9,7 @@
     :i18nRender="i18nRender"
     v-bind="settings"
   >
-    <!-- Ads begin
-      广告代码 真实项目中请移除
-      production remove this Ads
-    -->
     <ads v-if="isProPreviewSite && !collapsed"/>
-    <!-- Ads end -->
-
-    <!-- 1.0.0+ 版本 pro-layout 提供 API，
-          我们推荐使用这种方式进行 LOGO 和 title 自定义
-    -->
     <template v-slot:menuHeaderRender>
       <div>
         <logo-svg />
@@ -26,7 +17,7 @@
       </div>
     </template>
 
-    <setting-drawer :settings="settings" @change="handleSettingChange" />
+    <!-- <setting-drawer :settings="settings" @change="handleSettingChange" /> -->
     <template v-slot:rightContentRender>
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
@@ -38,7 +29,8 @@
 </template>
 
 <script>
-import { SettingDrawer, updateTheme } from '@ant-design-vue/pro-layout'
+// import {SettingDrawer, updateTheme } from '@ant-design-vue/pro-layout' 设置主题
+import { updateTheme } from '@ant-design-vue/pro-layout'
 import { i18nRender } from '@/locales'
 import { mapState } from 'vuex'
 import { CONTENT_WIDTH_TYPE, SIDEBAR_TYPE, TOGGLE_MOBILE_TYPE } from '@/store/mutation-types'
@@ -52,7 +44,7 @@ import LogoSvg from '../assets/logo.svg?inline'
 export default {
   name: 'BasicLayout',
   components: {
-    SettingDrawer,
+    // SettingDrawer,
     RightContent,
     GlobalFooter,
     LogoSvg,
@@ -67,7 +59,7 @@ export default {
       // base
       menus: [],
       // 侧栏收起状态
-      collapsed: false,
+      collapsed: true,
       title: defaultSettings.title,
       settings: {
         // 布局类型

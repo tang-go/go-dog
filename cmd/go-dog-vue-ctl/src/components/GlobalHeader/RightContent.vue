@@ -48,11 +48,11 @@ export default {
     }
   },
   mounted () {
-    setTimeout(() => {
-      this.currentUser = {
-        name: 'Serati Ma'
-      }
-    }, 1500)
+    // setTimeout(() => {
+    //   this.currentUser = {
+    //     name: 'Serati'
+    //   }
+    // }, 1500)
   }
 }
 </script>

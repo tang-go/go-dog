@@ -25,9 +25,9 @@ const (
 
 //Error 错误定义
 type Error struct {
-	Code int
-	Msg  string
-	Time int64
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Time int64  `json:"time"`
 }
 
 //EnCodeError 创建一个错误

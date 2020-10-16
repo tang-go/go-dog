@@ -26,6 +26,7 @@ func Background() plugins.Context {
 	c := new(MyContext)
 	c.Context = base.Background()
 	c.data = make(map[string]interface{})
+	c.share = make(map[string]interface{})
 	return c
 }
 

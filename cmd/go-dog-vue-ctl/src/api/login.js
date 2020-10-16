@@ -2,6 +2,7 @@ import request from '@/utils/request'
 
 const userApi = {
   Login: '/go-dog/controller/v1/admin/login',
+  UserInfo: '/go-dog/controller/v1/get/admin/info',
   Logout: '/auth/logout',
   ForgePassword: '/auth/forge-password',
   Register: '/auth/register',
@@ -9,7 +10,6 @@ const userApi = {
   SendSms: '/account/sms',
   SendSmsErr: '/account/sms_err',
   // get my info
-  UserInfo: '/user/info',
   UserMenu: '/user/nav'
 }
 
@@ -42,11 +42,8 @@ export function getSmsCaptcha (parameter) {
 
 export function getInfo () {
   return request({
-    url: userApi.UserInfo,
-    method: 'get',
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    url: userApi.UserInfo + '?code=121312',
+    method: 'get'
   })
 }
 

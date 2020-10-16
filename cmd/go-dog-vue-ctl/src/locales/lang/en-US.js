@@ -9,11 +9,13 @@ const components = {
 
 const locale = {
   'message': '-',
-  'menu.home': 'Home',
-  'menu.dashboard': 'Dashboard',
-  'menu.dashboard.analysis': 'Analysis',
-  'menu.dashboard.monitor': 'Monitor',
-  'menu.dashboard.workplace': 'Workplace',
+  'menu.home': 'home',
+  'menu.index': 'index',
+
+  'menu.admin': 'center',
+  'menu.admin.center': 'center',
+  'menu.admin.logout': 'logout',
+  'menu.admin.set': 'setting',
 
   'layouts.usermenu.dialog.title': 'Message',
   'layouts.usermenu.dialog.content': 'Do you really log-out.',

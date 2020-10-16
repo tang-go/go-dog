@@ -1,7 +1,7 @@
 import axios from 'axios'
 // import store from '@/store'
 import storage from 'store'
-import notification from 'ant-design-vue/es/notification'
+// import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 
@@ -14,35 +14,7 @@ const request = axios.create({
 
 // 异常拦截处理器
 const errorHandler = (error) => {
-  if (error.response) {
-    const data = error.response.data
-    console.log(data)
-    notification.error({
-      message: '错误',
-      description: data.Msg
-    })
-    // 从 localstorage 获取 token
-    // const token = storage.get(ACCESS_TOKEN)
-    // if (error.response.status === 403) {
-    //   notification.error({
-    //     message: 'Forbidden',
-    //     description: data.message
-    //   })
-    // }
-    // if (error.response.status === 401 && !(data.result && data.result.isLogin)) {
-    //   notification.error({
-    //     message: 'Unauthorized',
-    //     description: 'Authorization verification failed'
-    //   })
-    //   if (token) {
-    //     store.dispatch('Logout').then(() => {
-    //       setTimeout(() => {
-    //         window.location.reload()
-    //       }, 1500)
-    //     })
-    //   }
-    // }
-  }
+  console.log(error)
   return Promise.reject(error)
 }
 
@@ -64,14 +36,7 @@ request.interceptors.request.use(config => {
 // response interceptor
 request.interceptors.response.use((response) => {
   // 解析请求
-  if (response.data.Code === 10000) {
-    return response.data
-  }
-  notification.error({
-    message: '错误',
-    description: response.data.Msg
-  })
-  console.log(response.data)
+  return response.data
 }, errorHandler)
 
 const installer = {

@@ -220,9 +220,9 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	resp := new(interface{})
 	g.client.GetCodec().DeCode("json", back, resp)
 	c.JSON(http.StatusOK, gin.H{
-		"Code": define.SuccessCode,
-		"Body": resp,
-		"Time": time.Now().Unix(),
+		"code": define.SuccessCode,
+		"body": resp,
+		"time": time.Now().Unix(),
 	})
 	return
 }
@@ -296,9 +296,9 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	resp := new(interface{})
 	g.client.GetCodec().DeCode("json", back, resp)
 	c.JSON(http.StatusOK, gin.H{
-		"Code": define.SuccessCode,
-		"Body": resp,
-		"Time": time.Now().Unix(),
+		"code": define.SuccessCode,
+		"body": resp,
+		"time": time.Now().Unix(),
 	})
 	return
 }

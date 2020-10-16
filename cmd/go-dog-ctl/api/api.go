@@ -29,12 +29,18 @@ func (pointer *API) Router() {
 		false,
 		"获取图片验证码",
 		pointer.GetCode)
-	//验证码验证码
+	//管理员登录
 	pointer.service.POST("AdminLogin", "v1", "admin/login",
 		3,
 		false,
 		"管理员登录",
 		pointer.AdminLogin)
+	//获取管理员信息
+	pointer.service.GET("GetAdminInfo", "v1", "get/admin/info",
+		3,
+		true,
+		"获取管理员信息",
+		pointer.GetAdminInfo)
 	//获取API列表
 	pointer.service.GET("GetAPIList", "v1", "get/api/list",
 		3,

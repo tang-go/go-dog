@@ -92,7 +92,15 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 		name := t.Field(i).Name
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
-			panic("暂时不支持嵌套struct参数")
+			class := pointer.new(t.Field(i).Type)
+			tg := pointer.analysisStruct(class)
+			tgs := map[string]interface{}{
+				"type":        "object",
+				"description": t.Field(i).Tag.Get("description"),
+				"object":      tg,
+			}
+			explain[strings.ToLower(name)] = tgs
+			continue
 		}
 		if kind == reflect.Slice {
 			class := pointer.new(t.Field(i).Type.Elem())
