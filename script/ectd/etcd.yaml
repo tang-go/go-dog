@@ -1,0 +1,223 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: '15'
+    k8s.kuboard.cn/ingress: 'false'
+    k8s.kuboard.cn/service: NodePort
+    k8s.kuboard.cn/workload: etcd
+  creationTimestamp: '2020-10-19T01:53:49Z'
+  generation: 19
+  labels:
+    k8s.kuboard.cn/layer: cloud
+    k8s.kuboard.cn/name: etcd
+  managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:k8s.kuboard.cn/ingress': {}
+            'f:k8s.kuboard.cn/service': {}
+            'f:k8s.kuboard.cn/workload': {}
+          'f:labels':
+            .: {}
+            'f:k8s.kuboard.cn/layer': {}
+            'f:k8s.kuboard.cn/name': {}
+        'f:spec':
+          'f:progressDeadlineSeconds': {}
+          'f:replicas': {}
+          'f:revisionHistoryLimit': {}
+          'f:selector':
+            'f:matchLabels':
+              .: {}
+              'f:k8s.kuboard.cn/layer': {}
+              'f:k8s.kuboard.cn/name': {}
+          'f:strategy':
+            'f:rollingUpdate':
+              .: {}
+              'f:maxSurge': {}
+              'f:maxUnavailable': {}
+            'f:type': {}
+          'f:template':
+            'f:metadata':
+              'f:labels':
+                .: {}
+                'f:k8s.kuboard.cn/layer': {}
+                'f:k8s.kuboard.cn/name': {}
+            'f:spec':
+              'f:containers':
+                'k:{"name":"etcd"}':
+                  .: {}
+                  'f:args': {}
+                  'f:command': {}
+                  'f:image': {}
+                  'f:imagePullPolicy': {}
+                  'f:lifecycle': {}
+                  'f:name': {}
+                  'f:resources': {}
+                  'f:terminationMessagePath': {}
+                  'f:terminationMessagePolicy': {}
+              'f:dnsConfig': {}
+              'f:dnsPolicy': {}
+              'f:restartPolicy': {}
+              'f:schedulerName': {}
+              'f:securityContext':
+                .: {}
+                'f:seLinuxOptions': {}
+              'f:terminationGracePeriodSeconds': {}
+      manager: Mozilla
+      operation: Update
+      time: '2020-10-19T02:53:47Z'
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            'f:deployment.kubernetes.io/revision': {}
+        'f:status':
+          'f:availableReplicas': {}
+          'f:conditions':
+            'k:{"type":"Available"}':
+              'f:lastTransitionTime': {}
+              'f:lastUpdateTime': {}
+              'f:message': {}
+              'f:reason': {}
+              'f:status': {}
+            'k:{"type":"Progressing"}':
+              'f:lastUpdateTime': {}
+              'f:message': {}
+              'f:reason': {}
+          'f:observedGeneration': {}
+          'f:readyReplicas': {}
+          'f:replicas': {}
+          'f:updatedReplicas': {}
+      manager: kube-controller-manager
+      operation: Update
+      time: '2020-10-19T02:53:50Z'
+  name: etcd
+  namespace: test
+  resourceVersion: '1729470'
+  selfLink: /apis/apps/v1/namespaces/test/deployments/etcd
+  uid: 53de3266-7836-4ac9-b082-5a05548d2583
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s.kuboard.cn/layer: cloud
+      k8s.kuboard.cn/name: etcd
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        k8s.kuboard.cn/layer: cloud
+        k8s.kuboard.cn/name: etcd
+    spec:
+      containers:
+        - args:
+            - '--name=node01'
+            - '--listen-client-urls=http://0.0.0.0:2379'
+            - '--advertise-client-urls=http://0.0.0.0:2379'
+            - '--listen-peer-urls=http://0.0.0.0:2380'
+            - '--initial-advertise-peer-urls=http://0.0.0.0:2380'
+            - '--enable-v2=true'
+          command:
+            - /usr/local/bin/etcd
+          image: 'quay.io/coreos/etcd:latest'
+          imagePullPolicy: Never
+          lifecycle: {}
+          name: etcd
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsConfig: {}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        seLinuxOptions: {}
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    k8s.kuboard.cn/workload: etcd
+  creationTimestamp: '2020-10-19T01:53:49Z'
+  labels:
+    k8s.kuboard.cn/layer: cloud
+    k8s.kuboard.cn/name: etcd
+  managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:k8s.kuboard.cn/workload': {}
+          'f:labels':
+            .: {}
+            'f:k8s.kuboard.cn/layer': {}
+            'f:k8s.kuboard.cn/name': {}
+        'f:spec':
+          'f:externalTrafficPolicy': {}
+          'f:ports':
+            .: {}
+            'k:{"port":2379,"protocol":"TCP"}':
+              .: {}
+              'f:name': {}
+              'f:nodePort': {}
+              'f:port': {}
+              'f:protocol': {}
+              'f:targetPort': {}
+            'k:{"port":2380,"protocol":"TCP"}':
+              .: {}
+              'f:name': {}
+              'f:nodePort': {}
+              'f:port': {}
+              'f:protocol': {}
+              'f:targetPort': {}
+          'f:selector':
+            .: {}
+            'f:k8s.kuboard.cn/layer': {}
+            'f:k8s.kuboard.cn/name': {}
+          'f:sessionAffinity': {}
+          'f:type': {}
+      manager: Mozilla
+      operation: Update
+      time: '2020-10-19T01:53:49Z'
+  name: etcd
+  namespace: test
+  resourceVersion: '1710348'
+  selfLink: /api/v1/namespaces/test/services/etcd
+  uid: ce5e6976-6383-468a-8dea-11b394f55cd2
+spec:
+  clusterIP: 10.96.69.254
+  externalTrafficPolicy: Cluster
+  ports:
+    - name: 36yeej
+      nodePort: 23790
+      port: 2379
+      protocol: TCP
+      targetPort: 2379
+    - name: 68xbdd
+      nodePort: 23800
+      port: 2380
+      protocol: TCP
+      targetPort: 2380
+  selector:
+    k8s.kuboard.cn/layer: cloud
+    k8s.kuboard.cn/name: etcd
+  sessionAffinity: None
+  type: NodePort
+

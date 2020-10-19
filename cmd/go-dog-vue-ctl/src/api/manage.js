@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 const api = {
   user: '/user',
-  role: '/role',
+  role: '/go-dog/controller/v1/get/role/list',
   service: '/service',
   permission: '/permission',
   permissionNoPager: '/permission/no-pager',

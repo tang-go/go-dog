@@ -1,6 +1,7 @@
 import axios from 'axios'
-// import store from '@/store'
+ import store from '@/store'
 import storage from 'store'
+import router from '@/router'
 // import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
@@ -35,6 +36,13 @@ request.interceptors.request.use(config => {
 
 // response interceptor
 request.interceptors.response.use((response) => {
+  // token 失效 跳转登录页面
+  if (response.data.code === 10004) {
+    store.dispatch('Logout').then(() => {
+      router.push({ name: 'login' })
+    })
+    return response.data
+  }
   // 解析请求
   return response.data
 }, errorHandler)

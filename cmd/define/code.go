@@ -12,4 +12,8 @@ const (
 	AdminLoginErr = 10003
 	//AdminTokenErr 管理员Token验证失败
 	AdminTokenErr = 10004
+	//GetAdminInfoErr 获取管理员信息失败
+	GetAdminInfoErr = 10005
+	//GetRoleListErr 获取角色列表失败
+	GetRoleListErr = 10006
 )

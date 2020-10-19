@@ -1,14 +1,12 @@
 package api
 
 import (
-	"fmt"
 	"go-dog/cmd/go-dog-ctl/param"
 	"go-dog/plugins"
 )
 
 //GetAPIList 获取api列表
 func (pointer *API) GetAPIList(ctx plugins.Context, req param.GetAPIListReq) (res param.GetAPIListRes, err error) {
-	fmt.Println(ctx.GetShareByKey("Admin"))
 	list := make(map[string]*param.Service)
 	pointer.lock.RLock()
 	for key, api := range pointer.apis {

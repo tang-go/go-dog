@@ -1,22 +1,59 @@
 package api
 
 import (
-	"encoding/json"
 	"go-dog/cmd/define"
 	"go-dog/cmd/go-dog-ctl/param"
+	"go-dog/cmd/go-dog-ctl/table"
 	customerror "go-dog/error"
 	"go-dog/plugins"
 )
 
 //GetAdminInfo 获取管理员信息
 func (pointer *API) GetAdminInfo(ctx plugins.Context, request param.GetAdminInfoReq) (response param.GetAdminInfoRes, err error) {
-	if e := json.Unmarshal([]byte(userInfo), &response); e != nil {
-		err = customerror.EnCodeError(define.AdminLoginErr, e.Error())
+	admin, ok := ctx.GetShareByKey("Admin").(*table.Admin)
+	if ok == false {
+		err = customerror.EnCodeError(define.GetAdminInfoErr, "管理员信息失败")
 		return
 	}
-	if e := json.Unmarshal([]byte(roleObj), &response.Role); e != nil {
-		err = customerror.EnCodeError(define.AdminLoginErr, e.Error())
+	response.ID = admin.AdminID
+	response.Name = admin.Name
+	response.Avatar = "/avatar2.jpg"
+	response.Phone = admin.Phone
+	role := new(table.OwnerRole)
+	if pointer.mysql.GetReadEngine().Where("role_id = ?", admin.RoleID).First(role).RecordNotFound() == true {
+		err = customerror.EnCodeError(define.GetAdminInfoErr, "管理员权限不正确")
 		return
+	}
+	response.RoleID = role.Name
+	response.Role.ID = role.Name
+	if role.IsAdmin {
+		response.Role.Permissions = append(response.Role.Permissions, &param.Permissions{
+			RoleID:         role.Name,
+			PermissionID:   "admin",
+			PermissionName: role.Description,
+			ActionEntitySet: []*param.ActionEntitySet{
+				&param.ActionEntitySet{
+					Action:       "add",
+					Describe:     "新增",
+					DefaultCheck: true,
+				},
+				&param.ActionEntitySet{
+					Action:       "delete",
+					Describe:     "删除",
+					DefaultCheck: true,
+				},
+				&param.ActionEntitySet{
+					Action:       "update",
+					Describe:     "修改",
+					DefaultCheck: true,
+				},
+				&param.ActionEntitySet{
+					Action:       "query",
+					Describe:     "查询",
+					DefaultCheck: true,
+				},
+			},
+		})
 	}
 	return
 }

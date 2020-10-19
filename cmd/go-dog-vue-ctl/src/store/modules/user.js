@@ -54,7 +54,7 @@ const user = {
     GetInfo ({ commit }) {
       return new Promise((resolve, reject) => {
         getInfo().then(response => {
-          console.log('用户信息', response)
+          console.log('请求用户信息返回', response)
           if (response.code === 10000) {
             const result = response.body
             if (result.role && result.role.permissions.length > 0) {

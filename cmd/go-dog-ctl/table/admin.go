@@ -25,6 +25,8 @@ type Admin struct {
 	OwnerID int64
 	//是否被禁用
 	IsDisable bool
+	//角色
+	RoleID int64
 	//注册事件
 	Time int64
 }

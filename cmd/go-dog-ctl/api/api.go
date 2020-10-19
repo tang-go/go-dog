@@ -41,6 +41,12 @@ func (pointer *API) Router() {
 		true,
 		"获取管理员信息",
 		pointer.GetAdminInfo)
+	//获取角色列表
+	pointer.service.GET("GetRoleList", "v1", "get/role/list",
+		3,
+		true,
+		"获取角色列表",
+		pointer.GetRoleList)
 	//获取API列表
 	pointer.service.GET("GetAPIList", "v1", "get/api/list",
 		3,
@@ -102,7 +108,6 @@ func NewService() *API {
 		table.OwnerRole{},
 		table.Permission{},
 		table.RolePermission{},
-		table.AdminRole{},
 		table.Log{},
 	)
 	//初始化缓存
@@ -146,7 +151,7 @@ func (pointer *API) _InitMysql(phone, pwd string) {
 	ownerRole := &table.OwnerRole{
 		RoleID: pointer.snowflake.GetID(),
 		//角色名称
-		Name: "超级管理员",
+		Name: "admin",
 		//角色描述
 		Description: "系统自带的超级管理员",
 		//是否为超级管理员
@@ -161,7 +166,7 @@ func (pointer *API) _InitMysql(phone, pwd string) {
 		//账号 唯一主键
 		AdminID: pointer.snowflake.GetID(),
 		//名称
-		Name: "超级管理员",
+		Name: "admin",
 		//电话
 		Phone: phone,
 		//盐值 md5使用
@@ -172,20 +177,13 @@ func (pointer *API) _InitMysql(phone, pwd string) {
 		OwnerID: owner.OwnerID,
 		//是否被禁用
 		IsDisable: table.AdminAvailable,
+		//类型
+		RoleID: ownerRole.RoleID,
 		//注册事件
 		Time: owner.Time,
 	}
 	//生成密码
 	admin.Pwd = md5.Md5(md5.Md5(pwd) + admin.Salt)
-	//生成权限映射
-	adminRole := &table.AdminRole{
-		//角色ID
-		RoleID: ownerRole.RoleID,
-		//管理员ID
-		AdminID: admin.AdminID,
-		//创建时间
-		Time: owner.Time,
-	}
 	//开启数据库操作
 	tx := pointer.mysql.GetWriteEngine().Begin()
 	if err := tx.Create(owner).Error; err != nil {
@@ -197,10 +195,6 @@ func (pointer *API) _InitMysql(phone, pwd string) {
 		panic(err)
 	}
 	if err := tx.Create(admin).Error; err != nil {
-		tx.Rollback()
-		panic(err)
-	}
-	if err := tx.Create(adminRole).Error; err != nil {
 		tx.Rollback()
 		panic(err)
 	}

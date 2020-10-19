@@ -89,7 +89,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 	}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
-		name := t.Field(i).Name
+		//name := t.Field(i).Name
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
 			class := pointer.new(t.Field(i).Type)
@@ -99,7 +99,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 				"description": t.Field(i).Tag.Get("description"),
 				"object":      tg,
 			}
-			explain[strings.ToLower(name)] = tgs
+			explain[t.Field(i).Tag.Get("json")] = tgs
 			continue
 		}
 		if kind == reflect.Slice {
@@ -116,14 +116,14 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       tg,
 				}
-				explain[strings.ToLower(name)] = tgs
+				explain[t.Field(i).Tag.Get("json")] = tgs
 			} else {
 				tgs := map[string]interface{}{
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       kind.String(),
 				}
-				explain[strings.ToLower(name)] = tgs
+				explain[t.Field(i).Tag.Get("json")] = tgs
 			}
 			continue
 		}
@@ -131,7 +131,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 			"type":        t.Field(i).Tag.Get("type"),
 			"description": t.Field(i).Tag.Get("description"),
 		}
-		explain[strings.ToLower(name)] = tgs
+		explain[t.Field(i).Tag.Get("json")] = tgs
 	}
 	return explain
 }

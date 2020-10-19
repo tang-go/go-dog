@@ -19,8 +19,8 @@ export const asyncRouterMap = [
       {
         path: '/index',
         name: 'menu.index',
-        component: () => import('@/views/index'),
-        meta: { title: 'menu.index', keepAlive: true, permission: [ 'index', 'admin' ] }
+        meta: { title: 'menu.index', keepAlive: true, permission: [ 'index', 'admin' ] },
+        component: () => import('@/views/index/index')
       },
       // account
       {
@@ -28,7 +28,7 @@ export const asyncRouterMap = [
         component: RouteView,
         redirect: '/account/center',
         name: 'menu.admin',
-        meta: { title: 'menu.admin', icon: 'user', keepAlive: true, permission: [ 'admin' ] },
+        meta: { title: 'menu.admin', keepAlive: true, permission: [ 'admin' ] },
         children: [
           {
             path: '/account/center',
@@ -78,64 +78,33 @@ export const asyncRouterMap = [
           }
         ]
       },
-      // other
+      // 权限
       {
         path: '/power',
         name: 'power',
-        component: RouteView,
-        meta: { title: '权限管理', icon: 'slack', permission: [ 'admin' ] },
-        redirect: '/other/icon-selector',
+        component: () => import('@/views/role/Index'),
+        meta: { title: '系统设置', hideHeader: true, permission: [ 'admin' ] },
+        redirect: '/power/admin/list',
+        hideChildrenInMenu: true,
         children: [
-          // {
-          //   path: '/other/icon-selector',
-          //   name: 'TestIconSelect',
-          //   component: () => import('@/views/other/IconSelectorView'),
-          //   meta: { title: 'IconSelector', icon: 'tool', keepAlive: true, permission: [ 'admin' ] }
-          // },
-          // {
-          //   path: '/other/list',
-          //   component: RouteView,
-          //   meta: { title: '业务布局', icon: 'layout', permission: [ 'admin' ] },
-          //   redirect: '/other/list/tree-list',
-          //   children: [
-              // {
-              //   path: '/other/list/tree-list',
-              //   name: 'TreeList',
-              //   component: () => import('@/views/other/TreeList'),
-              //   meta: { title: '树目录表格', keepAlive: true }
-              // },
-              // {
-              //   path: '/other/list/edit-table',
-              //   name: 'EditList',
-              //   component: () => import('@/views/other/TableInnerEditList'),
-              //   meta: { title: '内联编辑表格', keepAlive: true }
-              // },
-              {
-                path: '/other/list/user-list',
-                name: 'UserList',
-                component: () => import('@/views/other/UserList'),
-                meta: { title: '用户列表', keepAlive: true }
-              },
-              {
-                path: '/other/list/role-list',
-                name: 'RoleList',
-                component: () => import('@/views/other/RoleList'),
-                meta: { title: '角色列表', keepAlive: true }
-              },
-              // {
-              //   path: '/other/list/system-role',
-              //   name: 'SystemRole',
-              //   component: () => import('@/views/role/RoleList'),
-              //   meta: { title: '角色列表2', keepAlive: true }
-              // },
-              {
-                path: '/other/list/permission-list',
-                name: 'PermissionList',
-                component: () => import('@/views/other/PermissionList'),
-                meta: { title: '权限列表', keepAlive: true }
-              }
-            // ]
-         // }
+          {
+            path: '/power/admin/list',
+            name: 'UserList',
+            component: () => import('@/views/other/UserList'),
+            meta: { title: '用户列表', hidden: true, keepAlive: true, permission: [ 'admin' ] }
+          },
+          {
+            path: '/power/role/list',
+            name: 'RoleList',
+            component: () => import('@/views/role/RoleList'),
+            meta: { title: '角色列表', hidden: true, keepAlive: true, permission: [ 'admin' ] }
+          },
+          {
+            path: '/power/permission/list',
+            name: 'PermissionList',
+            component: () => import('@/views/other/PermissionList'),
+            meta: { title: '权限列表', hidden: true, keepAlive: true, permission: [ 'admin' ] }
+          }
         ]
       }
     ]
