@@ -3,9 +3,9 @@
     "server_name":"gateway",
     //端口
     "port":80,
-    //etcd
-    "etcd":[
-        "192.168.0.11:23790"
+    //服务发现
+    "discovery":[
+        "127.0.0.1:4343"
     ],
     //redis地址
     "redis":[

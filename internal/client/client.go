@@ -61,7 +61,7 @@ func NewClient(discoveryTTL int64, param ...interface{}) plugins.Client {
 	}
 	if client.discovery == nil {
 		//使用默认服务发现中心
-		client.discovery = discovery.NewEtcdDiscovery(client.cfg.GetEtcd(), discoveryTTL)
+		client.discovery = discovery.NewGoDogDiscovery(client.cfg.GetDiscovery(), discoveryTTL)
 	}
 	if client.fusing == nil {
 		//使用默认的熔断插件

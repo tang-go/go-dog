@@ -22,6 +22,15 @@ type Inter interface {
 
 	//Get 获取值
 	Get(key string, value interface{}) error
+
+	//Sadd  集合
+	Sadd(key string, value interface{}) (int64, error)
+
+	//SRem  删除集合成员数
+	SRem(key string, member interface{}) (int64, error)
+
+	//SMembers  获取集合
+	SMembers(key string) (r []redis.Result, e error)
 }
 
 //Cache 缓存

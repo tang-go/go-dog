@@ -28,8 +28,8 @@ type Config struct {
 	Explain string `json:"explain"`
 	//使用端口号
 	Port int `json:"port"`
-	//Etcd 地址
-	Etcd []string `json:"etcd"`
+	//Discovery 服务发现
+	Discovery []string `json:"discovery"`
 	//Redis地址
 	Redis []string `json:"redis"`
 	//Kafka地址
@@ -87,9 +87,9 @@ func (c *Config) GetExplain() string {
 	return c.Explain
 }
 
-//GetEtcd 获取etcd配置
-func (c *Config) GetEtcd() []string {
-	return c.Etcd
+//GetDiscovery 获取服务发现配置
+func (c *Config) GetDiscovery() []string {
+	return c.Discovery
 }
 
 //GetRedis 获取redis配置
@@ -207,7 +207,7 @@ func NewConfig() *Config {
 	fmt.Println("************************************************")
 	fmt.Println("### ServerName:   ", c.ServerName)
 	fmt.Println("### Port:         ", c.Port)
-	fmt.Println("### Etcd:         ", c.Etcd)
+	fmt.Println("### Discovery:    ", c.Discovery)
 	fmt.Println("### Redis:        ", c.Redis)
 	fmt.Println("### Kafka:        ", c.Kafka)
 	fmt.Println("### Nats:         ", c.Nats)

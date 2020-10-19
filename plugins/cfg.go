@@ -13,8 +13,8 @@ type Cfg interface {
 	//GetPort 获取端口
 	GetPort() int
 
-	//GetEtcd 获取etcd配置
-	GetEtcd() []string
+	//GetDiscovery 获取服务发现配置
+	GetDiscovery() []string
 
 	//GetRedis 获取redis配置
 	GetRedis() []string

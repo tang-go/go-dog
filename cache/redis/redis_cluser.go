@@ -165,7 +165,11 @@ func (pointer *Cluster) Sadd(key string, value interface{}) (int64, error) {
 		//进行重连
 		pointer.funcConnect()
 	}
-	return pointer.clients.SAdd(key, value).Result()
+	v, err := json.Marshal(value)
+	if err != nil {
+		return -1, err
+	}
+	return pointer.clients.SAdd(key, string(v)).Result()
 }
 
 //SCard  获取集合成员数
@@ -178,21 +182,34 @@ func (pointer *Cluster) SCard(key string) (int64, error) {
 }
 
 //SRem  删除集合成员数
-func (pointer *Cluster) SRem(key string, member ...interface{}) (int64, error) {
+func (pointer *Cluster) SRem(key string, member interface{}) (int64, error) {
 	if pointer.clients == nil {
 		//进行重连
 		pointer.funcConnect()
 	}
-	return pointer.clients.SRem(key, member...).Result()
+	v, err := json.Marshal(member)
+	if err != nil {
+		return -1, err
+	}
+	return pointer.clients.SRem(key, string(v)).Result()
 }
 
 //SMembers  获取集合
-func (pointer *Cluster) SMembers(key string) ([]string, error) {
+func (pointer *Cluster) SMembers(key string) (r []Result, e error) {
 	if pointer.clients == nil {
 		//进行重连
 		pointer.funcConnect()
 	}
-	return pointer.clients.SMembers(key).Result()
+	array, err := pointer.clients.SMembers(key).Result()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range array {
+		r = append(r, Result{
+			value: v,
+		})
+	}
+	return
 }
 
 //LPush 添加列表

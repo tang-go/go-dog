@@ -241,7 +241,6 @@ func (s *Service) Run() error {
 		}
 	}()
 	msg := <-c
-	atomic.AddInt32(&s.close, 1)
 	s.Close()
 	return fmt.Errorf("收到kill信号:%s", msg)
 }
@@ -406,6 +405,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 
 //Close 关闭服务
 func (s *Service) Close() {
+	atomic.AddInt32(&s.close, 1)
 	s.wait.Wait()
 	s.register.Cancellation()
 	s.limit.Close()
