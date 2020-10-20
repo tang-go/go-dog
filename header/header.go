@@ -1,7 +1,7 @@
 package header
 
 import (
-	customerror "go-dog/error"
+	customerror "github.com/tang-go/go-dog/error"
 )
 
 //Request MsgPack请求

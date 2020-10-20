@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 
-	"go-dog/lib/sirupsen/logrus"
+	"github.com/tang-go/go-dog/lib/sirupsen/logrus"
 )
 
 // Level describes the log severity level.

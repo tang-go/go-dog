@@ -1,6 +1,6 @@
 package plugins
 
-import "go-dog/pkg/config"
+import "github.com/tang-go/go-dog/pkg/config"
 
 //Cfg 配置接口
 type Cfg interface {

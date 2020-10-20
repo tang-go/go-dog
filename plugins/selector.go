@@ -1,6 +1,6 @@
 package plugins
 
-import "go-dog/serviceinfo"
+import "github.com/tang-go/go-dog/serviceinfo"
 
 //Selector 路由选择器
 type Selector interface {

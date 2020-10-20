@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/serviceinfo"
 )
 
 //Mode 模式

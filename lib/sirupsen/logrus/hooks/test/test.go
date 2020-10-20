@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"go-dog/lib/sirupsen/logrus"
+	"github.com/tang-go/go-dog/lib/sirupsen/logrus"
 )
 
 // Hook is a hook designed for dealing with logs in test scenarios.

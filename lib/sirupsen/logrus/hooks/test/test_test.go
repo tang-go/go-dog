@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"go-dog/lib/sirupsen/logrus"
+	"github.com/tang-go/go-dog/lib/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 

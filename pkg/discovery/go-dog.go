@@ -2,10 +2,10 @@ package discovery
 
 import (
 	"encoding/json"
-	"go-dog/lib/io"
-	"go-dog/log"
-	"go-dog/pkg/discovery/param"
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/lib/io"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/pkg/discovery/param"
+	"github.com/tang-go/go-dog/serviceinfo"
 	"net"
 	"sync"
 	"time"

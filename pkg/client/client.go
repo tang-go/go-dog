@@ -1,17 +1,17 @@
 package client
 
 import (
-	customerror "go-dog/error"
-	"go-dog/pkg/codec"
-	"go-dog/pkg/config"
-	"go-dog/pkg/discovery"
-	"go-dog/pkg/fusing"
-	"go-dog/pkg/limit"
-	"go-dog/pkg/selector"
-	"go-dog/log"
-	"go-dog/plugins"
-	"go-dog/recover"
-	"go-dog/serviceinfo"
+	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/pkg/codec"
+	"github.com/tang-go/go-dog/pkg/config"
+	"github.com/tang-go/go-dog/pkg/discovery"
+	"github.com/tang-go/go-dog/pkg/fusing"
+	"github.com/tang-go/go-dog/pkg/limit"
+	"github.com/tang-go/go-dog/pkg/selector"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/plugins"
+	"github.com/tang-go/go-dog/recover"
+	"github.com/tang-go/go-dog/serviceinfo"
 	"sync"
 	"time"
 )

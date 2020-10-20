@@ -1,11 +1,11 @@
 package rpc
 
 import (
-	"go-dog/header"
-	"go-dog/lib/io"
-	"go-dog/log"
-	"go-dog/plugins"
-	"go-dog/recover"
+	"github.com/tang-go/go-dog/header"
+	"github.com/tang-go/go-dog/lib/io"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/plugins"
+	"github.com/tang-go/go-dog/recover"
 	"net"
 	"sync"
 	"sync/atomic"

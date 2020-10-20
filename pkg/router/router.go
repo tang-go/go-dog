@@ -1,8 +1,8 @@
 package router
 
 import (
-	customerror "go-dog/error"
-	"go-dog/plugins"
+	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/plugins"
 	"reflect"
 	"strings"
 	"unicode"
@@ -55,7 +55,7 @@ func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[st
 	}
 	ctxType := mtype.In(0)
 	if !ctxType.Implements(typeOfContext) {
-		panic("第一个参数必须为go-dog/context")
+		panic("第一个参数必须为github.com/tang-go/go-dog/context")
 	}
 	argType := mtype.In(1)
 	//返回值判断

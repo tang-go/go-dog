@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	customerror "go-dog/error"
-	"go-dog/pkg/client"
-	"go-dog/pkg/config"
-	"go-dog/pkg/context"
-	"go-dog/log"
-	"go-dog/plugins"
+	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/pkg/client"
+	"github.com/tang-go/go-dog/pkg/config"
+	"github.com/tang-go/go-dog/pkg/context"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/plugins"
 	"sync"
 	"sync/atomic"
 	"time"

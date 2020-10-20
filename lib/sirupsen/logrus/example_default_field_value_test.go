@@ -1,7 +1,7 @@
 package logrus_test
 
 import (
-	"go-dog/lib/sirupsen/logrus"
+	"github.com/tang-go/go-dog/lib/sirupsen/logrus"
 	"os"
 )
 

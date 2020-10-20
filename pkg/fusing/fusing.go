@@ -1,9 +1,9 @@
 package fusing
 
 import (
-	customerror "go-dog/error"
-	"go-dog/log"
-	"go-dog/recover"
+	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/recover"
 	"sync"
 	"time"
 )

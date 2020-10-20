@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"context"
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/serviceinfo"
 )
 
 //Register 服务注册

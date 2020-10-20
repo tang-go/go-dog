@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
-	"go-dog/pkg/rpc"
-	"go-dog/plugins"
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/pkg/rpc"
+	"github.com/tang-go/go-dog/plugins"
+	"github.com/tang-go/go-dog/serviceinfo"
 	"net"
 	"sync"
 )

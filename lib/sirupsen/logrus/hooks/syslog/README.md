@@ -5,8 +5,8 @@
 ```go
 import (
   "log/syslog"
-  "go-dog/lib/sirupsen/logrus"
-  lSyslog "go-dog/lib/sirupsen/logrus/hooks/syslog"
+  "github.com/tang-go/go-dog/lib/sirupsen/logrus"
+  lSyslog "github.com/tang-go/go-dog/lib/sirupsen/logrus/hooks/syslog"
 )
 
 func main() {
@@ -24,8 +24,8 @@ If you want to connect to local syslog (Ex. "/dev/log" or "/var/run/syslog" or "
 ```go
 import (
   "log/syslog"
-  "go-dog/lib/sirupsen/logrus"
-  lSyslog "go-dog/lib/sirupsen/logrus/hooks/syslog"
+  "github.com/tang-go/go-dog/lib/sirupsen/logrus"
+  lSyslog "github.com/tang-go/go-dog/lib/sirupsen/logrus/hooks/syslog"
 )
 
 func main() {

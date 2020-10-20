@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go-dog/lib/net"
+	"github.com/tang-go/go-dog/lib/net"
 	"io/ioutil"
 	"os"
 	"strconv"

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-dog/pkg/service"
-	"go-dog/log"
-	"go-dog/plugins"
+	"github.com/tang-go/go-dog/pkg/service"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/plugins"
 	"runtime"
 	"sync/atomic"
 	"time"

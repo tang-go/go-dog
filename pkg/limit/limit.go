@@ -1,7 +1,7 @@
 package limit
 
 import (
-	"go-dog/recover"
+	"github.com/tang-go/go-dog/recover"
 	"sync/atomic"
 	"time"
 )

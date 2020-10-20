@@ -2,7 +2,7 @@ package recover
 
 import (
 	"fmt"
-	"go-dog/log"
+	"github.com/tang-go/go-dog/log"
 	"runtime/debug"
 )
 

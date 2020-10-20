@@ -1,9 +1,9 @@
 package selector
 
 import (
-	"go-dog/error"
-	"go-dog/plugins"
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/plugins"
+	"github.com/tang-go/go-dog/serviceinfo"
 	"math/rand"
 	"sync"
 	"time"

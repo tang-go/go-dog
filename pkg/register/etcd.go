@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/serviceinfo"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"

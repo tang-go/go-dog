@@ -3,8 +3,8 @@ package discovery
 import (
 	"context"
 	"encoding/json"
-	"go-dog/log"
-	"go-dog/serviceinfo"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/serviceinfo"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"

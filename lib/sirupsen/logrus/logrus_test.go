@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	. "go-dog/lib/sirupsen/logrus"
-	. "go-dog/lib/sirupsen/logrus/pkg/testutils"
+	. "github.com/tang-go/go-dog/lib/sirupsen/logrus"
+	. "github.com/tang-go/go-dog/lib/sirupsen/logrus/pkg/testutils"
 )
 
 // TestReportCaller verifies that when ReportCaller is set, the 'func' field
@@ -40,7 +40,7 @@ func TestReportCallerWhenConfigured(t *testing.T) {
 		assert.Equal(t, "testWithCaller", fields["msg"])
 		assert.Equal(t, "info", fields["level"])
 		assert.Equal(t,
-			"go-dog/lib/sirupsen/logrus_test.TestReportCallerWhenConfigured.func3", fields[FieldKeyFunc])
+			"github.com/tang-go/go-dog/lib/sirupsen/logrus_test.TestReportCallerWhenConfigured.func3", fields[FieldKeyFunc])
 	})
 
 	LogAndAssertJSON(t, func(log *Logger) {
@@ -379,7 +379,7 @@ func TestNestedLoggingReportsCorrectCaller(t *testing.T) {
 	assert.Equal(t, "looks delicious", fields["msg"])
 	assert.Equal(t, "eating raw fish", fields["context"])
 	assert.Equal(t,
-		"go-dog/lib/sirupsen/logrus_test.TestNestedLoggingReportsCorrectCaller", fields["func"])
+		"github.com/tang-go/go-dog/lib/sirupsen/logrus_test.TestNestedLoggingReportsCorrectCaller", fields["func"])
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 	assert.Equal(t, filepath.ToSlash(fmt.Sprintf("%s/logrus_test.go:%d", cwd, line-1)), filepath.ToSlash(fields["file"].(string)))
@@ -410,7 +410,7 @@ func TestNestedLoggingReportsCorrectCaller(t *testing.T) {
 	assert.Equal(t, "The hardest workin' man in show business", fields["msg"])
 	assert.Nil(t, fields["fields.msg"], "should not have prefixed previous `msg` entry")
 	assert.Equal(t,
-		"go-dog/lib/sirupsen/logrus_test.TestNestedLoggingReportsCorrectCaller", fields["func"])
+		"github.com/tang-go/go-dog/lib/sirupsen/logrus_test.TestNestedLoggingReportsCorrectCaller", fields["func"])
 	require.NoError(t, err)
 	assert.Equal(t, filepath.ToSlash(fmt.Sprintf("%s/logrus_test.go:%d", cwd, line-1)), filepath.ToSlash(fields["file"].(string)))
 

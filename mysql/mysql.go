@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"fmt"
-	"go-dog/plugins"
+	"github.com/tang-go/go-dog/plugins"
 	"time"
 
 	"github.com/jinzhu/gorm"

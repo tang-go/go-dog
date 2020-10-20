@@ -1,4 +1,4 @@
-module go-dog
+module github.com/tang-go/go-dog
 
 go 1.13
 

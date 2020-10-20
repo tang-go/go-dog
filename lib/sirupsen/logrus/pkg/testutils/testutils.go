@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	. "go-dog/lib/sirupsen/logrus"
+	. "github.com/tang-go/go-dog/lib/sirupsen/logrus"
 
 	"github.com/stretchr/testify/require"
 )

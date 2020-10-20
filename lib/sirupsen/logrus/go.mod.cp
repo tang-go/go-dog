@@ -1,4 +1,4 @@
-module go-dog/lib/sirupsen/logrus
+module github.com/tang-go/go-dog/lib/sirupsen/logrus
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

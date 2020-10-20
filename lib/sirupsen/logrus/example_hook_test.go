@@ -6,8 +6,8 @@ import (
 	"log/syslog"
 	"os"
 
-	"go-dog/lib/sirupsen/logrus"
-	slhooks "go-dog/lib/sirupsen/logrus/hooks/syslog"
+	"github.com/tang-go/go-dog/lib/sirupsen/logrus"
+	slhooks "github.com/tang-go/go-dog/lib/sirupsen/logrus/hooks/syslog"
 )
 
 // An example on how to use a hook

@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"go-dog/cache/redis"
-	"go-dog/plugins"
+	"github.com/tang-go/go-dog/cache/redis"
+	"github.com/tang-go/go-dog/plugins"
 )
 
 //Inter 接口

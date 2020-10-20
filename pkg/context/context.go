@@ -2,7 +2,7 @@ package context
 
 import (
 	base "context"
-	"go-dog/plugins"
+	"github.com/tang-go/go-dog/plugins"
 	"time"
 )
 

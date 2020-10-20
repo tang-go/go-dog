@@ -1,5 +1,5 @@
 language: go
-go_import_path: go-dog/lib/sirupsen/logrus
+go_import_path: github.com/tang-go/go-dog/lib/sirupsen/logrus
 git:
   depth: 1
 env:
