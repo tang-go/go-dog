@@ -2,9 +2,9 @@ package discovery
 
 import (
 	"encoding/json"
-	"go-dog/cmd/go-dog-find/param"
 	"go-dog/lib/io"
 	"go-dog/log"
+	"go-dog/pkg/discovery/param"
 	"go-dog/serviceinfo"
 	"net"
 	"sync"
