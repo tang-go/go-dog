@@ -5,7 +5,7 @@ import (
 	"go-dog/cache"
 	"go-dog/cmd/define"
 	"go-dog/cmd/go-dog-ctl/table"
-	"go-dog/internal/service"
+	"go-dog/pkg/service"
 	"go-dog/lib/md5"
 	"go-dog/lib/rand"
 	"go-dog/lib/snowflake"

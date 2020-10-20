@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	customerror "go-dog/error"
-	"go-dog/internal/client"
-	"go-dog/internal/config"
-	"go-dog/internal/context"
+	"go-dog/pkg/client"
+	"go-dog/pkg/config"
+	"go-dog/pkg/context"
 	"go-dog/log"
 	"go-dog/plugins"
 	"sync"

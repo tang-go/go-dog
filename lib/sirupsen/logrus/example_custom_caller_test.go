@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"go-dog/lib/sirupsen/logrus"
 )
 
 func ExampleCustomFormatter() {

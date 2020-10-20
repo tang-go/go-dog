@@ -3,9 +3,9 @@
     "server_name":"controller",
     //说明
     "explain":"控制中心",
-    //etcd
-    "etcd":[
-        "192.168.0.11:23790"
+    //服务发现
+    "discovery":[
+        "127.0.0.1:4343"
     ],
     //redis地址
     "redis":[

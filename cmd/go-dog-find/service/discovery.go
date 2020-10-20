@@ -81,6 +81,8 @@ func (d *Discovery) PushEvent() {
 				}
 				//查看服务是否还在线
 				if err = d.service.cache.GetCache().Get(data.Key, data); err != nil {
+					//不在线删除
+					d.service.cache.GetCache().SRem(data.Label, data)
 					log.Errorln(err.Error())
 					continue
 				}

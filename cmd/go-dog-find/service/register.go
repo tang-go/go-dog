@@ -12,16 +12,15 @@ import (
 type Register struct {
 	conn        net.Conn
 	offlinefunc func()
-	data        *param.Data
+	datas       []*param.Data
 	service     *Service
 }
 
 //NewRegister 新建一个服务注册
-func NewRegister(service *Service, conn net.Conn, data *param.Data, offlinefunc func()) *Register {
+func NewRegister(service *Service, conn net.Conn, offlinefunc func()) *Register {
 	return &Register{
 		conn:        conn,
 		offlinefunc: offlinefunc,
-		data:        data,
 		service:     service,
 	}
 }
@@ -29,21 +28,31 @@ func NewRegister(service *Service, conn net.Conn, data *param.Data, offlinefunc 
 //Run 启动
 func (r *Register) Run() {
 	defer r.offlinefunc()
-	//上线服务
-	r.service.cache.GetCache().Sadd(r.data.Label, r.data)
-	//设置超时token
-	r.service.cache.GetCache().SetByTime(r.data.Key, r.data, 5)
 	for {
-		_, _, err := io.ReadByTime(r.conn, time.Now().Add(time.Second*5))
+		_, buff, err := io.ReadByTime(r.conn, time.Now().Add(time.Second*5))
 		if err != nil {
-			//删除服务
-			r.service.cache.GetCache().SRem(r.data.Label, r.data)
-			r.service.cache.GetCache().Del(r.data.Key)
+			for _, data := range r.datas {
+				r.service.cache.GetCache().SRem(data.Label, data)
+				r.service.cache.GetCache().Del(data.Key)
+			}
 			r.conn.Close()
 			log.Errorln(err.Error())
 			return
 		}
-		//收心跳
-		r.service.cache.GetCache().SetByTime(r.data.Key, r.data, 5)
+		event := new(param.Event)
+		if err := event.DeCode(buff, event); err != nil {
+			log.Errorln(err.Error())
+			continue
+		}
+		if event.Cmd == param.Reg {
+			//注册事件
+			r.datas = append(r.datas, event.Data)
+		}
+		for _, data := range r.datas {
+			//上线服务
+			r.service.cache.GetCache().Sadd(data.Label, data)
+			//设置超时token
+			r.service.cache.GetCache().SetByTime(data.Key, data, 5)
+		}
 	}
 }

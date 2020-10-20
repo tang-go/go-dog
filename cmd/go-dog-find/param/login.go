@@ -11,7 +11,6 @@ const (
 type LoginReq struct {
 	Codec
 	Type int8
-	Data *Data
 }
 
 //Data 数据

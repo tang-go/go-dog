@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sirupsen/logrus"
+	"go-dog/lib/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 

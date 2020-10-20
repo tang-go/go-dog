@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go-dog/cache"
 	"go-dog/cmd/go-dog-find/param"
-	"go-dog/internal/config"
+	"go-dog/pkg/config"
 	"go-dog/lib/io"
 	"go-dog/lib/uuid"
 	"go-dog/log"
@@ -139,7 +139,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 		//服务注册
 		if login.Type == param.RegType {
 			token := uuid.GetToken()
-			register := NewRegister(s, conn, login.Data, func() {
+			register := NewRegister(s, conn, func() {
 				s.lock.Lock()
 				delete(s.registers, token)
 				s.lock.Unlock()

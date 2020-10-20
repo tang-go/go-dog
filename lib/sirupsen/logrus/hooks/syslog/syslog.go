@@ -7,7 +7,7 @@ import (
 	"log/syslog"
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"go-dog/lib/sirupsen/logrus"
 )
 
 // SyslogHook to send logs via syslog.

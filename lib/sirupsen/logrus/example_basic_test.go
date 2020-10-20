@@ -3,7 +3,7 @@ package logrus_test
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"go-dog/lib/sirupsen/logrus"
 )
 
 func Example_basic() {

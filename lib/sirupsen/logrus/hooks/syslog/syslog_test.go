@@ -6,7 +6,7 @@ import (
 	"log/syslog"
 	"testing"
 
-	"github.com/sirupsen/logrus"
+	"go-dog/lib/sirupsen/logrus"
 )
 
 func TestLocalhostAddAndPrint(t *testing.T) {

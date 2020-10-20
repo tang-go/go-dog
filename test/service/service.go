@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-dog/internal/service"
+	"go-dog/pkg/service"
 	"go-dog/log"
 	"go-dog/plugins"
 	"runtime"
