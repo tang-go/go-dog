@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/tang-go/go-dog/lib/io"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/register/param"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"net"
-	"sync"
-	"time"
 )
 
 //GoDogRegister 服务发现
@@ -28,7 +29,7 @@ type GoDogRegister struct {
 }
 
 //NewGoDogRegister  新建服务注册
-func NewGoDogRegister(address []string, ttl int64) *GoDogRegister {
+func NewGoDogRegister(address []string) *GoDogRegister {
 	dis := &GoDogRegister{
 		address:    address,
 		ttl:        2 * time.Second,

@@ -1,19 +1,20 @@
 package client
 
 import (
+	"sync"
+	"time"
+
 	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/discovery"
 	"github.com/tang-go/go-dog/pkg/fusing"
 	"github.com/tang-go/go-dog/pkg/limit"
 	"github.com/tang-go/go-dog/pkg/selector"
-	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/recover"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"sync"
-	"time"
 )
 
 const (
@@ -33,7 +34,7 @@ type Client struct {
 }
 
 //NewClient  新建一个客户端
-func NewClient(discoveryTTL int64, param ...interface{}) plugins.Client {
+func NewClient(param ...interface{}) plugins.Client {
 	client := new(Client)
 	for _, plugin := range param {
 		if cfg, ok := plugin.(plugins.Cfg); ok {
@@ -61,11 +62,11 @@ func NewClient(discoveryTTL int64, param ...interface{}) plugins.Client {
 	}
 	if client.discovery == nil {
 		//使用默认服务发现中心
-		client.discovery = discovery.NewGoDogDiscovery(client.cfg.GetDiscovery(), discoveryTTL)
+		client.discovery = discovery.NewGoDogDiscovery(client.cfg.GetDiscovery())
 	}
 	if client.fusing == nil {
 		//使用默认的熔断插件
-		client.fusing = fusing.NewFusing(time.Duration(discoveryTTL) * time.Second)
+		client.fusing = fusing.NewFusing(2 * time.Second)
 	}
 	if client.selector == nil {
 		//使用默认的选择器

@@ -2,13 +2,14 @@ package discovery
 
 import (
 	"encoding/json"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/tang-go/go-dog/lib/io"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/discovery/param"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"net"
-	"sync"
-	"time"
 )
 
 //GoDogDiscovery 服务发现
@@ -31,7 +32,7 @@ type GoDogDiscovery struct {
 }
 
 //NewGoDogDiscovery  新建发现服务
-func NewGoDogDiscovery(address []string, ttl int64) *GoDogDiscovery {
+func NewGoDogDiscovery(address []string) *GoDogDiscovery {
 	dis := &GoDogDiscovery{
 		address:    address,
 		ttl:        2 * time.Second,

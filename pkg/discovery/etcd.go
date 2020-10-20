@@ -3,9 +3,10 @@ package discovery
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -21,10 +22,10 @@ type EtcdDiscovery struct {
 }
 
 //NewEtcdDiscovery  新建发现服务
-func NewEtcdDiscovery(address []string, ttl int64) *EtcdDiscovery {
+func NewEtcdDiscovery(address []string) *EtcdDiscovery {
 	conf := clientv3.Config{
 		Endpoints:   address,
-		DialTimeout: time.Duration(ttl) * time.Second,
+		DialTimeout: time.Duration(2) * time.Second,
 	}
 	client, err := clientv3.New(conf)
 	if err != nil {

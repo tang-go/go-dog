@@ -2,20 +2,6 @@ package service
 
 import (
 	"fmt"
-	customerror "github.com/tang-go/go-dog/error"
-	"github.com/tang-go/go-dog/header"
-	"github.com/tang-go/go-dog/pkg/client"
-	"github.com/tang-go/go-dog/pkg/codec"
-	"github.com/tang-go/go-dog/pkg/config"
-	"github.com/tang-go/go-dog/pkg/context"
-	"github.com/tang-go/go-dog/pkg/limit"
-	"github.com/tang-go/go-dog/pkg/register"
-	"github.com/tang-go/go-dog/pkg/router"
-	"github.com/tang-go/go-dog/pkg/rpc"
-	"github.com/tang-go/go-dog/log"
-	"github.com/tang-go/go-dog/plugins"
-	"github.com/tang-go/go-dog/recover"
-	"github.com/tang-go/go-dog/serviceinfo"
 	"net"
 	"os"
 	"os/signal"
@@ -24,6 +10,21 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/header"
+	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/pkg/client"
+	"github.com/tang-go/go-dog/pkg/codec"
+	"github.com/tang-go/go-dog/pkg/config"
+	"github.com/tang-go/go-dog/pkg/context"
+	"github.com/tang-go/go-dog/pkg/limit"
+	"github.com/tang-go/go-dog/pkg/register"
+	"github.com/tang-go/go-dog/pkg/router"
+	"github.com/tang-go/go-dog/pkg/rpc"
+	"github.com/tang-go/go-dog/plugins"
+	"github.com/tang-go/go-dog/recover"
+	"github.com/tang-go/go-dog/serviceinfo"
 )
 
 const (
@@ -63,7 +64,7 @@ type Service struct {
 }
 
 //CreateService 创建一个服务
-func CreateService(name string, ttl int64, param ...interface{}) plugins.Service {
+func CreateService(name string, param ...interface{}) plugins.Service {
 	service := &Service{
 		close:      0,
 		name:       name,
@@ -102,7 +103,7 @@ func CreateService(name string, ttl int64, param ...interface{}) plugins.Service
 	}
 	if service.register == nil {
 		//使用默认注册中心
-		service.register = register.NewGoDogRegister(service.cfg.GetDiscovery(), ttl)
+		service.register = register.NewGoDogRegister(service.cfg.GetDiscovery())
 	}
 	if service.router == nil {
 		//默认路由
@@ -114,7 +115,7 @@ func CreateService(name string, ttl int64, param ...interface{}) plugins.Service
 	}
 	if service.client == nil {
 		//默认客户端
-		service.client = client.NewClient(ttl, service.cfg)
+		service.client = client.NewClient(service.cfg)
 	}
 	//初始化日志
 	switch service.cfg.GetRunmode() {

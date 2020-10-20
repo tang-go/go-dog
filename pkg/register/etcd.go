@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tang-go/go-dog/serviceinfo"
 	"time"
+
+	"github.com/tang-go/go-dog/serviceinfo"
 
 	"github.com/coreos/etcd/clientv3"
 )
@@ -19,17 +20,17 @@ type EtcdRegister struct {
 }
 
 //NewEtcdRegister 初始化一个etcd服务注册中心
-func NewEtcdRegister(address []string, ttl int64) *EtcdRegister {
+func NewEtcdRegister(address []string) *EtcdRegister {
 	conf := clientv3.Config{
 		Endpoints:   address,
-		DialTimeout: time.Duration(ttl) * time.Second,
+		DialTimeout: time.Duration(2) * time.Second,
 	}
 	client, err := clientv3.New(conf)
 	if err != nil {
 		panic(err.Error())
 	}
 	return &EtcdRegister{
-		ttl:    ttl,
+		ttl:    2,
 		client: client,
 	}
 }
