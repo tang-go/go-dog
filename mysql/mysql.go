@@ -2,8 +2,9 @@ package mysql
 
 import (
 	"fmt"
-	"github.com/tang-go/go-dog/plugins"
 	"time"
+
+	"github.com/tang-go/go-dog/plugins"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
