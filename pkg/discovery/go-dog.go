@@ -178,6 +178,7 @@ func (d *GoDogDiscovery) _Watch() {
 					}
 					d.apidata[data.Key] = info
 				}
+				mp[data.Key] = data.Value
 			}
 			for key := range d.apidata {
 				if _, ok := mp[key]; !ok {
