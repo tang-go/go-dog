@@ -156,13 +156,17 @@ func (d *GoDogDiscovery) _Watch() {
 						log.Errorln(err.Error(), data.Key, data.Value)
 						continue
 					}
+					d.lock.Lock()
 					d.rpcdata[data.Key] = info
+					d.lock.Unlock()
 				}
 				mp[data.Key] = data.Value
 			}
 			for key := range d.rpcdata {
 				if _, ok := mp[key]; !ok {
+					d.lock.Lock()
 					delete(d.rpcdata, key)
+					d.lock.Unlock()
 				}
 			}
 		}
@@ -175,12 +179,16 @@ func (d *GoDogDiscovery) _Watch() {
 						log.Errorln(err.Error(), data.Key, data.Value)
 						continue
 					}
+					d.lock.Lock()
 					d.apidata[data.Key] = info
+					d.lock.Unlock()
 				}
 			}
 			for key := range d.apidata {
 				if _, ok := mp[key]; !ok {
+					d.lock.Lock()
 					delete(d.apidata, key)
+					d.lock.Unlock()
 				}
 			}
 		}
