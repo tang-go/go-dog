@@ -47,6 +47,8 @@ type Service struct {
 	limit plugins.Limit
 	//链路追踪插件
 	interceptor plugins.Interceptor
+	//服务发现
+	discovery plugins.Discovery
 	//方法
 	methods []*serviceinfo.Method
 	//鉴权方法
@@ -89,6 +91,9 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 		if codec, ok := plugin.(plugins.Codec); ok {
 			service.codec = codec
 		}
+		if discovery, ok := plugin.(plugins.Discovery); ok {
+			service.discovery = discovery
+		}
 		if client, ok := plugin.(plugins.Client); ok {
 			service.client = client
 		}
@@ -115,7 +120,11 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 	}
 	if service.client == nil {
 		//默认客户端
-		service.client = client.NewClient(service.cfg)
+		if service.discovery != nil {
+			service.client = client.NewClient(service.cfg, service.discovery)
+		} else {
+			service.client = client.NewClient(service.cfg)
+		}
 	}
 	//初始化日志
 	switch service.cfg.GetRunmode() {
