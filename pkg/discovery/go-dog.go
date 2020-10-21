@@ -133,7 +133,8 @@ func (d *GoDogDiscovery) _ConnectClient() error {
 func (d *GoDogDiscovery) _Watch() {
 	go d._Heart()
 	d._WatchRPCService()
-	d._WatchAPIService()
+	//默认是不关注API注册的
+	//d._WatchAPIService()
 	for {
 		_, buff, err := io.Read(d.conn)
 		if err != nil {
