@@ -108,10 +108,6 @@ func NewClient(param ...interface{}) plugins.Client {
 		break
 	}
 	client.managerclient = NewManagerClient(client.codec)
-	//开始RPC监听服务上下线
-	client.discovery.RegRPCServiceOnlineNotice(client.ServiceOnlineNotice)
-	client.discovery.RegRPCServiceOfflineNotice(client.ServiceOfflineNotice)
-	client.discovery.WatchRPCService()
 	return client
 }
 
@@ -140,20 +136,14 @@ func (c *Client) GetCodec() plugins.Codec {
 	return c.codec
 }
 
-//GetAllService 获取所有服务
-func (c *Client) GetAllService() (services []*serviceinfo.ServiceInfo) {
-	return c.selector.GetAllService()
+//GetAllRPCService 获取所有RPC服务
+func (c *Client) GetAllRPCService() (services []*serviceinfo.RPCServiceInfo) {
+	return c.discovery.GetAllRPCService()
 }
 
-//ServiceOnlineNotice 服务上线
-func (c *Client) ServiceOnlineNotice(key string, info *serviceinfo.ServiceInfo) {
-	c.selector.AddService(key, info)
-}
-
-//ServiceOfflineNotice 服务下线
-func (c *Client) ServiceOfflineNotice(key string) {
-	c.selector.DelService(key)
-	c.managerclient.DelClient(key)
+//GetAllAPIService 获取所有API服务
+func (c *Client) GetAllAPIService() (services []*serviceinfo.APIServiceInfo) {
+	return c.discovery.GetAllAPIService()
 }
 
 //Call 调用函数
@@ -167,7 +157,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	switch mode {
 	//随机模式
 	case plugins.RandomMode:
-		service, err := c.selector.RandomMode(c.fusing, name, method)
+		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
 		if err != nil {
 			return err
 		}
@@ -188,7 +178,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	//遍历模式
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
-		c.selector.RangeMode(c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
+		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
@@ -208,7 +198,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		return e
 	//hash模式
 	case plugins.HashMode:
-		service, err := c.selector.HashMode(c.fusing, name, method)
+		service, err := c.selector.HashMode(c.discovery, c.fusing, name, method)
 		if err != nil {
 			return err
 		}
@@ -228,7 +218,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	//默认方式
 	default:
-		service, err := c.selector.Custom(c.fusing, name, method)
+		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
 		if err != nil {
 			return err
 		}
@@ -260,7 +250,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	switch mode {
 	//随机模式
 	case plugins.RandomMode:
-		service, err := c.selector.RandomMode(c.fusing, name, method)
+		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
 		if err != nil {
 			return nil, err
 		}
@@ -282,7 +272,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 		var res []byte
-		c.selector.RangeMode(c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
+		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
@@ -302,7 +292,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		return res, e
 	//hash模式
 	case plugins.HashMode:
-		service, err := c.selector.HashMode(c.fusing, name, method)
+		service, err := c.selector.HashMode(c.discovery, c.fusing, name, method)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +312,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	//默认方式
 	default:
-		service, err := c.selector.Custom(c.fusing, name, method)
+		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
 		if err != nil {
 			return nil, err
 		}

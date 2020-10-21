@@ -23,7 +23,7 @@ type GoDogRegister struct {
 	count      int
 	close      bool
 	closeheart chan bool
-	rpcinfo    *serviceinfo.ServiceInfo
+	rpcinfo    *serviceinfo.RPCServiceInfo
 	apiinfo    *serviceinfo.APIServiceInfo
 	lock       sync.Mutex
 }
@@ -113,7 +113,7 @@ func (d *GoDogRegister) _Watch() {
 }
 
 //RegisterRPCService 注册RPC服务
-func (d *GoDogRegister) RegisterRPCService(ctx context.Context, info *serviceinfo.ServiceInfo) error {
+func (d *GoDogRegister) RegisterRPCService(ctx context.Context, info *serviceinfo.RPCServiceInfo) error {
 	key := "rpc/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
 	info.Key = key
 	val, err := json.Marshal(info)

@@ -1,7 +1,7 @@
 package serviceinfo
 
-//ServiceInfo 服务信息
-type ServiceInfo struct {
+//RPCServiceInfo RPC服务信息
+type RPCServiceInfo struct {
 	Key       string    //注册时候使用的唯一key
 	Name      string    //服务名称
 	Address   string    //服务地址

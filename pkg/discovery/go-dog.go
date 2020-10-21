@@ -14,21 +14,16 @@ import (
 
 //GoDogDiscovery 服务发现
 type GoDogDiscovery struct {
-	address                []string
-	conn                   net.Conn
-	ttl                    time.Duration
-	pos                    int
-	count                  int
-	close                  bool
-	closeheart             chan bool
-	label                  map[string]string
-	apidata                map[string]string
-	rpcdata                map[string]string
-	rpcServcieOnlineNotice func(string, *serviceinfo.ServiceInfo)
-	rpcServcieOffineNotice func(string)
-	apiServcieOnlineNotice func(string, *serviceinfo.APIServiceInfo)
-	apiServcieOffineNotice func(string)
-	lock                   sync.Mutex
+	address    []string
+	conn       net.Conn
+	ttl        time.Duration
+	pos        int
+	count      int
+	close      bool
+	closeheart chan bool
+	apidata    map[string]*serviceinfo.APIServiceInfo
+	rpcdata    map[string]*serviceinfo.RPCServiceInfo
+	lock       sync.RWMutex
 }
 
 //NewGoDogDiscovery  新建发现服务
@@ -40,14 +35,57 @@ func NewGoDogDiscovery(address []string) *GoDogDiscovery {
 		pos:        0,
 		close:      false,
 		closeheart: make(chan bool),
-		label:      make(map[string]string),
-		apidata:    make(map[string]string),
-		rpcdata:    make(map[string]string),
+		apidata:    make(map[string]*serviceinfo.APIServiceInfo),
+		rpcdata:    make(map[string]*serviceinfo.RPCServiceInfo),
 	}
 	if err := dis._ConnectClient(); err != nil {
 		panic(err)
 	}
 	return dis
+}
+
+//GetAllAPIService 获取所有API服务
+func (d *GoDogDiscovery) GetAllAPIService() (services []*serviceinfo.APIServiceInfo) {
+	d.lock.RLock()
+	for _, service := range d.apidata {
+		services = append(services, service)
+	}
+	d.lock.RUnlock()
+	return
+}
+
+//GetAllRPCService 获取所有RPC服务
+func (d *GoDogDiscovery) GetAllRPCService() (services []*serviceinfo.RPCServiceInfo) {
+	d.lock.RLock()
+	for _, service := range d.rpcdata {
+		services = append(services, service)
+	}
+	d.lock.RUnlock()
+	return
+}
+
+//GetRPCServiceByName 通过名称获取RPC服务
+func (d *GoDogDiscovery) GetRPCServiceByName(name string) (services []*serviceinfo.RPCServiceInfo) {
+	d.lock.RLock()
+	for _, service := range d.rpcdata {
+		if service.Name == name {
+			services = append(services, service)
+		}
+	}
+	d.lock.RUnlock()
+	return
+}
+
+//GetAPIServiceByName 通过名称获取API服务
+func (d *GoDogDiscovery) GetAPIServiceByName(name string) (services []*serviceinfo.APIServiceInfo) {
+	d.lock.RLock()
+	for _, service := range d.apidata {
+		if service.Name == name {
+			services = append(services, service)
+		}
+	}
+	d.lock.RUnlock()
+	return
 }
 
 //_ConnectClient 建立链接
@@ -94,12 +132,8 @@ func (d *GoDogDiscovery) _ConnectClient() error {
 //_Watch 开始监听
 func (d *GoDogDiscovery) _Watch() {
 	go d._Heart()
-	if _, ok := d.label["/rpc"]; ok {
-		d.WatchRPCService()
-	}
-	if _, ok := d.label["/api"]; ok {
-		d.WatchAPIService()
-	}
+	d._WatchRPCService()
+	d._WatchAPIService()
 	for {
 		_, buff, err := io.Read(d.conn)
 		if err != nil {
@@ -117,24 +151,18 @@ func (d *GoDogDiscovery) _Watch() {
 			mp := make(map[string]string)
 			for _, data := range all.Datas {
 				if _, ok := d.rpcdata[data.Key]; !ok {
-					if d.rpcServcieOnlineNotice != nil {
-						info := new(serviceinfo.ServiceInfo)
-						if err := json.Unmarshal([]byte(data.Value), info); err != nil {
-							log.Errorln(err.Error(), data.Key, data.Value)
-							continue
-						}
-						d.rpcServcieOnlineNotice(data.Key, info)
-						d.rpcdata[data.Key] = data.Value
+					info := new(serviceinfo.RPCServiceInfo)
+					if err := json.Unmarshal([]byte(data.Value), info); err != nil {
+						log.Errorln(err.Error(), data.Key, data.Value)
+						continue
 					}
+					d.rpcdata[data.Key] = info
 				}
 				mp[data.Key] = data.Value
 			}
 			for key := range d.rpcdata {
 				if _, ok := mp[key]; !ok {
-					if d.rpcServcieOffineNotice != nil {
-						d.rpcServcieOffineNotice(key)
-						delete(d.rpcdata, key)
-					}
+					delete(d.rpcdata, key)
 				}
 			}
 		}
@@ -142,24 +170,17 @@ func (d *GoDogDiscovery) _Watch() {
 			mp := make(map[string]string)
 			for _, data := range all.Datas {
 				if _, ok := d.apidata[data.Key]; !ok {
-					if d.apiServcieOnlineNotice != nil {
-						info := new(serviceinfo.APIServiceInfo)
-						if err := json.Unmarshal([]byte(data.Value), info); err != nil {
-							log.Errorln(err.Error(), data.Key, data.Value)
-							continue
-						}
-						d.apiServcieOnlineNotice(data.Key, info)
-						d.apidata[data.Key] = data.Value
+					info := new(serviceinfo.APIServiceInfo)
+					if err := json.Unmarshal([]byte(data.Value), info); err != nil {
+						log.Errorln(err.Error(), data.Key, data.Value)
+						continue
 					}
+					d.apidata[data.Key] = info
 				}
-				mp[data.Key] = data.Value
 			}
 			for key := range d.apidata {
 				if _, ok := mp[key]; !ok {
-					if d.apiServcieOffineNotice != nil {
-						d.apiServcieOffineNotice(key)
-						delete(d.apidata, key)
-					}
+					delete(d.apidata, key)
 				}
 			}
 		}
@@ -196,18 +217,8 @@ func (d *GoDogDiscovery) _Heart() {
 	}
 }
 
-//RegRPCServiceOnlineNotice 注册RPC服务上线通知
-func (d *GoDogDiscovery) RegRPCServiceOnlineNotice(f func(string, *serviceinfo.ServiceInfo)) {
-	d.rpcServcieOnlineNotice = f
-}
-
-//RegRPCServiceOfflineNotice 注册RPC服务下线通知
-func (d *GoDogDiscovery) RegRPCServiceOfflineNotice(f func(string)) {
-	d.rpcServcieOffineNotice = f
-}
-
 //WatchRPCService 开始RPC服务发现
-func (d *GoDogDiscovery) WatchRPCService() {
+func (d *GoDogDiscovery) _WatchRPCService() {
 	//开启监听
 	listen := &param.Event{
 		Cmd:   param.Listen,
@@ -220,22 +231,11 @@ func (d *GoDogDiscovery) WatchRPCService() {
 	if _, err := io.WriteByTime(d.conn, buff, time.Now().Add(d.ttl)); err != nil {
 		panic(err.Error())
 	}
-	d.label["/rpc"] = "/rpc"
 	log.Traceln("watch /rpc")
 }
 
-//RegAPIServiceOnlineNotice 注册API服务上线通知
-func (d *GoDogDiscovery) RegAPIServiceOnlineNotice(f func(string, *serviceinfo.APIServiceInfo)) {
-	d.apiServcieOnlineNotice = f
-}
-
-//RegAPIServiceOfflineNotice 注册API服务下线通知
-func (d *GoDogDiscovery) RegAPIServiceOfflineNotice(f func(string)) {
-	d.apiServcieOffineNotice = f
-}
-
 //WatchAPIService 开始API服务发现
-func (d *GoDogDiscovery) WatchAPIService() {
+func (d *GoDogDiscovery) _WatchAPIService() {
 	//开启监听
 	listen := &param.Event{
 		Cmd:   param.Listen,
@@ -248,7 +248,6 @@ func (d *GoDogDiscovery) WatchAPIService() {
 	if _, err := io.WriteByTime(d.conn, buff, time.Now().Add(d.ttl)); err != nil {
 		panic(err.Error())
 	}
-	d.label["/api"] = "/api"
 	log.Traceln("watch /api")
 }
 

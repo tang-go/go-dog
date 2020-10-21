@@ -15,7 +15,7 @@ import (
 //EtcdDiscovery 服务发现
 type EtcdDiscovery struct {
 	client                 *clientv3.Client //etcd 客户端
-	rpcServcieOnlineNotice func(string, *serviceinfo.ServiceInfo)
+	rpcServcieOnlineNotice func(string, *serviceinfo.RPCServiceInfo)
 	rpcServcieOffineNotice func(string)
 	apiServcieOnlineNotice func(string, *serviceinfo.APIServiceInfo)
 	apiServcieOffineNotice func(string)
@@ -37,7 +37,7 @@ func NewEtcdDiscovery(address []string) *EtcdDiscovery {
 }
 
 //RegRPCServiceOnlineNotice 注册RPC服务上线通知
-func (d *EtcdDiscovery) RegRPCServiceOnlineNotice(f func(string, *serviceinfo.ServiceInfo)) {
+func (d *EtcdDiscovery) RegRPCServiceOnlineNotice(f func(string, *serviceinfo.RPCServiceInfo)) {
 	d.rpcServcieOnlineNotice = f
 }
 
@@ -65,7 +65,7 @@ func (d *EtcdDiscovery) WatchRPCService() {
 	}
 	for _, ev := range resp.Kvs {
 		if d.rpcServcieOnlineNotice != nil {
-			info := serviceinfo.ServiceInfo{}
+			info := serviceinfo.RPCServiceInfo{}
 			if err := json.Unmarshal(ev.Value, &info); err != nil {
 				continue
 			}
@@ -79,7 +79,7 @@ func (d *EtcdDiscovery) WatchRPCService() {
 				switch ev.Type {
 				case mvccpb.PUT: //修改或者新增
 					if d.rpcServcieOnlineNotice != nil {
-						info := serviceinfo.ServiceInfo{}
+						info := serviceinfo.RPCServiceInfo{}
 						if err := json.Unmarshal(ev.Kv.Value, &info); err != nil {
 							log.Errorln(err.Error(), ev.Kv.Key, ev.Kv.Value)
 							return

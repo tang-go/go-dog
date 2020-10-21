@@ -7,23 +7,17 @@ import (
 //Discovery 服务发现
 type Discovery interface {
 
-	//RegRPCServiceOnlineNotice 注册RPC服务上线通知
-	RegRPCServiceOnlineNotice(f func(string, *serviceinfo.ServiceInfo))
+	//GetAllAPIService 获取所有API服务
+	GetAllAPIService() (services []*serviceinfo.APIServiceInfo)
 
-	//RegAPIServiceOfflineNotice 注册RPC服务下线通知
-	RegAPIServiceOfflineNotice(f func(string))
+	//GetAllRPCService 获取所有RPC服务
+	GetAllRPCService() (services []*serviceinfo.RPCServiceInfo)
 
-	//RegAPIServiceOnlineNotice 注册API服务上线通知
-	RegAPIServiceOnlineNotice(f func(string, *serviceinfo.APIServiceInfo))
+	//GetRPCServiceByName 通过名称获取RPC服务
+	GetRPCServiceByName(name string) (services []*serviceinfo.RPCServiceInfo)
 
-	//RegRPCServiceOfflineNotice 注册API服务下线通知
-	RegRPCServiceOfflineNotice(f func(string))
-
-	//WatchRPCService 开始RPC服务发现
-	WatchRPCService()
-
-	//WatchAPIService 开始API服务发现
-	WatchAPIService()
+	//GetAPIServiceByName 通过名称获取API服务
+	GetAPIServiceByName(name string) (services []*serviceinfo.APIServiceInfo)
 
 	//Close 关闭服务
 	Close() error

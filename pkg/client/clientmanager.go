@@ -2,11 +2,12 @@ package client
 
 import (
 	"fmt"
+	"net"
+	"sync"
+
 	"github.com/tang-go/go-dog/pkg/rpc"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"net"
-	"sync"
 )
 
 type errService struct {
@@ -32,7 +33,7 @@ func NewManagerClient(codec plugins.Codec) *ManagerClient {
 }
 
 //GetClient 获取客户端
-func (m *ManagerClient) GetClient(service *serviceinfo.ServiceInfo) (*rpc.ClientRPC, error) {
+func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.ClientRPC, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	//如果曾经链接失败，就没必要再链接

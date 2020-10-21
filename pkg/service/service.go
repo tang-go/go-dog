@@ -259,7 +259,7 @@ func (s *Service) _Run() error {
 	}
 	//注册RPC方法到etcd
 	if len(s.methods) > 0 {
-		info := serviceinfo.ServiceInfo{
+		info := serviceinfo.RPCServiceInfo{
 			Name:    name,
 			Address: s.cfg.GetHost(),
 			Port:    s.cfg.GetPort(),
