@@ -148,6 +148,7 @@ func (d *GoDogDiscovery) _Watch() {
 			continue
 		}
 		if all.Label == "/rpc" {
+			d.lock.Lock()
 			mp := make(map[string]string)
 			for _, data := range all.Datas {
 				if _, ok := d.rpcdata[data.Key]; !ok {
@@ -156,21 +157,19 @@ func (d *GoDogDiscovery) _Watch() {
 						log.Errorln(err.Error(), data.Key, data.Value)
 						continue
 					}
-					d.lock.Lock()
 					d.rpcdata[data.Key] = info
-					d.lock.Unlock()
 				}
 				mp[data.Key] = data.Value
 			}
 			for key := range d.rpcdata {
 				if _, ok := mp[key]; !ok {
-					d.lock.Lock()
 					delete(d.rpcdata, key)
-					d.lock.Unlock()
 				}
 			}
+			d.lock.Unlock()
 		}
 		if all.Label == "/api" {
+			d.lock.Lock()
 			mp := make(map[string]string)
 			for _, data := range all.Datas {
 				if _, ok := d.apidata[data.Key]; !ok {
@@ -179,18 +178,15 @@ func (d *GoDogDiscovery) _Watch() {
 						log.Errorln(err.Error(), data.Key, data.Value)
 						continue
 					}
-					d.lock.Lock()
 					d.apidata[data.Key] = info
-					d.lock.Unlock()
 				}
 			}
 			for key := range d.apidata {
 				if _, ok := mp[key]; !ok {
-					d.lock.Lock()
 					delete(d.apidata, key)
-					d.lock.Unlock()
 				}
 			}
+			d.lock.Unlock()
 		}
 	}
 
