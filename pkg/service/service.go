@@ -257,7 +257,7 @@ func (s *Service) Run() error {
 
 //_Run 启动
 func (s *Service) _Run() error {
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.cfg.GetHost(), s.cfg.GetPort()))
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.cfg.GetPort()))
 	if err != nil {
 		return err
 	}
