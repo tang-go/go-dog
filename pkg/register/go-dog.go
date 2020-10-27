@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tang-go/go-dog/lib/io"
+	"github.com/tang-go/go-dog/lib/rand"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/register/param"
 	"github.com/tang-go/go-dog/serviceinfo"
@@ -51,11 +52,8 @@ func (d *GoDogRegister) _ConnectClient() error {
 	if d.close {
 		return nil
 	}
-	address := d.address[d.pos]
-	d.pos++
-	if d.pos >= d.count {
-		d.pos = 0
-	}
+	index := rand.IntRand(0, d.count)
+	address := d.address[index]
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", address)
 	if err != nil {
 		return err
