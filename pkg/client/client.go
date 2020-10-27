@@ -333,6 +333,35 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	}
 }
 
+//Broadcast 广播
+func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args interface{}, reply interface{}) error {
+	defer recover.Recover()
+	if c.limit.IsLimit() {
+		return customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
+	}
+	c.wait.Add(1)
+	defer c.wait.Done()
+	var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+	e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
+		client, err := c.managerclient.GetClient(service)
+		if err != nil {
+			e = err
+			return false
+		}
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		err = client.Call(ctx, name, method, args, reply)
+		if err != nil {
+			//添加错误
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			e = err
+			return false
+		}
+		return false
+	})
+	return e
+}
+
 //Close 关闭
 func (c *Client) Close() {
 	c.managerclient.Close()

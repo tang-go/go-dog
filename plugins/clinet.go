@@ -43,6 +43,9 @@ type Client interface {
 	//Call 调用函数
 	Call(ctx Context, mode Mode, name string, method string, args interface{}, reply interface{}) error
 
+	//Broadcast 广播
+	Broadcast(ctx Context, name string, method string, args interface{}, reply interface{}) error
+
 	//SendRequest 发生请求
 	SendRequest(ctx Context, mode Mode, name string, method string, code string, args []byte) (reply []byte, e error)
 
