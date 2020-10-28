@@ -8,6 +8,7 @@ import (
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/pkg/config"
+	"github.com/tang-go/go-dog/pkg/context"
 	"github.com/tang-go/go-dog/pkg/discovery"
 	"github.com/tang-go/go-dog/pkg/fusing"
 	"github.com/tang-go/go-dog/pkg/limit"
@@ -350,7 +351,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		}
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
-		err = client.Call(ctx, name, method, args, reply)
+		err = client.Call(context.WithTimeout(ctx, int64(time.Second*5)), name, method, args, reply)
 		if err != nil {
 			//添加错误
 			c.fusing.AddErrorMethod(service.Key, method, err)
