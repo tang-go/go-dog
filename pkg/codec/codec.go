@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/vmihailenco/msgpack"
@@ -31,8 +32,12 @@ func (c *Codec) EnCode(code string, v interface{}) ([]byte, error) {
 func (c *Codec) DeCode(code string, buff []byte, v interface{}) error {
 	switch code {
 	case "json":
-		return json.Unmarshal(buff, v)
+		d := json.NewDecoder(bytes.NewReader(buff))
+		d.UseNumber()
+		return d.Decode(v)
 	default:
+		// d := msgpack.NewDecoder(bytes.NewReader(buff))
+		// d.UseNumber()
 		return msgpack.Unmarshal(buff, v)
 	}
 }
