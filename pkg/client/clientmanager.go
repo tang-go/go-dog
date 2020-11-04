@@ -5,6 +5,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/rpc"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
@@ -45,11 +46,13 @@ func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.Cli
 		tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:%d", service.Address, service.Port))
 		if err != nil {
 			m.errs[service.Key] = err
+			log.Errorln(err.Error())
 			return nil, err
 		}
 		conn, err := net.DialTCP("tcp", nil, tcpAddr)
 		if err != nil {
 			m.errs[service.Key] = err
+			log.Errorln(err.Error())
 			return nil, err
 		}
 		//创建一个新的链接
