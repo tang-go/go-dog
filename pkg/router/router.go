@@ -1,12 +1,13 @@
 package router
 
 import (
-	customerror "github.com/tang-go/go-dog/error"
-	"github.com/tang-go/go-dog/plugins"
 	"reflect"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	customerror "github.com/tang-go/go-dog/error"
+	"github.com/tang-go/go-dog/plugins"
 )
 
 //定义错误类型
@@ -89,7 +90,6 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 	}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
-		//name := t.Field(i).Name
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
 			class := pointer.new(t.Field(i).Type)

@@ -30,7 +30,7 @@ type Service interface {
 	GetClient() Client
 
 	//Auth 验证函数
-	Auth(fun func(ctx Context, token string) error)
+	Auth(fun func(ctx Context, method, token string) error)
 
 	//RegisterRPC 	注册RPC方法
 	//name			方法名称

@@ -36,7 +36,7 @@ type Service struct {
 	//服务名称
 	name string
 	//验证插件
-	auth func(ctx plugins.Context, token string) error
+	auth func(ctx plugins.Context, method, token string) error
 	//配置插件
 	cfg plugins.Cfg
 	//注册中心插件
@@ -235,7 +235,7 @@ func (s *Service) _RegisterAPI(methodname, version, path string, kind plugins.HT
 }
 
 //Auth 验证函数
-func (s *Service) Auth(fun func(ctx plugins.Context, token string) error) {
+func (s *Service) Auth(fun func(ctx plugins.Context, method, token string) error) {
 	s.auth = fun
 }
 
@@ -383,7 +383,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 				//先判断此方法是否需要鉴权
 				if _, o := s.authMethod[strings.ToLower(req.Method)]; o {
 					if s.auth != nil {
-						if err := s.auth(ctx, req.Token); err != nil {
+						if err := s.auth(ctx, req.Name, req.Token); err != nil {
 							rep.Error = customerror.DeCodeError(err)
 							return rep
 						}
