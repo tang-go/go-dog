@@ -1,11 +1,12 @@
 package selector
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
-	"github.com/tang-go/go-dog/error"
+	customerror "github.com/tang-go/go-dog/error"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
 )
@@ -21,6 +22,19 @@ func NewSelector() *Selector {
 	s := new(Selector)
 	s.rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return s
+}
+
+//GetByAddress 通过地址获取rpc服务信息
+func (s *Selector) GetByAddress(discovery plugins.Discovery, address string, fusing plugins.Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error) {
+	services := discovery.GetRPCServiceByName(name)
+	for _, service := range services {
+		if !fusing.IsFusing(service.Key, method) {
+			if fmt.Sprintf("%s:%d", service.Address, service.Port) == address {
+				return service, nil
+			}
+		}
+	}
+	return nil, customerror.EnCodeError(customerror.InternalServerError, "没有可用服务")
 }
 
 //RandomMode 随机模式(失败即返回)

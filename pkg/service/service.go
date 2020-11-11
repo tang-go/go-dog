@@ -367,7 +367,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			ctx.SetTraceID(req.TraceID)
 			ctx.SetIsTest(req.IsTest)
 			ctx.SetToken(req.Token)
-
+			ctx.SetSource(req.Source)
 			ctx.SetClient(s.client)
 			for key, value := range req.Data {
 				ctx.SetData(key, value)

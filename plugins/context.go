@@ -12,6 +12,12 @@ type Context interface {
 
 	Value(key interface{}) interface{}
 
+	//SetSource 设置请求源
+	SetSource(source string)
+
+	//GetSource 获取请求源
+	GetSource() string
+
 	//GetTTL 获取超时时间
 	GetTTL() int64
 

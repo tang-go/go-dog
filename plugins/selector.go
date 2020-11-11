@@ -5,6 +5,9 @@ import "github.com/tang-go/go-dog/serviceinfo"
 //Selector 路由选择器
 type Selector interface {
 
+	//GetByAddress 通过地址获取rpc服务信息
+	GetByAddress(discovery Discovery, address string, fusing Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error)
+
 	//RandomMode 随机模式(失败即返回)
 	RandomMode(discovery Discovery, fusing Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error)
 

@@ -49,6 +49,9 @@ type Client interface {
 	//SendRequest 发生请求
 	SendRequest(ctx Context, mode Mode, name string, method string, code string, args []byte) (reply []byte, e error)
 
+	//CallByAddress 指定地址调用
+	CallByAddress(ctx Context, address string, name string, method string, args interface{}, reply interface{}) error
+
 	//Close 关闭
 	Close()
 }

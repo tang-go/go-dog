@@ -12,6 +12,7 @@ type Request struct {
 	Token   string
 	IsTest  bool
 	Address string
+	Source  string
 	Data    map[string]interface{}
 	ID      string
 	Name    string

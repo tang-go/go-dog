@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -361,6 +362,36 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		return false
 	})
 	return e
+}
+
+//CallByAddress 指定地址调用
+func (c *Client) CallByAddress(ctx plugins.Context, address string, name string, method string, args interface{}, reply interface{}) error {
+	defer recover.Recover()
+	if c.limit.IsLimit() {
+		return customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
+	}
+	c.wait.Add(1)
+	defer c.wait.Done()
+
+	service, err := c.selector.GetByAddress(c.discovery, address, c.fusing, name, method)
+	if err != nil {
+		return err
+	}
+	ctx.SetSource(fmt.Sprintf("%s:%d", c.cfg.GetHost(), c.cfg.GetPort()))
+	client, err := c.managerclient.GetClient(service)
+	if err == nil {
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		err := client.Call(ctx, name, method, args, reply)
+		if err != nil {
+			//添加错误
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return err
+		}
+		return nil
+	}
+	return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 }
 
 //Close 关闭

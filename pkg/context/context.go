@@ -2,8 +2,9 @@ package context
 
 import (
 	base "context"
-	"github.com/tang-go/go-dog/plugins"
 	"time"
+
+	"github.com/tang-go/go-dog/plugins"
 )
 
 //MyContext 自定义context
@@ -14,6 +15,7 @@ type MyContext struct {
 	traceID string
 	isTest  bool
 	address string
+	source  string
 	token   string
 	cancel  base.CancelFunc
 	client  plugins.Client
@@ -66,6 +68,16 @@ func (c *MyContext) SetIsTest(test bool) {
 //GetIsTest 是否是测试请求
 func (c *MyContext) GetIsTest() bool {
 	return c.isTest
+}
+
+//SetSource 设置请求源
+func (c *MyContext) SetSource(source string) {
+	c.source = source
+}
+
+//GetSource 获取请求源
+func (c *MyContext) GetSource() string {
+	return c.source
 }
 
 //SetToken 设置token
