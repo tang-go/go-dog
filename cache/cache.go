@@ -26,6 +26,9 @@ type Inter interface {
 	//Sadd  集合
 	Sadd(key string, value string) (int64, error)
 
+	//SCard  获取集合成员数
+	SCard(key string) (int64, error)
+
 	//SRem  删除集合成员数
 	SRem(key string, member string) (int64, error)
 
