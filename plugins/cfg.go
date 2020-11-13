@@ -19,6 +19,9 @@ type Cfg interface {
 	//GetRedis 获取redis配置
 	GetRedis() []string
 
+	//GetEtcd 获取etcd配置
+	GetEtcd() []string
+
 	//GetKafka 获取kfaka地址
 	GetKafka() []string
 
