@@ -82,7 +82,7 @@ func (pointer *Router) analysisStruct(index *int, class interface{}) map[string]
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	if *index > 4 {
+	if t.Kind() != reflect.Struct {
 		tgs := map[string]string{
 			"type":        t.Kind().String(),
 			"description": t.Kind().String(),
@@ -90,9 +90,10 @@ func (pointer *Router) analysisStruct(index *int, class interface{}) map[string]
 		explain[strings.ToLower(t.Name())] = tgs
 		return explain
 	}
-	if t.Kind() != reflect.Struct {
+
+	if *index > 4 {
 		tgs := map[string]string{
-			"type":        t.Kind().String(),
+			"type":        "object",
 			"description": t.Kind().String(),
 		}
 		explain[strings.ToLower(t.Name())] = tgs
