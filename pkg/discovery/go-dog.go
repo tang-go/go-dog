@@ -39,9 +39,12 @@ func NewGoDogDiscovery(address []string) *GoDogDiscovery {
 		apidata:    make(map[string]*serviceinfo.APIServiceInfo),
 		rpcdata:    make(map[string]*serviceinfo.RPCServiceInfo),
 	}
+	//初始化第一个链接
 	if err := dis._ConnectClient(); err != nil {
 		panic(err)
 	}
+	//等待一个心跳时间
+	time.Sleep(dis.ttl)
 	return dis
 }
 
@@ -122,17 +125,18 @@ func (d *GoDogDiscovery) _ConnectClient() error {
 		return err
 	}
 	d.conn = conn
+	//开启心跳
+	go d._Heart()
+	//开启监听
 	go d._Watch()
+	//默认监听rpc服务消息
+	d._WatchRPCService()
 	log.Traceln("链接成功注册中心", address)
 	return nil
 }
 
 //_Watch 开始监听
 func (d *GoDogDiscovery) _Watch() {
-	go d._Heart()
-	d._WatchRPCService()
-	//默认是不关注API注册的
-	//d._WatchAPIService()
 	for {
 		_, buff, err := io.Read(d.conn)
 		if err != nil {
