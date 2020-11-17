@@ -70,15 +70,25 @@ func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[st
 		panic("第二个返回值必须为error")
 	}
 	pointer.methods[strings.ToLower(name)] = &methodstruct{name: name, method: method, ctxType: ctxType, argType: argType}
-	return pointer.analysisStruct(pointer.new(argType)), pointer.analysisStruct(pointer.new(replyType))
+	index := 0
+	return pointer.analysisStruct(&index, pointer.new(argType)), pointer.analysisStruct(&index, pointer.new(replyType))
 }
 
 //analysisStruct 解析参数
-func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} {
+func (pointer *Router) analysisStruct(index *int, class interface{}) map[string]interface{} {
+	*index = *index + 1
 	explain := make(map[string]interface{})
 	t := reflect.TypeOf(class)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
+	}
+	if *index > 4 {
+		tgs := map[string]string{
+			"type":        t.Kind().String(),
+			"description": t.Kind().String(),
+		}
+		explain[strings.ToLower(t.Name())] = tgs
+		return explain
 	}
 	if t.Kind() != reflect.Struct {
 		tgs := map[string]string{
@@ -93,7 +103,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
 			class := pointer.new(t.Field(i).Type)
-			tg := pointer.analysisStruct(class)
+			tg := pointer.analysisStruct(index, class)
 			tgs := map[string]interface{}{
 				"type":        "object",
 				"description": t.Field(i).Tag.Get("description"),
@@ -110,7 +120,7 @@ func (pointer *Router) analysisStruct(class interface{}) map[string]interface{} 
 			}
 			kind := classType.Kind()
 			if kind == reflect.Struct {
-				tg := pointer.analysisStruct(class)
+				tg := pointer.analysisStruct(index, class)
 				tgs := map[string]interface{}{
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
