@@ -8,6 +8,9 @@ type Fusing interface {
 	//SetFusingTTL 设置熔断统计时间
 	SetFusingTTL(ttl time.Duration)
 
+	//AddMethod 添加服务错误
+	AddError(servicekey string, err error)
+
 	//AddErrorMethod 添加请求发生错误的方法
 	AddErrorMethod(servicekey, methodname string, err error)
 

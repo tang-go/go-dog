@@ -1,11 +1,12 @@
 package fusing
 
 import (
+	"sync"
+	"time"
+
 	customerror "github.com/tang-go/go-dog/error"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/recover"
-	"sync"
-	"time"
 )
 
 //方法错误统计
@@ -21,6 +22,7 @@ type Fusing struct {
 	methods map[string]*method
 	auto    map[string]string
 	forced  map[string]string
+	err     map[string]error
 	close   chan bool
 	lock    sync.RWMutex
 }
@@ -33,6 +35,7 @@ func NewFusing(ttl time.Duration) *Fusing {
 	fulsing.forced = make(map[string]string)
 	fulsing.auto = make(map[string]string)
 	fulsing.close = make(chan bool)
+	fulsing.err = make(map[string]error)
 	go fulsing.eventloop()
 	return fulsing
 }
@@ -40,6 +43,13 @@ func NewFusing(ttl time.Duration) *Fusing {
 //SetFusingTTL 设置熔断统计时间
 func (f *Fusing) SetFusingTTL(ttl time.Duration) {
 	f.ttl = ttl
+}
+
+//AddMethod 添加服务错误
+func (f *Fusing) AddError(servicekey string, err error) {
+	f.lock.Lock()
+	f.err[servicekey] = err
+	f.lock.Unlock()
 }
 
 //AddErrorMethod 添加请求发生错误的方法
@@ -96,6 +106,9 @@ func (f *Fusing) CloseFusing(servicekey, method string) {
 func (f *Fusing) IsFusing(servicekey, method string) bool {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
+	if _, ok := f.err[servicekey]; ok {
+		return true
+	}
 	if _, ok := f.forced[servicekey+"@"+method]; ok {
 		return true
 	}
@@ -132,6 +145,7 @@ func (f *Fusing) eventloop() {
 				m.errnum = 0
 				m.total = 0
 			}
+			f.err = make(map[string]error)
 			f.lock.Unlock()
 		case <-f.close:
 			close(f.close)

@@ -165,31 +165,30 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
-		if err == nil {
-			//请求统计添加
-			c.fusing.AddMethod(service.Key, method)
-			//客户端发起请求
-			err := client.Call(ctx, name, method, args, reply)
-			if err != nil {
-				//添加错误
-				log.Errorln(err.Error())
-				c.fusing.AddErrorMethod(service.Key, method, err)
-				return err
-			}
-			if err != nil {
-				log.Errorln(err.Error())
-			}
-			return nil
+		if err != nil {
+			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
+			return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
-		return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		err = client.Call(ctx, name, method, args, reply)
+		if err != nil {
+			//添加错误
+			log.Errorln(err.Error())
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return err
+		}
+		return nil
 	//遍历模式
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
-				e = err
 				log.Errorln(err.Error())
+				c.fusing.AddError(service.Key, err)
 				return false
 			}
 			//请求统计添加
@@ -204,9 +203,6 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			}
 			return true
 		})
-		if e != nil {
-			log.Errorln(e.Error())
-		}
 		return e
 	//hash模式
 	case plugins.HashMode:
@@ -216,23 +212,22 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
-		if err == nil {
-			//请求统计添加
-			c.fusing.AddMethod(service.Key, method)
-			//客户端发起请求
-			err := client.Call(ctx, name, method, args, reply)
-			if err != nil {
-				//添加错误
-				log.Errorln(err.Error())
-				c.fusing.AddErrorMethod(service.Key, method, err)
-				return err
-			}
-			return nil
-		}
 		if err != nil {
 			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
+			return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
-		return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		err = client.Call(ctx, name, method, args, reply)
+		if err != nil {
+			//添加错误
+			log.Errorln(err.Error())
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return err
+		}
+		return nil
 	//默认方式
 	default:
 		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
@@ -241,23 +236,22 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
-		if err == nil {
-			//请求统计添加
-			c.fusing.AddMethod(service.Key, method)
-			//客户端发起请求
-			err := client.Call(ctx, name, method, args, reply)
-			if err != nil {
-				//添加错误
-				log.Errorln(err.Error())
-				c.fusing.AddErrorMethod(service.Key, method, err)
-				return err
-			}
-			return nil
-		}
 		if err != nil {
 			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
+			return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
-		return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		err = client.Call(ctx, name, method, args, reply)
+		if err != nil {
+			//添加错误
+			log.Errorln(err.Error())
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return err
+		}
+		return nil
 	}
 }
 
@@ -278,23 +272,22 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
-		if err == nil {
-			//请求统计添加
-			c.fusing.AddMethod(service.Key, method)
-			//客户端发起请求
-			res, err := client.SendRequest(ctx, name, method, code, args)
-			if err != nil {
-				//添加错误
-				log.Errorln(err.Error())
-				c.fusing.AddErrorMethod(service.Key, method, err)
-				return nil, err
-			}
-			return res, nil
-		}
 		if err != nil {
 			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
+			return nil, customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
-		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		res, err := client.SendRequest(ctx, name, method, code, args)
+		if err != nil {
+			//添加错误
+			log.Errorln(err.Error())
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return nil, err
+		}
+		return res, nil
 	//遍历模式
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
@@ -304,6 +297,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			if err != nil {
 				e = err
 				log.Errorln(err.Error())
+				c.fusing.AddError(service.Key, err)
 				return false
 			}
 			//请求统计添加
@@ -318,9 +312,6 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			}
 			return true
 		})
-		if e != nil {
-			log.Errorln(e.Error())
-		}
 		return res, e
 	//hash模式
 	case plugins.HashMode:
@@ -329,23 +320,22 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
-		if err == nil {
-			//请求统计添加
-			c.fusing.AddMethod(service.Key, method)
-			//客户端发起请求
-			res, err := client.SendRequest(ctx, name, method, code, args)
-			if err != nil {
-				//添加错误
-				log.Errorln(err.Error())
-				c.fusing.AddErrorMethod(service.Key, method, err)
-				return nil, err
-			}
-			return res, nil
-		}
 		if err != nil {
 			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
+			return nil, customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
-		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		res, err := client.SendRequest(ctx, name, method, code, args)
+		if err != nil {
+			//添加错误
+			log.Errorln(err.Error())
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return nil, err
+		}
+		return res, nil
 	//默认方式
 	default:
 		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
@@ -354,23 +344,22 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
-		if err == nil {
-			//请求统计添加
-			c.fusing.AddMethod(service.Key, method)
-			//客户端发起请求
-			res, err := client.SendRequest(ctx, name, method, code, args)
-			if err != nil {
-				//添加错误
-				log.Errorln(err.Error())
-				c.fusing.AddErrorMethod(service.Key, method, err)
-				return nil, err
-			}
-			return res, nil
-		}
 		if err != nil {
 			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
+			return nil, customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
-		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+		//请求统计添加
+		c.fusing.AddMethod(service.Key, method)
+		//客户端发起请求
+		res, err := client.SendRequest(ctx, name, method, code, args)
+		if err != nil {
+			//添加错误
+			log.Errorln(err.Error())
+			c.fusing.AddErrorMethod(service.Key, method, err)
+			return nil, err
+		}
+		return res, nil
 	}
 }
 
@@ -388,6 +377,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		if err != nil {
 			e = err
 			log.Errorln(err.Error())
+			c.fusing.AddError(service.Key, err)
 			return false
 		}
 		//请求统计添加
@@ -424,23 +414,22 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 	}
 	ctx.SetSource(fmt.Sprintf("%s:%d", c.cfg.GetHost(), c.cfg.GetPort()))
 	client, err := c.managerclient.GetClient(service)
-	if err == nil {
-		//请求统计添加
-		c.fusing.AddMethod(service.Key, method)
-		//客户端发起请求
-		err := client.Call(ctx, name, method, args, reply)
-		if err != nil {
-			//添加错误
-			log.Errorln(err.Error())
-			c.fusing.AddErrorMethod(service.Key, method, err)
-			return err
-		}
-		return nil
-	}
 	if err != nil {
 		log.Errorln(err.Error())
+		c.fusing.AddError(service.Key, err)
+		return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 	}
-	return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
+	//请求统计添加
+	c.fusing.AddMethod(service.Key, method)
+	//客户端发起请求
+	err = client.Call(ctx, name, method, args, reply)
+	if err != nil {
+		//添加错误
+		log.Errorln(err.Error())
+		c.fusing.AddErrorMethod(service.Key, method, err)
+		return err
+	}
+	return nil
 }
 
 //Close 关闭
