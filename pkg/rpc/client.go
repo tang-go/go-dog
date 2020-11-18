@@ -70,7 +70,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 		return customerror.EnCodeError(customerror.ParamError, "参数不正确")
 	}
 	done := make(chan *header.Response, 1)
-	c.wait.Add(1)
+
 	go c.call(ctx, req, done)
 	select {
 	case rep := <-done:
@@ -117,7 +117,6 @@ func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, code s
 	req.Arg = arg
 	req.Code = code
 	done := make(chan *header.Response, 1)
-	c.wait.Add(1)
 	go c.call(ctx, req, done)
 	select {
 	case rep := <-done:
@@ -139,6 +138,7 @@ func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, code s
 //Call 调用函数
 func (c *ClientRPC) call(ctx plugins.Context, req *header.Request, response chan *header.Response) {
 	defer recover.Recover()
+	c.wait.Add(1)
 	defer c.wait.Done()
 	if atomic.LoadInt32(&c.isClose) != 0 {
 		rep := new(header.Response)
