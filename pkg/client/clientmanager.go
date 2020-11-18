@@ -59,6 +59,7 @@ func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.Cli
 		//创建一个新的链接
 		cli := rpc.NewClientRPC(conn, m.codec, func(net.Conn) {
 			m.DelClient(service.Key)
+			log.Traceln("服务器重启或者崩溃", service.Key)
 		})
 		m.clients[service.Key] = cli
 		return cli, nil
@@ -73,8 +74,8 @@ func (m *ManagerClient) DelClient(key string) {
 	if ok {
 		client.Close()
 		delete(m.clients, key)
-		delete(m.errs, key)
 	}
+	delete(m.errs, key)
 	m.lock.Unlock()
 }
 
