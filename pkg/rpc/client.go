@@ -215,10 +215,10 @@ func (c *ClientRPC) eventloop() {
 			vali.response <- response
 		}
 		c.lock.RUnlock()
-		c.wait.Wait()
 		if c.closecallback != nil {
 			c.closecallback(c.conn)
 		}
+		c.wait.Wait()
 	}()
 	for {
 		_, buff, err := io.ReadByTime(c.conn, time.Now().Add(time.Minute*5))
