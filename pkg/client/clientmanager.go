@@ -20,7 +20,6 @@ type errService struct {
 type ManagerClient struct {
 	codec   plugins.Codec
 	clients map[string]*rpc.ClientRPC
-	errs    map[string]error
 	lock    sync.RWMutex
 }
 
@@ -28,7 +27,6 @@ type ManagerClient struct {
 func NewManagerClient(codec plugins.Codec) *ManagerClient {
 	m := new(ManagerClient)
 	m.clients = make(map[string]*rpc.ClientRPC)
-	m.errs = make(map[string]error)
 	m.codec = codec
 	return m
 }
@@ -37,22 +35,15 @@ func NewManagerClient(codec plugins.Codec) *ManagerClient {
 func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.ClientRPC, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	//如果曾经链接失败，就没必要再链接
-	if err, ok := m.errs[service.Key]; ok {
-		log.Errorln(err.Error())
-		return nil, err
-	}
 	client, ok := m.clients[service.Key]
 	if !ok {
 		tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:%d", service.Address, service.Port))
 		if err != nil {
-			m.errs[service.Key] = err
 			log.Errorln(err.Error())
 			return nil, err
 		}
 		conn, err := net.DialTCP("tcp", nil, tcpAddr)
 		if err != nil {
-			m.errs[service.Key] = err
 			log.Errorln(err.Error())
 			return nil, err
 		}
@@ -75,7 +66,6 @@ func (m *ManagerClient) DelClient(key string) {
 		client.Close()
 		delete(m.clients, key)
 	}
-	delete(m.errs, key)
 	m.lock.Unlock()
 }
 
