@@ -1,15 +1,16 @@
 package rpc
 
 import (
+	"net"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/tang-go/go-dog/header"
 	"github.com/tang-go/go-dog/lib/io"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/recover"
-	"net"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 //ServiceRPC 服务
@@ -72,7 +73,6 @@ func (s *ServiceRPC) eventloop() {
 	defer recover.Recover()
 	defer func() {
 		s.conn.Close()
-		log.Traceln("链接关闭", s.conn.RemoteAddr())
 	}()
 	for {
 		_, buff, err := io.ReadByTime(s.conn, time.Now().Add(time.Minute*5))
