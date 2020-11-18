@@ -161,12 +161,14 @@ func (d *GoDogDiscovery) _Watch() {
 						continue
 					}
 					d.rpcdata[data.Key] = info
+					log.Tracef("rpc 上线 | %s | %s | %s ", info.Name, data.Key, info.Address)
 				}
 				mp[data.Key] = data.Value
 			}
-			for key := range d.rpcdata {
+			for key, info := range d.rpcdata {
 				if _, ok := mp[key]; !ok {
 					delete(d.rpcdata, key)
+					log.Tracef("rpc 下线 | %s | %s | %s ", info.Name, key, info.Address)
 				}
 			}
 		}
@@ -180,12 +182,14 @@ func (d *GoDogDiscovery) _Watch() {
 						continue
 					}
 					d.apidata[data.Key] = info
+					log.Tracef("api 上线 | %s | %s | %s ", info.Name, data.Key, info.Address)
 				}
 				mp[data.Key] = data.Value
 			}
-			for key := range d.apidata {
+			for key, info := range d.apidata {
 				if _, ok := mp[key]; !ok {
 					delete(d.apidata, key)
+					log.Tracef("api 下线 | %s | %s | %s ", info.Name, key, info.Address)
 				}
 			}
 		}

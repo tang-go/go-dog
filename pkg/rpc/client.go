@@ -10,7 +10,6 @@ import (
 	"github.com/tang-go/go-dog/header"
 	"github.com/tang-go/go-dog/lib/io"
 	"github.com/tang-go/go-dog/lib/uuid"
-	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/recover"
 )
@@ -220,7 +219,6 @@ func (c *ClientRPC) eventloop() {
 		if c.closecallback != nil {
 			c.closecallback(c.conn)
 		}
-		log.Traceln("链接关闭", c.conn.RemoteAddr())
 	}()
 	for {
 		_, buff, err := io.ReadByTime(c.conn, time.Now().Add(time.Minute*5))

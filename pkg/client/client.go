@@ -161,6 +161,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	case plugins.RandomMode:
 		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
 		if err != nil {
+			log.Errorln(err.Error())
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
@@ -171,8 +172,12 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			err := client.Call(ctx, name, method, args, reply)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				return err
+			}
+			if err != nil {
+				log.Errorln(err.Error())
 			}
 			return nil
 		}
@@ -184,6 +189,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
+				log.Errorln(err.Error())
 				return false
 			}
 			//请求统计添加
@@ -191,17 +197,22 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			err = client.Call(ctx, name, method, args, reply)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				e = err
 				return false
 			}
 			return true
 		})
+		if e != nil {
+			log.Errorln(e.Error())
+		}
 		return e
 	//hash模式
 	case plugins.HashMode:
 		service, err := c.selector.HashMode(c.discovery, c.fusing, name, method)
 		if err != nil {
+			log.Errorln(err.Error())
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
@@ -212,16 +223,21 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			err := client.Call(ctx, name, method, args, reply)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				return err
 			}
 			return nil
+		}
+		if err != nil {
+			log.Errorln(err.Error())
 		}
 		return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	//默认方式
 	default:
 		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
 		if err != nil {
+			log.Errorln(err.Error())
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
@@ -232,10 +248,14 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			err := client.Call(ctx, name, method, args, reply)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				return err
 			}
 			return nil
+		}
+		if err != nil {
+			log.Errorln(err.Error())
 		}
 		return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	}
@@ -254,6 +274,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	case plugins.RandomMode:
 		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
 		if err != nil {
+			log.Errorln(err.Error())
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
@@ -264,10 +285,14 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			res, err := client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				return nil, err
 			}
 			return res, nil
+		}
+		if err != nil {
+			log.Errorln(err.Error())
 		}
 		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	//遍历模式
@@ -278,6 +303,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
+				log.Errorln(err.Error())
 				return false
 			}
 			//请求统计添加
@@ -285,12 +311,16 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			res, err = client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				e = err
 				return false
 			}
 			return true
 		})
+		if e != nil {
+			log.Errorln(e.Error())
+		}
 		return res, e
 	//hash模式
 	case plugins.HashMode:
@@ -306,16 +336,21 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			res, err := client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				return nil, err
 			}
 			return res, nil
+		}
+		if err != nil {
+			log.Errorln(err.Error())
 		}
 		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	//默认方式
 	default:
 		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
 		if err != nil {
+			log.Errorln(err.Error())
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
@@ -326,10 +361,14 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			res, err := client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
+				log.Errorln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				return nil, err
 			}
 			return res, nil
+		}
+		if err != nil {
+			log.Errorln(err.Error())
 		}
 		return nil, customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 	}
@@ -348,6 +387,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
 			e = err
+			log.Errorln(err.Error())
 			return false
 		}
 		//请求统计添加
@@ -355,12 +395,16 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		err = client.Call(context.WithTimeout(ctx, int64(time.Second*5)), name, method, args, reply)
 		if err != nil {
 			//添加错误
+			log.Errorln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			e = err
 			return false
 		}
 		return false
 	})
+	if e != nil {
+		log.Errorln(e.Error())
+	}
 	return e
 }
 
@@ -375,6 +419,7 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 
 	service, err := c.selector.GetByAddress(c.discovery, address, c.fusing, name, method)
 	if err != nil {
+		log.Errorln(err.Error())
 		return err
 	}
 	ctx.SetSource(fmt.Sprintf("%s:%d", c.cfg.GetHost(), c.cfg.GetPort()))
@@ -386,10 +431,14 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 		err := client.Call(ctx, name, method, args, reply)
 		if err != nil {
 			//添加错误
+			log.Errorln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return err
 		}
 		return nil
+	}
+	if err != nil {
+		log.Errorln(err.Error())
 	}
 	return customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 }

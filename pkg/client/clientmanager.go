@@ -39,6 +39,7 @@ func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.Cli
 	defer m.lock.Unlock()
 	//如果曾经链接失败，就没必要再链接
 	if err, ok := m.errs[service.Key]; ok {
+		log.Errorln(err.Error())
 		return nil, err
 	}
 	client, ok := m.clients[service.Key]
