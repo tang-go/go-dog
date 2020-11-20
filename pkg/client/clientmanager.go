@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/rpc"
@@ -42,7 +43,7 @@ func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.Cli
 			log.Errorln(err.Error())
 			return nil, err
 		}
-		conn, err := net.DialTCP("tcp", nil, tcpAddr)
+		conn, err := net.DialTimeout("tcp", tcpAddr.String(), time.Second*1)
 		if err != nil {
 			log.Errorln(err.Error())
 			return nil, err
