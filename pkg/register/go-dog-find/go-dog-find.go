@@ -71,7 +71,7 @@ func (d *GoDogRegister) _ConnectClient() error {
 		log.Errorln(err.Error())
 		return err
 	}
-	if err := d._SendMsg(conn, param.Listen, buff); err != nil {
+	if err := d._SendMsg(conn, param.Login, buff); err != nil {
 		//断线开启重新链接
 		conn.Close()
 		log.Errorln(err.Error())
