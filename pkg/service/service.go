@@ -19,7 +19,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
 	"github.com/tang-go/go-dog/pkg/limit"
-	"github.com/tang-go/go-dog/pkg/register"
+	register "github.com/tang-go/go-dog/pkg/register/go-dog-find"
 	"github.com/tang-go/go-dog/pkg/router"
 	"github.com/tang-go/go-dog/pkg/rpc"
 	"github.com/tang-go/go-dog/plugins"

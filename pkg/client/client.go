@@ -10,7 +10,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
-	"github.com/tang-go/go-dog/pkg/discovery"
+	discovery "github.com/tang-go/go-dog/pkg/discovery/go-dog-find"
 	"github.com/tang-go/go-dog/pkg/fusing"
 	"github.com/tang-go/go-dog/pkg/limit"
 	"github.com/tang-go/go-dog/pkg/selector"
