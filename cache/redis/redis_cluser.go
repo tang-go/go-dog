@@ -2,6 +2,7 @@ package redis
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -157,6 +158,42 @@ func (pointer *Cluster) IncrBy(key string, value int64) (int64, error) {
 		pointer.funcConnect()
 	}
 	return pointer.clients.IncrBy(key, value).Result()
+}
+
+//Zadd  有序集合
+func (pointer *Cluster) Zadd(key string, score int64, value string) (int64, error) {
+	if pointer.clients == nil {
+		//进行重连
+		pointer.funcConnect()
+	}
+	return pointer.clients.ZAdd(key, redis.Z{Score: float64(score), Member: value}).Result()
+}
+
+//ZRange  获取有序集合成员(升序)
+func (pointer *Cluster) ZRange(key string, start int64, stop int64) ([]string, error) {
+	if pointer.clients == nil {
+		//进行重连
+		pointer.funcConnect()
+	}
+	return pointer.clients.ZRange(key, start, stop).Result()
+}
+
+//ZRevRangeByScore  更具积分降序获取成员
+func (pointer *Cluster) ZRevRangeByScore(key string, max int64, min int64) ([]string, error) {
+	if pointer.clients == nil {
+		//进行重连
+		pointer.funcConnect()
+	}
+	return pointer.clients.ZRevRangeByScore(key, redis.ZRangeBy{Max: strconv.FormatInt(max, 10), Min: strconv.FormatInt(min, 10)}).Result()
+}
+
+//ZRemRangeByScore  删除指定积分内的成员
+func (pointer *Cluster) ZRemRangeByScore(key string, min int64, max int64) (int64, error) {
+	if pointer.clients == nil {
+		//进行重连
+		pointer.funcConnect()
+	}
+	return pointer.clients.ZRemRangeByScore(key, strconv.FormatInt(min, 10), strconv.FormatInt(max, 10)).Result()
 }
 
 //Sadd  集合

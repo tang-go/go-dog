@@ -14,14 +14,23 @@ type Inter interface {
 	//Del 删除key
 	Del(Key string) (int, error)
 
-	//SetByTime 设置redis 储存键值对含有过期时间 这个函数被弃用,但是为了保证前面的代码能用,所以保留
-	//param:key		键
-	//param:value	值
-	//param:tm		过期时间单位秒
+	//SetByTime 设置redis 过期时间为单位秒
 	SetByTime(key string, value interface{}, tm int) error
 
 	//Get 获取值
 	Get(key string, value interface{}) error
+
+	//Zadd  有序集合
+	Zadd(key string, score int64, value string) (int64, error)
+
+	//ZRange  获取有序集合成员(升序)
+	ZRange(key string, start int64, stop int64) ([]string, error)
+
+	//ZRevRangeByScore  更具积分降序获取成员
+	ZRevRangeByScore(key string, max int64, min int64) ([]string, error)
+
+	//ZRemRangeByScore  删除指定积分内的成员
+	ZRemRangeByScore(key string, min int64, max int64) (int64, error)
 
 	//Sadd  集合
 	Sadd(key string, value string) (int64, error)
