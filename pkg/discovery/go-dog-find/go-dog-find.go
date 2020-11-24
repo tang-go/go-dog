@@ -40,7 +40,9 @@ func NewGoDogDiscovery(address []string) *GoDogDiscovery {
 		rpcdata:    make(map[string]*serviceinfo.RPCServiceInfo),
 	}
 	//初始化第一个链接
-	if err := dis._ConnectClient(); err != nil {
+	index := rand.IntRand(0, dis.count)
+	addr := dis.address[index]
+	if err := dis._ConnectClient(addr); err != nil {
 		panic(err)
 	}
 	//等待一个心跳时间
@@ -104,14 +106,12 @@ func (d *GoDogDiscovery) GetAPIServiceByName(name string) (services []*servicein
 }
 
 //_ConnectClient 建立链接
-func (d *GoDogDiscovery) _ConnectClient() error {
+func (d *GoDogDiscovery) _ConnectClient(address string) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if d.close {
 		return nil
 	}
-	index := rand.IntRand(0, d.count)
-	address := d.address[index]
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", address)
 	if err != nil {
 		return err
@@ -198,10 +198,12 @@ func (d *GoDogDiscovery) _Watch() {
 		}
 	}
 	for {
-		time.Sleep(d.ttl)
-		log.Traceln("断线重链注册中心....")
-		if d._ConnectClient() == nil {
-			return
+		for _, addr := range d.address {
+			time.Sleep(d.ttl)
+			log.Traceln("断线重链注册中心....")
+			if d._ConnectClient(addr) == nil {
+				return
+			}
 		}
 	}
 }

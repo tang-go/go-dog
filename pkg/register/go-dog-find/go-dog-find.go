@@ -39,21 +39,21 @@ func NewGoDogRegister(address []string) *GoDogRegister {
 		close:      false,
 		closeheart: make(chan bool),
 	}
-	if err := dis._ConnectClient(); err != nil {
+	index := rand.IntRand(0, dis.count)
+	addr := dis.address[index]
+	if err := dis._ConnectClient(addr); err != nil {
 		panic(err)
 	}
 	return dis
 }
 
 //_ConnectClient 建立链接
-func (d *GoDogRegister) _ConnectClient() error {
+func (d *GoDogRegister) _ConnectClient(address string) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if d.close {
 		return nil
 	}
-	index := rand.IntRand(0, d.count)
-	address := d.address[index]
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", address)
 	if err != nil {
 		return err
@@ -119,10 +119,12 @@ func (d *GoDogRegister) _Watch() {
 		}
 	}
 	for {
-		time.Sleep(d.ttl)
-		log.Traceln("断线重链注册中心....")
-		if d._ConnectClient() == nil {
-			return
+		for _, addr := range d.address {
+			time.Sleep(d.ttl)
+			log.Traceln("断线重链注册中心....")
+			if d._ConnectClient(addr) == nil {
+				return
+			}
 		}
 	}
 }
