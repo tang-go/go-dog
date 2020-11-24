@@ -126,33 +126,6 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 			service.client = client.NewClient(service.cfg)
 		}
 	}
-	//初始化日志
-	switch service.cfg.GetRunmode() {
-	case "panic":
-		log.SetLevel(log.PanicLevel)
-		break
-	case "fatal":
-		log.SetLevel(log.FatalLevel)
-		break
-	case "error":
-		log.SetLevel(log.ErrorLevel)
-		break
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-		break
-	case "info":
-		log.SetLevel(log.InfoLevel)
-		break
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-		break
-	case "trace":
-		log.SetLevel(log.TraceLevel)
-		break
-	default:
-		log.SetLevel(log.TraceLevel)
-		break
-	}
 	return service
 }
 

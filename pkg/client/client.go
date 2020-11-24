@@ -82,33 +82,6 @@ func NewClient(param ...interface{}) plugins.Client {
 		//使用默认的参数编码
 		client.codec = codec.NewCodec()
 	}
-	//初始化日志
-	switch client.cfg.GetRunmode() {
-	case "panic":
-		log.SetLevel(log.PanicLevel)
-		break
-	case "fatal":
-		log.SetLevel(log.FatalLevel)
-		break
-	case "error":
-		log.SetLevel(log.ErrorLevel)
-		break
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-		break
-	case "info":
-		log.SetLevel(log.InfoLevel)
-		break
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-		break
-	case "trace":
-		log.SetLevel(log.TraceLevel)
-		break
-	default:
-		log.SetLevel(log.TraceLevel)
-		break
-	}
 	client.managerclient = NewManagerClient(client.codec)
 	return client
 }

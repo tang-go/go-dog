@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/tang-go/go-dog/lib/net"
+	"github.com/tang-go/go-dog/log"
 
 	"github.com/sipt/GoJsoner"
 )
@@ -208,6 +209,33 @@ func NewConfig() *Config {
 	if runmode != "" {
 		c.Runmode = runmode
 	}
+	//初始化日志
+	switch c.GetRunmode() {
+	case "panic":
+		log.SetLevel(log.PanicLevel)
+		break
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+		break
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+		break
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+		break
+	case "info":
+		log.SetLevel(log.InfoLevel)
+		break
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+		break
+	case "trace":
+		log.SetLevel(log.TraceLevel)
+		break
+	default:
+		log.SetLevel(log.TraceLevel)
+		break
+	}
 	fmt.Println("************************************************")
 	fmt.Println("*                                              *")
 	fmt.Println("*             	   Cfg  Init                    *")
@@ -227,5 +255,6 @@ func NewConfig() *Config {
 	fmt.Println("### Jaeger:       ", c.Jaeger)
 	fmt.Println("### Host:         ", c.Host)
 	fmt.Println("### RunMode:      ", c.Runmode)
+	log.Traceln("日志初始化完成")
 	return c
 }
