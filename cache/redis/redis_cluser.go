@@ -196,6 +196,15 @@ func (pointer *Cluster) ZRemRangeByScore(key string, min int64, max int64) (int6
 	return pointer.clients.ZRemRangeByScore(key, strconv.FormatInt(min, 10), strconv.FormatInt(max, 10)).Result()
 }
 
+//ZRem  删除指定会员
+func (pointer *Cluster) ZRem(key string, value string) (int64, error) {
+	if pointer.clients == nil {
+		//进行重连
+		pointer.funcConnect()
+	}
+	return pointer.clients.ZRem(key, value).Result()
+}
+
 //Sadd  集合
 func (pointer *Cluster) Sadd(key string, value string) (int64, error) {
 	if pointer.clients == nil {

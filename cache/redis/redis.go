@@ -195,6 +195,15 @@ func (pointer *Redis) ZRemRangeByScore(key string, min int64, max int64) (int64,
 	return pointer.client.ZRemRangeByScore(key, strconv.FormatInt(min, 10), strconv.FormatInt(max, 10)).Result()
 }
 
+//ZRem  删除指定会员
+func (pointer *Redis) ZRem(key string, value string) (int64, error) {
+	if pointer.client == nil {
+		//进行重连
+		pointer.funcConnect()
+	}
+	return pointer.client.ZRem(key, value).Result()
+}
+
 //Sadd  集合
 func (pointer *Redis) Sadd(key string, value string) (int64, error) {
 	if pointer.client == nil {

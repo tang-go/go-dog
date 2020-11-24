@@ -32,6 +32,9 @@ type Inter interface {
 	//ZRemRangeByScore  删除指定积分内的成员
 	ZRemRangeByScore(key string, min int64, max int64) (int64, error)
 
+	//ZRem  删除指定会员
+	ZRem(key string, value string) (int64, error)
+
 	//Sadd  集合
 	Sadd(key string, value string) (int64, error)
 
