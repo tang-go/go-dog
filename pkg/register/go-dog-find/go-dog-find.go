@@ -86,7 +86,7 @@ func (d *GoDogRegister) _ConnectClient() error {
 //_SendMsg 发送消息
 func (d *GoDogRegister) _SendMsg(conn net.Conn, cmd int8, buff []byte) error {
 	event := new(param.Event)
-	event.Cmd = param.Login
+	event.Cmd = cmd
 	event.Data = buff
 	data, err := event.EnCode(event)
 	if err != nil {
