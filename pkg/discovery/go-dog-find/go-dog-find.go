@@ -154,7 +154,12 @@ func (d *GoDogDiscovery) _SendMsg(conn net.Conn, cmd int8, buff []byte) error {
 	event := new(param.Event)
 	event.Cmd = param.Login
 	event.Data = buff
-	if _, err := io.WriteByTime(conn, buff, time.Now().Add(d.ttl)); err != nil {
+	data, err := event.EnCode(event)
+	if err != nil {
+		log.Errorln(err.Error())
+		return err
+	}
+	if _, err := io.WriteByTime(conn, data, time.Now().Add(d.ttl)); err != nil {
 		log.Errorln(err.Error())
 		return err
 	}
