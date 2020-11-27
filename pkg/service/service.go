@@ -341,6 +341,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			ctx.SetIsTest(req.IsTest)
 			ctx.SetToken(req.Token)
 			ctx.SetSource(req.Source)
+			ctx.SetURL(req.URL)
 			ctx.SetClient(s.client)
 			for key, value := range req.Data {
 				ctx.SetData(key, value)

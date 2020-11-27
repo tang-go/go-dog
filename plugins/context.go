@@ -12,6 +12,12 @@ type Context interface {
 
 	Value(key interface{}) interface{}
 
+	//SetURL 设置请求url
+	SetURL(url string)
+
+	//GetURL 获取请求url
+	GetURL() string
+
 	//SetSource 设置请求源
 	SetSource(source string)
 

@@ -62,6 +62,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 	req.Data = ctx.GetData()
 	req.Token = ctx.GetToken()
 	req.Source = ctx.GetSource()
+	req.URL = ctx.GetURL()
 	req.ID = uuid.GetToken()
 	req.Name = name
 	req.Method = method
@@ -110,7 +111,7 @@ func (c *ClientRPC) SendRequest(ctx plugins.Context, name, method string, code s
 	req.Data = ctx.GetData()
 	req.Token = ctx.GetToken()
 	req.Source = ctx.GetSource()
-
+	req.URL = ctx.GetURL()
 	req.ID = uuid.GetToken()
 	req.Name = name
 	req.Method = method

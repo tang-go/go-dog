@@ -13,6 +13,7 @@ type Request struct {
 	IsTest  bool
 	Address string
 	Source  string
+	URL     string
 	Data    map[string]interface{}
 	ID      string
 	Name    string

@@ -17,6 +17,7 @@ type MyContext struct {
 	address string
 	source  string
 	token   string
+	url     string
 	cancel  base.CancelFunc
 	client  plugins.Client
 	data    map[string]interface{}
@@ -78,6 +79,16 @@ func (c *MyContext) SetSource(source string) {
 //GetSource 获取请求源
 func (c *MyContext) GetSource() string {
 	return c.source
+}
+
+//SetURL 设置请求url
+func (c *MyContext) SetURL(url string) {
+	c.url = url
+}
+
+//GetURL 获取请求url
+func (c *MyContext) GetURL() string {
+	return c.url
 }
 
 //SetToken 设置token
