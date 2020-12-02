@@ -13,6 +13,7 @@ type Cluster struct {
 	addrs   []string
 	addr    string
 	pass    string
+	mem     *Mem
 	clients *redis.ClusterClient
 }
 
@@ -21,6 +22,7 @@ func CreateCluster(ip []string, p string) (*Cluster, error) {
 	redisCluster := new(Cluster)
 	redisCluster.addrs = ip
 	redisCluster.pass = p
+	redisCluster.mem = NewMem()
 	return redisCluster, redisCluster.funcConnect()
 }
 
@@ -35,6 +37,12 @@ func (pointer *Cluster) funcConnect() error {
 		return err
 	}
 	return nil
+}
+
+//Close 关闭
+func (pointer *Cluster) Close() {
+	pointer.mem.Close()
+	pointer.clients.Close()
 }
 
 //Set 设置
@@ -54,12 +62,14 @@ func (pointer *Cluster) Set(key string, value interface{}) error {
 }
 
 //Del 删除
-func (pointer *Cluster) Del(Key string) (int, error) {
+func (pointer *Cluster) Del(key string) (int, error) {
 	if pointer.clients == nil {
 		//进行重连
 		pointer.funcConnect()
 	}
-	return 0, pointer.clients.Del(Key).Err()
+	//内存删除
+	pointer.mem.Del(key)
+	return 0, pointer.clients.Del(key).Err()
 }
 
 //FlushAll 清空所有数据库
@@ -98,12 +108,14 @@ func (pointer *Cluster) Ping() (string, error) {
 *@param:value		值
 *@param:tm		过期时间单位秒
  */
-func (pointer *Cluster) SetByTime(key string, value interface{}, tm int) error {
+func (pointer *Cluster) SetByTime(key string, value interface{}, tm int64) error {
 	if pointer.clients == nil {
 		//进行重连
 		pointer.funcConnect()
 	}
 	buff, _ := json.Marshal(value)
+	//内存存放
+	pointer.mem.Set(key, string(buff), tm)
 	return pointer.clients.Set(key, string(buff), time.Second*time.Duration(tm)).Err()
 }
 
@@ -114,15 +126,27 @@ func (pointer *Cluster) SetByTime(key string, value interface{}, tm int) error {
 *@param:key		键
  */
 func (pointer *Cluster) Get(key string, value interface{}) error {
-	if pointer.clients == nil {
-		//进行重连
-		pointer.funcConnect()
+	v, ok := pointer.mem.Get(key)
+	if !ok {
+		//内存里面没有则redis获取
+		if pointer.clients == nil {
+			//进行重连
+			pointer.funcConnect()
+		}
+		redisvalue, err := pointer.clients.Get(key).Result()
+		if err != nil {
+			return err
+		}
+		ttl, err := pointer.clients.TTL(key).Result()
+		if err == nil {
+			//没有超时进行同步
+			if ttl > 0 {
+				pointer.mem.Set(key, redisvalue, int64(ttl))
+			}
+		}
+		v = redisvalue
 	}
-	v, err := pointer.clients.Get(key).Result()
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal([]byte(v), value)
+	err := json.Unmarshal([]byte(v), value)
 	return err
 }
 

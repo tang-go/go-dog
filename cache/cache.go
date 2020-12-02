@@ -15,7 +15,7 @@ type Inter interface {
 	Del(Key string) (int, error)
 
 	//SetByTime 设置redis 过期时间为单位秒
-	SetByTime(key string, value interface{}, tm int) error
+	SetByTime(key string, value interface{}, tm int64) error
 
 	//Get 获取值
 	Get(key string, value interface{}) error
@@ -46,6 +46,9 @@ type Inter interface {
 
 	//SMembers  获取集合
 	SMembers(key string) (r []string, e error)
+
+	//Close 关闭
+	Close()
 }
 
 //Cache 缓存
