@@ -19,6 +19,7 @@ type Mem struct {
 //NewMem 创建一个mem
 func NewMem() *Mem {
 	m := new(Mem)
+	m.close = make(chan bool)
 	go m.eventloop()
 	return m
 }
