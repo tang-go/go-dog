@@ -351,7 +351,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			if argv, ok := s.router.GetMethodArg(req.Method); ok {
 				err := s.codec.DeCode(req.Code, req.Arg, argv)
 				if err != nil {
-					rep.Error = customerror.EnCodeError(customerror.ParamError, "参数不合法")
+					rep.Error = customerror.EnCodeError(customerror.ParamError, "请求参数错误:"+err.Error())
 					return rep
 				}
 				//先判断此方法是否需要鉴权
@@ -376,7 +376,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 				}
 				reply, err := s.codec.EnCode(req.Code, back)
 				if err != nil {
-					rep.Error = customerror.EnCodeError(customerror.ParamError, "返回参数不合法")
+					rep.Error = customerror.EnCodeError(customerror.ParamError, "返回参数"+err.Error())
 					return rep
 				}
 				rep.Reply = reply

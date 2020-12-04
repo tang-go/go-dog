@@ -68,7 +68,7 @@ func (c *ClientRPC) Call(ctx plugins.Context, name, method string, request inter
 	req.Method = method
 	req.Arg, e = c.codec.EnCode("", request)
 	if e != nil {
-		return customerror.EnCodeError(customerror.ParamError, "参数不正确")
+		return customerror.EnCodeError(customerror.ParamError, e.Error())
 	}
 	done := make(chan *header.Response, 1)
 
@@ -193,7 +193,7 @@ func (c *ClientRPC) send(request *header.Request, response chan *header.Response
 			rep := new(header.Response)
 			rep.ID = request.ID
 			rep.Name = request.Name
-			rep.Error = customerror.EnCodeError(customerror.ParamError, "请求参数不正确")
+			rep.Error = customerror.EnCodeError(customerror.ParamError, err.Error())
 			rep.Method = request.Method
 			response <- rep
 		}
