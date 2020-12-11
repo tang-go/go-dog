@@ -31,6 +31,76 @@ const (
 	_MaxServiceRequestCount = 100000
 )
 
+//API api路由组件
+type API struct {
+	api *serviceinfo.API
+	s   *Service
+}
+
+func newAPI(s *Service, api *serviceinfo.API) plugins.API {
+	return &API{
+		s:   s,
+		api: api,
+	}
+}
+
+//APIGroup APi组
+func (a *API) APIGroup(group string) plugins.API {
+	a.api.Group = group
+	return a
+}
+
+//APIAuth APi需要验证
+func (a *API) APIAuth() plugins.API {
+	a.api.IsAuth = true
+	return a
+}
+
+//APINoAuth APi需要不验证
+func (a *API) APINoAuth() plugins.API {
+	a.api.IsAuth = false
+	return a
+}
+
+//APIVersion APi版本
+func (a *API) APIVersion(version string) plugins.API {
+	a.api.Version = version
+	return a
+}
+
+//APILevel APi等级
+func (a *API) APILevel(level int8) plugins.API {
+	a.api.Level = level
+	return a
+}
+
+//GET APi GET路由
+func (a *API) GET(name string, path string, explain string, fn interface{}) {
+	a.api.Path = path
+	if a.api.Group == "" {
+		a.api.Group = a.s.name
+	}
+	if a.api.Level <= 0 {
+		a.api.Level = 1
+	}
+	a.s._RegisterAPI(a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
+}
+
+//POST POST路由
+func (a *API) POST(name string, path string, explain string, fn interface{}) {
+	a.api.Path = path
+	if a.api.Group == "" {
+		a.api.Group = a.s.name
+	}
+	if a.api.Version == "" {
+		a.api.Version = "v1"
+	}
+	if a.api.Level <= 0 {
+		a.api.Level = 1
+	}
+	a.s._RegisterAPI(a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
+}
+
 //Service 服务
 type Service struct {
 	//服务名称
@@ -169,26 +239,33 @@ func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn i
 
 //POST POST方法
 func (s *Service) POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
-	s._RegisterAPI(methodname, version, path, plugins.POST, level, isAuth, explain, fn)
+	s._RegisterAPI(s.name, methodname, version, path, plugins.POST, level, isAuth, explain, fn)
 }
 
 //GET GET方法
 func (s *Service) GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
-	s._RegisterAPI(methodname, version, path, plugins.GET, level, isAuth, explain, fn)
+	s._RegisterAPI(s.name, methodname, version, path, plugins.GET, level, isAuth, explain, fn)
+}
+
+//HTTP 创建http
+func (s *Service) HTTP() plugins.API {
+	return newAPI(s, new(serviceinfo.API))
 }
 
 //RegisterAPI 注册API方法--注册给网管
-func (s *Service) _RegisterAPI(methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
+func (s *Service) _RegisterAPI(group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
+	url := fmt.Sprintf("api/%s/%s/%s", s.name, version, path)
 	api := &serviceinfo.API{
 		Name:     methodname,
+		Group:    group,
 		Level:    level,
 		Explain:  explain,
 		IsAuth:   isAuth,
 		Request:  req,
 		Response: rep,
 		Version:  version,
-		Path:     path,
+		Path:     url,
 		Kind:     string(kind),
 	}
 	method := &serviceinfo.Method{
@@ -204,7 +281,7 @@ func (s *Service) _RegisterAPI(methodname, version, path string, kind plugins.HT
 	if isAuth {
 		s.authMethod[strings.ToLower(methodname)] = methodname
 	}
-	log.Tracef("注册API接口:%s,路由:api/%s/%s/%s", api.Name, s.name, api.Version, api.Path)
+	log.Tracef("注册API接口:%s,路由:%s", api.Name, api.Path)
 }
 
 //Auth 验证函数

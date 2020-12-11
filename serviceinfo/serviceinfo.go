@@ -39,6 +39,7 @@ type APIServiceInfo struct {
 //API 服务提供的API接口
 type API struct {
 	Name     string                 //方法名称
+	Group    string                 //api的分组
 	Level    int8                   //方法等级
 	Request  map[string]interface{} //请求json格式展示
 	Response map[string]interface{} //响应格式

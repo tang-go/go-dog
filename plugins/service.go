@@ -33,32 +33,16 @@ type Service interface {
 	Auth(fun func(ctx Context, method, token string) error)
 
 	//RegisterRPC 	注册RPC方法
-	//name			方法名称
-	//level			方法等级
-	//isAuth		是否需要鉴权
-	//explain		方法说明
-	//fn			注册的方法
 	RPC(name string, level int8, isAuth bool, explain string, fn interface{})
 
 	//POST 			注册POST方法
-	//methodname 	API方法名称
-	//version 		API方法版本
-	//path 			API路由
-	//level 		API等级
-	//isAuth 		是否需要鉴权
-	//explain		方法描述
-	//fn 			注册的方法
 	POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{})
 
 	//GET GET方法
-	//methodname 	API方法名称
-	//version 		API方法版本
-	//path 			API路由
-	//level 		API等级
-	//isAuth 		是否需要鉴权
-	//explain		方法描述
-	//fn 			注册的方法
 	GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{})
+
+	//HTTP 创建http
+	HTTP() API
 
 	//Run 启动服务
 	Run() error
