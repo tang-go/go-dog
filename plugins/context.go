@@ -70,7 +70,7 @@ type Context interface {
 	SetData(key string, val interface{}) error
 
 	//GetData 获取自定义data
-	GetData() map[string]string
+	GetData() map[string][]byte
 
 	//GetDataByKey 通过key获取自定义数据
 	GetDataByKey(string, interface{}) error

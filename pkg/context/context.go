@@ -23,7 +23,7 @@ type MyContext struct {
 	url     string
 	cancel  base.CancelFunc
 	client  plugins.Client
-	data    map[string]string
+	data    map[string][]byte
 	share   map[string]interface{}
 }
 
@@ -32,7 +32,7 @@ func Background() plugins.Context {
 	c := new(MyContext)
 	c.codec = codec.NewCodec()
 	c.Context = base.Background()
-	c.data = make(map[string]string)
+	c.data = make(map[string][]byte)
 	c.share = make(map[string]interface{})
 	return c
 }
@@ -146,12 +146,12 @@ func (c *MyContext) SetData(key string, val interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.data[key] = string(v)
+	c.data[key] = v
 	return nil
 }
 
 //GetData 获取自定义data
-func (c *MyContext) GetData() map[string]string {
+func (c *MyContext) GetData() map[string][]byte {
 	return c.data
 }
 
