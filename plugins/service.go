@@ -44,6 +44,9 @@ type Service interface {
 	//HTTP 创建http
 	HTTP() API
 
+	//APIRegIntercept API注册拦截器
+	APIRegIntercept(f func(url, explain string))
+
 	//Run 启动服务
 	Run() error
 }

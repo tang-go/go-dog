@@ -131,6 +131,8 @@ type Service struct {
 	codec plugins.Codec
 	//退出信号
 	close int32
+	//api注册拦截器
+	apiRegIntercept func(url string, explain string)
 	//等待
 	wait sync.WaitGroup
 }
@@ -252,6 +254,11 @@ func (s *Service) HTTP() plugins.API {
 	return newAPI(s, new(serviceinfo.API))
 }
 
+//APIRegIntercept API注册拦截器
+func (s *Service) APIRegIntercept(f func(url, explain string)) {
+	s.apiRegIntercept = f
+}
+
 //RegisterAPI 注册API方法--注册给网管
 func (s *Service) _RegisterAPI(group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
@@ -280,6 +287,9 @@ func (s *Service) _RegisterAPI(group, methodname, version, path string, kind plu
 	s.api = append(s.api, api)
 	if isAuth {
 		s.authMethod[strings.ToLower(methodname)] = methodname
+	}
+	if s.apiRegIntercept != nil {
+		s.apiRegIntercept(url, explain)
 	}
 	log.Tracef("注册API接口:%s,路由:%s", api.Name, api.Path)
 }
