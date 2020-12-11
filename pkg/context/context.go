@@ -2,6 +2,7 @@ package context
 
 import (
 	base "context"
+	"errors"
 	"time"
 
 	"github.com/tang-go/go-dog/pkg/codec"
@@ -156,7 +157,11 @@ func (c *MyContext) GetData() map[string]string {
 
 //GetDataByKey 获取自定义data值
 func (c *MyContext) GetDataByKey(key string, val interface{}) error {
-	return c.codec.DeCode("msgpack", []byte(c.data[key]), val)
+	v, ok := c.data[key]
+	if ok {
+		return c.codec.DeCode("msgpack", []byte(v), val)
+	}
+	return errors.New("no this key")
 }
 
 //SetClient 设置客户端
