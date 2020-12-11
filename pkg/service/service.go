@@ -422,7 +422,11 @@ func (s *Service) _ServeConn(conn net.Conn) {
 				return rep
 			}
 			//创建ctx
-			ctx := context.Background()
+			datas := make(map[string][]byte)
+			for key, value := range req.Data {
+				datas[key] = value
+			}
+			ctx := context.NewContextByData(datas)
 			ctx.SetAddress(req.Address)
 			ctx.SetTraceID(req.TraceID)
 			ctx.SetIsTest(req.IsTest)
@@ -430,9 +434,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			ctx.SetSource(req.Source)
 			ctx.SetURL(req.URL)
 			ctx.SetClient(s.client)
-			for key, value := range req.Data {
-				ctx.SetData(key, value)
-			}
+
 			ctx = context.WithTimeout(ctx, ttl)
 
 			if argv, ok := s.router.GetMethodArg(req.Method); ok {

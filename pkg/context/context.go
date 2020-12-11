@@ -37,6 +37,16 @@ func Background() plugins.Context {
 	return c
 }
 
+//NewContextByData 通过一个data创建
+func NewContextByData(data map[string][]byte) plugins.Context {
+	c := new(MyContext)
+	c.codec = codec.NewCodec()
+	c.Context = base.Background()
+	c.data = data
+	c.share = make(map[string]interface{})
+	return c
+}
+
 //WithTimeout 创建一个超时context
 func WithTimeout(ctx plugins.Context, ttl int64) plugins.Context {
 	c := ctx.(*MyContext)
