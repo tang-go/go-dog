@@ -67,13 +67,13 @@ type Context interface {
 	GetShareByKey(key string) interface{}
 
 	//SetData  设置自定义data
-	SetData(key string, val interface{})
+	SetData(key string, val interface{}) error
 
 	//GetData 获取自定义data
 	GetData() map[string]string
 
 	//GetDataByKey 通过key获取自定义数据
-	GetDataByKey(string, interface{})
+	GetDataByKey(string, interface{}) error
 
 	//SetClient 设置客户端
 	SetClient(cli Client)

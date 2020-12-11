@@ -140,9 +140,13 @@ func (c *MyContext) GetShareByKey(key string) interface{} {
 }
 
 //SetData  设置自定义data
-func (c *MyContext) SetData(key string, val interface{}) {
-	v, _ := c.codec.EnCode("msgpack", val)
+func (c *MyContext) SetData(key string, val interface{}) error {
+	v, err := c.codec.EnCode("msgpack", val)
+	if err != nil {
+		return err
+	}
 	c.data[key] = string(v)
+	return nil
 }
 
 //GetData 获取自定义data
@@ -151,8 +155,8 @@ func (c *MyContext) GetData() map[string]string {
 }
 
 //GetDataByKey 获取自定义data值
-func (c *MyContext) GetDataByKey(key string, val interface{}) {
-	c.codec.DeCode("msgpack", []byte(c.data[key]), val)
+func (c *MyContext) GetDataByKey(key string, val interface{}) error {
+	return c.codec.DeCode("msgpack", []byte(c.data[key]), val)
 }
 
 //SetClient 设置客户端
