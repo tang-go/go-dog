@@ -36,8 +36,6 @@ func (c *Codec) DeCode(code string, buff []byte, v interface{}) error {
 		d.UseNumber()
 		return d.Decode(v)
 	default:
-		// d := msgpack.NewDecoder(bytes.NewReader(buff))
-		// d.UseNumber()
 		return msgpack.Unmarshal(buff, v)
 	}
 }

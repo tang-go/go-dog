@@ -1,9 +1,10 @@
 package interceptor
 
 import (
+	"time"
+
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/plugins"
-	"time"
 )
 
 //Interceptor 拦截器
@@ -18,12 +19,12 @@ func NewInterceptor() *Interceptor {
 
 //Request 请求
 func (t *Interceptor) Request(ctx plugins.Context, servicename, method string, request interface{}) {
-	ctx.SetData("Request-Time", time.Now())
+	ctx.SetShare("Request-Time", time.Now())
 }
 
 //Respone 响应
 func (t *Interceptor) Respone(ctx plugins.Context, servicename, method string, respone interface{}, err error) {
-	start := ctx.GetDataByKey("Request-Time")
+	start := ctx.GetShareByKey("Request-Time")
 	tm, ok := start.(time.Time)
 	if !ok {
 		log.Errorln(start)

@@ -4,12 +4,14 @@ import (
 	base "context"
 	"time"
 
+	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/plugins"
 )
 
 //MyContext 自定义context
 type MyContext struct {
 	base.Context
+	codec   plugins.Codec
 	ttl     int64
 	timeout int64
 	traceID string
@@ -20,15 +22,16 @@ type MyContext struct {
 	url     string
 	cancel  base.CancelFunc
 	client  plugins.Client
-	data    map[string]interface{}
+	data    map[string]string
 	share   map[string]interface{}
 }
 
 //Background 创建一个空context
 func Background() plugins.Context {
 	c := new(MyContext)
+	c.codec = codec.NewCodec()
 	c.Context = base.Background()
-	c.data = make(map[string]interface{})
+	c.data = make(map[string]string)
 	c.share = make(map[string]interface{})
 	return c
 }
@@ -138,17 +141,18 @@ func (c *MyContext) GetShareByKey(key string) interface{} {
 
 //SetData  设置自定义data
 func (c *MyContext) SetData(key string, val interface{}) {
-	c.data[key] = val
+	v, _ := c.codec.EnCode("msgpack", val)
+	c.data[key] = string(v)
 }
 
 //GetData 获取自定义data
-func (c *MyContext) GetData() map[string]interface{} {
+func (c *MyContext) GetData() map[string]string {
 	return c.data
 }
 
 //GetDataByKey 获取自定义data值
-func (c *MyContext) GetDataByKey(key string) interface{} {
-	return c.data[key]
+func (c *MyContext) GetDataByKey(key string, val interface{}) {
+	c.codec.DeCode("msgpack", []byte(c.data[key]), val)
 }
 
 //SetClient 设置客户端

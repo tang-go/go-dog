@@ -70,10 +70,10 @@ type Context interface {
 	SetData(key string, val interface{})
 
 	//GetData 获取自定义data
-	GetData() map[string]interface{}
+	GetData() map[string]string
 
 	//GetDataByKey 通过key获取自定义数据
-	GetDataByKey(string) interface{}
+	GetDataByKey(string, interface{})
 
 	//SetClient 设置客户端
 	SetClient(cli Client)

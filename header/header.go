@@ -14,7 +14,7 @@ type Request struct {
 	Address string
 	Source  string
 	URL     string
-	Data    map[string]interface{}
+	Data    map[string]string
 	ID      string
 	Name    string
 	Method  string
