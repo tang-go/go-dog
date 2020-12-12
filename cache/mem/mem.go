@@ -1,4 +1,4 @@
-package redis
+package mem
 
 import (
 	"sync"

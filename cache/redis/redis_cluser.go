@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/tang-go/go-dog/cache/mem"
 )
 
 //Cluster redis集群
@@ -13,7 +14,7 @@ type Cluster struct {
 	addrs   []string
 	addr    string
 	pass    string
-	mem     *Mem
+	mem     *mem.Mem
 	clients *redis.ClusterClient
 }
 
@@ -22,7 +23,7 @@ func CreateCluster(ip []string, p string) (*Cluster, error) {
 	redisCluster := new(Cluster)
 	redisCluster.addrs = ip
 	redisCluster.pass = p
-	redisCluster.mem = NewMem()
+	redisCluster.mem = mem.NewMem()
 	return redisCluster, redisCluster.funcConnect()
 }
 
