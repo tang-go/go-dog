@@ -23,7 +23,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
 	github.com/jinzhu/gorm v1.9.16
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v1.1.9 // indirect
+	github.com/json-iterator/go v1.1.9
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
