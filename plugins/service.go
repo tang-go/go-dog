@@ -35,14 +35,8 @@ type Service interface {
 	//RegisterRPC 	注册RPC方法
 	RPC(name string, level int8, isAuth bool, explain string, fn interface{})
 
-	//POST 			注册POST方法
-	POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{})
-
-	//GET GET方法
-	GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{})
-
 	//HTTP 创建http
-	HTTP() API
+	HTTP(gate string) API
 
 	//APIRegIntercept API注册拦截器
 	APIRegIntercept(f func(url, explain string))

@@ -21,9 +21,13 @@ type GoDogDiscovery struct {
 	pos        int
 	count      int
 	close      bool
+	watchAPI   bool
+	watchRPC   bool
 	closeheart chan bool
 	apidata    map[string]*serviceinfo.APIServiceInfo
 	rpcdata    map[string]*serviceinfo.RPCServiceInfo
+	apis       map[string]*serviceinfo.ServcieAPI
+	gate       string
 	lock       sync.RWMutex
 }
 
@@ -33,32 +37,37 @@ func NewGoDogDiscovery(address []string) *GoDogDiscovery {
 		address:    address,
 		ttl:        2 * time.Second,
 		count:      len(address),
+		watchAPI:   false,
+		watchRPC:   false,
 		pos:        0,
 		close:      false,
 		closeheart: make(chan bool),
 		apidata:    make(map[string]*serviceinfo.APIServiceInfo),
 		rpcdata:    make(map[string]*serviceinfo.RPCServiceInfo),
+		apis:       make(map[string]*serviceinfo.ServcieAPI),
+		gate:       "",
 	}
-	//初始化第一个链接
-	index := rand.IntRand(0, dis.count)
-	addr := dis.address[index]
-	if err := dis._ConnectClient(addr); err != nil {
-		panic(err)
-	}
-	//等待一个心跳时间
-	time.Sleep(dis.ttl)
 	return dis
 }
 
-//Close 关闭服务
-func (d *GoDogDiscovery) Close() error {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-	d.close = true
-	if d.conn != nil {
-		return d.conn.Close()
+//WatchAPI 监听api服务--区分网关使用
+func (d *GoDogDiscovery) WatchAPI(gate string) {
+	d.watchAPI = true
+	d.gate = gate
+}
+
+//WatchRPC 监听api服务
+func (d *GoDogDiscovery) WatchRPC() {
+	d.watchRPC = true
+}
+
+//ConnectClient 建立链接
+func (d *GoDogDiscovery) ConnectClient() {
+	index := rand.IntRand(0, d.count)
+	addr := d.address[index]
+	if err := d._ConnectClient(addr); err != nil {
+		panic(err)
 	}
-	return nil
 }
 
 //GetAllAPIService 获取所有API服务
@@ -93,6 +102,23 @@ func (d *GoDogDiscovery) GetRPCServiceByName(name string) (services []*servicein
 	return
 }
 
+//GetAPIByURL 通过RUL获取API服务
+func (d *GoDogDiscovery) GetAPIByURL(url string) (*serviceinfo.ServcieAPI, bool) {
+	d.lock.RLock()
+	defer d.lock.RUnlock()
+	s, ok := d.apis[url]
+	return s, ok
+}
+
+//RangeAPI 遍历api
+func (d *GoDogDiscovery) RangeAPI(f func(url string, api *serviceinfo.ServcieAPI)) {
+	d.lock.RLock()
+	for url, api := range d.apis {
+		f(url, api)
+	}
+	d.lock.RUnlock()
+}
+
 //GetAPIServiceByName 通过名称获取API服务
 func (d *GoDogDiscovery) GetAPIServiceByName(name string) (services []*serviceinfo.APIServiceInfo) {
 	d.lock.RLock()
@@ -103,6 +129,17 @@ func (d *GoDogDiscovery) GetAPIServiceByName(name string) (services []*servicein
 	}
 	d.lock.RUnlock()
 	return
+}
+
+//Close 关闭服务
+func (d *GoDogDiscovery) Close() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	d.close = true
+	if d.conn != nil {
+		return d.conn.Close()
+	}
+	return nil
 }
 
 //_ConnectClient 建立链接
@@ -142,9 +179,13 @@ func (d *GoDogDiscovery) _ConnectClient(address string) error {
 	//开启监听
 	go d._Watch()
 	//默认监听rpc服务消息
-	d._WatchRPCService()
+	if d.watchRPC {
+		d._WatchRPCService()
+	}
 	//默认监听api服务消息
-	//d._WatchAPIService()
+	if d.watchAPI {
+		d._WatchAPIService()
+	}
 	log.Traceln("链接成功注册中心", address)
 	return nil
 }
@@ -245,15 +286,42 @@ func (d *GoDogDiscovery) _APIWatch(datas []param.Data) {
 				log.Errorln(err.Error(), data.Key, data.Value)
 				continue
 			}
+			for _, method := range info.API {
+				if method.Gate != d.gate {
+					continue
+				}
+				url := "/" + method.Path
+				if api, ok := d.apis[url]; ok {
+					api.Count++
+				} else {
+					d.apis[url] = &serviceinfo.ServcieAPI{
+						Method:  method,
+						Gate:    method.Gate,
+						Tags:    method.Group,
+						Explain: info.Explain,
+						Name:    info.Name,
+						Count:   1,
+					}
+					log.Tracef(" 上线 | %s | %s | %s ", info.Name, data.Key, url)
+				}
+			}
 			d.apidata[data.Key] = info
-			log.Tracef("api 上线 | %s | %s | %s ", info.Name, data.Key, info.Address)
 		}
 		mp[data.Key] = data.Value
 	}
 	for key, info := range d.apidata {
 		if _, ok := mp[key]; !ok {
+			for _, method := range info.API {
+				url := "/" + method.Path
+				if api, ok := d.apis[url]; ok {
+					api.Count--
+					if api.Count <= 0 {
+						delete(d.apis, url)
+						log.Tracef(" 下线 | %s | %s | %s ", info.Name, info.Key, url)
+					}
+				}
+			}
 			delete(d.apidata, key)
-			log.Tracef("api 下线 | %s | %s | %s ", info.Name, key, info.Address)
 		}
 	}
 }

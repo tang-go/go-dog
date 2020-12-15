@@ -38,6 +38,7 @@ type APIServiceInfo struct {
 
 //API 服务提供的API接口
 type API struct {
+	Gate     string                 //注册网关的名称
 	Name     string                 //方法名称
 	Group    string                 //api的分组
 	Level    int8                   //方法等级
@@ -54,4 +55,14 @@ type API struct {
 type Flusing struct {
 	ServiceKey string
 	Method     string
+}
+
+//ServcieAPI api列表
+type ServcieAPI struct {
+	Method  *API
+	Gate    string //注册网关的名称
+	Tags    string
+	Name    string
+	Explain string
+	Count   int32
 }

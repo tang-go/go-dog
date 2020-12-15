@@ -83,7 +83,7 @@ func (a *API) GET(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s._RegisterAPI(a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
+	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //POST POST路由
@@ -98,7 +98,7 @@ func (a *API) POST(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s._RegisterAPI(a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
+	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //Service 服务
@@ -239,19 +239,11 @@ func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn i
 	log.Traceln("注册RPC方法:", method.Name, "说明:", method.Explain)
 }
 
-//POST POST方法
-func (s *Service) POST(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
-	s._RegisterAPI(s.name, methodname, version, path, plugins.POST, level, isAuth, explain, fn)
-}
-
-//GET GET方法
-func (s *Service) GET(methodname, version, path string, level int8, isAuth bool, explain string, fn interface{}) {
-	s._RegisterAPI(s.name, methodname, version, path, plugins.GET, level, isAuth, explain, fn)
-}
-
 //HTTP 创建http
-func (s *Service) HTTP() plugins.API {
-	return newAPI(s, new(serviceinfo.API))
+func (s *Service) HTTP(gate string) plugins.API {
+	api := new(serviceinfo.API)
+	api.Gate = gate
+	return newAPI(s, api)
 }
 
 //APIRegIntercept API注册拦截器
@@ -260,10 +252,11 @@ func (s *Service) APIRegIntercept(f func(url, explain string)) {
 }
 
 //RegisterAPI 注册API方法--注册给网管
-func (s *Service) _RegisterAPI(group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
+func (s *Service) _RegisterAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
 	url := fmt.Sprintf("api/%s/%s/%s", s.name, version, path)
 	api := &serviceinfo.API{
+		Gate:     gate,
 		Name:     methodname,
 		Group:    group,
 		Level:    level,
