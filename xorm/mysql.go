@@ -59,7 +59,7 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 	write.SetConnMaxLifetime(time.Duration(cfg.GetWriteMysql().ConnMaxLifetime) * time.Second)
 	//设置日志
 	write.SetLogger(new(Logger))
-	write.ShowSQL(cfg.GetReadMysql().OpenLog)
+	write.ShowSQL(cfg.GetWriteMysql().OpenLog)
 	//设置规则
 	write.SetTableMapper(core.GonicMapper{})
 	write.SetColumnMapper(core.GonicMapper{})
