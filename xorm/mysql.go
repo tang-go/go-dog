@@ -35,8 +35,8 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 	//设置链接可重用时间
 	read.SetConnMaxLifetime(time.Duration(cfg.GetReadMysql().ConnMaxLifetime) * time.Second)
 	//设置日志
-	//设置日志
-	read.SetLogger(NewLogger(core.LOG_DEBUG, cfg.GetWriteMysql().OpenLog))
+	read.SetLogger(new(Logger))
+	read.ShowSQL(cfg.GetReadMysql().OpenLog)
 	//设置规则
 	read.SetTableMapper(core.GonicMapper{})
 	read.SetColumnMapper(core.GonicMapper{})
@@ -58,7 +58,8 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 	//设置链接可重用时间
 	write.SetConnMaxLifetime(time.Duration(cfg.GetWriteMysql().ConnMaxLifetime) * time.Second)
 	//设置日志
-	write.SetLogger(NewLogger(core.LOG_DEBUG, cfg.GetWriteMysql().OpenLog))
+	write.SetLogger(new(Logger))
+	write.ShowSQL(cfg.GetReadMysql().OpenLog)
 	//设置规则
 	write.SetTableMapper(core.GonicMapper{})
 	write.SetColumnMapper(core.GonicMapper{})
