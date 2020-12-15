@@ -15,6 +15,7 @@ require (
 	github.com/swaggo/gin-swagger v1.3.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e
+	xorm.io/xorm v1.0.5
 )
 
 replace google.golang.org/grpc v1.27.0 => google.golang.org/grpc v1.26.0
