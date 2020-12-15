@@ -1,4 +1,4 @@
-package mysql
+package gorm
 
 import (
 	"fmt"
