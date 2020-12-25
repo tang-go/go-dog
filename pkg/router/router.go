@@ -70,13 +70,11 @@ func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[st
 		panic("第二个返回值必须为error")
 	}
 	pointer.methods[strings.ToLower(name)] = &methodstruct{name: name, method: method, ctxType: ctxType, argType: argType}
-	index := 0
-	return pointer.analysisStruct(&index, pointer.new(argType)), pointer.analysisStruct(&index, pointer.new(replyType))
+	return pointer.analysisStruct(true, nil, pointer.new(argType)), pointer.analysisStruct(true, nil, pointer.new(replyType))
 }
 
 //analysisStruct 解析参数
-func (pointer *Router) analysisStruct(index *int, class interface{}) map[string]interface{} {
-	*index = *index + 1
+func (pointer *Router) analysisStruct(first bool, index *int, class interface{}) map[string]interface{} {
 	explain := make(map[string]interface{})
 	t := reflect.TypeOf(class)
 	if t.Kind() == reflect.Ptr {
@@ -90,21 +88,26 @@ func (pointer *Router) analysisStruct(index *int, class interface{}) map[string]
 		explain[strings.ToLower(t.Name())] = tgs
 		return explain
 	}
-
-	if *index > 4 {
-		tgs := map[string]string{
-			"type":        "object",
-			"description": t.Kind().String(),
+	//递归解析上线
+	if !first {
+		if *index > 100 {
+			tgs := map[string]string{
+				"type":        "object",
+				"description": t.Kind().String(),
+			}
+			explain[strings.ToLower(t.Name())] = tgs
+			return explain
 		}
-		explain[strings.ToLower(t.Name())] = tgs
-		return explain
+		*index = *index + 1
 	}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
+		//检测每一个字段的深度
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
 			class := pointer.new(t.Field(i).Type)
-			tg := pointer.analysisStruct(index, class)
+			index := 0
+			tg := pointer.analysisStruct(false, &index, class)
 			tgs := map[string]interface{}{
 				"type":        "object",
 				"description": t.Field(i).Tag.Get("description"),
@@ -121,7 +124,8 @@ func (pointer *Router) analysisStruct(index *int, class interface{}) map[string]
 			}
 			kind := classType.Kind()
 			if kind == reflect.Struct {
-				tg := pointer.analysisStruct(index, class)
+				index := 0
+				tg := pointer.analysisStruct(false, &index, class)
 				tgs := map[string]interface{}{
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),

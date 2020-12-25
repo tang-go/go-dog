@@ -286,13 +286,16 @@ func (d *GoDogDiscovery) _APIWatch(datas []param.Data) {
 				log.Errorln(err.Error(), data.Key, data.Value)
 				continue
 			}
+			apis := make([]*serviceinfo.API, 0)
 			for _, method := range info.API {
 				if method.Gate != d.gate {
 					continue
 				}
+				apis = append(apis, method)
 				url := "/" + method.Path
 				if api, ok := d.apis[url]; ok {
 					api.Count++
+					d.apis[url] = api
 				} else {
 					d.apis[url] = &serviceinfo.ServcieAPI{
 						Method:  method,
@@ -305,6 +308,7 @@ func (d *GoDogDiscovery) _APIWatch(datas []param.Data) {
 					log.Tracef(" 上线 | %s | %s | %s ", info.Name, data.Key, url)
 				}
 			}
+			info.API = apis
 			d.apidata[data.Key] = info
 		}
 		mp[data.Key] = data.Value

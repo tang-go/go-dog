@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/serviceinfo"
@@ -200,7 +200,7 @@ func createPOSTAPI(tags, summary, name string, isAuth bool, request, respone map
 		In:          "body",
 		Required:    true,
 	}
-	requestName := strings.Replace(tags+"."+name+"Request", "/", ".", -1)
+	requestName := strings.Replace(tags+"."+name+".post.Request", "/", ".", -1)
 	requestProperties := createDefinitions(requestName, request)
 	definitions = append(definitions, requestProperties...)
 
@@ -240,7 +240,7 @@ func createPOSTAPI(tags, summary, name string, isAuth bool, request, respone map
 	}
 	api.Post.Parameters = append(api.Post.Parameters, parameters)
 
-	responeName := strings.Replace(tags+"."+name+"Respone", "/", ".", -1)
+	responeName := strings.Replace(tags+"."+name+".post.Respone", "/", ".", -1)
 	responeProperties := createDefinitions(responeName, respone)
 	definitions = append(definitions, responeProperties...)
 
@@ -305,7 +305,7 @@ func createGETAPI(tags, summary, name string, isAuth bool, request, respone map[
 		})
 	}
 
-	responeName := strings.Replace(tags+"."+name+"Respone", "/", ".", -1)
+	responeName := strings.Replace(tags+"."+name+".get.Respone", "/", ".", -1)
 	responeProperties := createDefinitions(responeName, respone)
 	definitions = append(definitions, responeProperties...)
 
