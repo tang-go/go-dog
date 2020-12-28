@@ -13,6 +13,7 @@ import (
 
 	customerror "github.com/tang-go/go-dog/error"
 	"github.com/tang-go/go-dog/header"
+	"github.com/tang-go/go-dog/jaeger"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/pkg/client"
 	"github.com/tang-go/go-dog/pkg/codec"
@@ -190,6 +191,10 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 		//默认限流插件
 		service.limit = limit.NewLimit(_MaxServiceRequestCount)
 	}
+	if service.interceptor == nil {
+		//链路追踪插件
+		service.interceptor = jaeger.NewJaeger(name, service.cfg)
+	}
 	if service.client == nil {
 		//默认客户端
 		if service.discovery != nil {
@@ -361,7 +366,7 @@ func (s *Service) _Log(address, name, method string, respone *header.Response) f
 	start := time.Now()
 	return func() {
 		if respone.Error != nil {
-			log.Tracef("| %s | %s | %13v | %s | %s ",
+			log.Infof("| %s | %s | %13v | %s | %s ",
 				address,
 				respone.Error.Error(),
 				time.Now().Sub(start),
@@ -369,7 +374,7 @@ func (s *Service) _Log(address, name, method string, respone *header.Response) f
 				method,
 			)
 		} else {
-			log.Tracef("| %s | %s | %13v | %s | %s ",
+			log.Infof("| %s | %s | %13v | %s | %s ",
 				address,
 				"成功",
 				time.Now().Sub(start),
@@ -391,7 +396,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			rep.Method = req.Method
 			rep.Name = req.Name
 			rep.Code = req.Code
-			if s.GetCfg().GetRunmode() == "trace" {
+			if s.GetCfg().GetRunmode() == "trace" || s.GetCfg().GetRunmode() == "debug" || s.GetCfg().GetRunmode() == "info" {
 				defer s._Log(req.Address, req.Name, req.Method, rep)()
 			}
 			//服务器关闭了 直接关闭
@@ -476,4 +481,5 @@ func (s *Service) Close() {
 	s.register.Cancellation()
 	s.limit.Close()
 	s.client.Close()
+	s.interceptor.Close()
 }

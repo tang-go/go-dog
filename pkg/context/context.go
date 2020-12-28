@@ -169,7 +169,7 @@ func (c *MyContext) GetData() map[string][]byte {
 func (c *MyContext) GetDataByKey(key string, val interface{}) error {
 	v, ok := c.data[key]
 	if ok {
-		return c.codec.DeCode("msgpack", []byte(v), val)
+		return c.codec.DeCode("msgpack", v, val)
 	}
 	return errors.New("no this key")
 }

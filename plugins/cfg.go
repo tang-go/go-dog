@@ -45,4 +45,7 @@ type Cfg interface {
 
 	//GetRunmode 获取runmode地址配置
 	GetRunmode() string
+
+	//GetJaeger 获取链路追踪地址
+	GetJaeger() string
 }

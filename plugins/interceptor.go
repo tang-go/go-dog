@@ -7,4 +7,7 @@ type Interceptor interface {
 
 	//Respone 响应
 	Respone(ctx Context, servicename, method string, respone interface{}, err error)
+
+	//Close 关闭
+	Close() error
 }

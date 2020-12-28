@@ -146,6 +146,11 @@ func (c *Config) GetRunmode() string {
 	return c.Runmode
 }
 
+//GetJaeger 获取链路追踪地址
+func (c *Config) GetJaeger() string {
+	return c.Jaeger
+}
+
 //NewConfig 初始化Config
 func NewConfig() *Config {
 	c := new(Config)
