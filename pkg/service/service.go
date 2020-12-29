@@ -133,7 +133,7 @@ type Service struct {
 	//退出信号
 	close int32
 	//api注册拦截器
-	apiRegIntercept func(url string, explain string)
+	apiRegIntercept func(gate, group, url string, level int8, isAuth bool, explain string)
 	//等待
 	wait sync.WaitGroup
 }
@@ -252,7 +252,7 @@ func (s *Service) HTTP(gate string) plugins.API {
 }
 
 //APIRegIntercept API注册拦截器
-func (s *Service) APIRegIntercept(f func(url, explain string)) {
+func (s *Service) APIRegIntercept(f func(gate, group, url string, level int8, isAuth bool, explain string)) {
 	s.apiRegIntercept = f
 }
 
@@ -287,7 +287,7 @@ func (s *Service) _RegisterAPI(gate, group, methodname, version, path string, ki
 		s.authMethod[strings.ToLower(methodname)] = methodname
 	}
 	if s.apiRegIntercept != nil {
-		s.apiRegIntercept(url, explain)
+		s.apiRegIntercept(gate, group, url, level, isAuth, explain)
 	}
 	log.Tracef("注册API接口:%s,路由:%s", api.Name, api.Path)
 }

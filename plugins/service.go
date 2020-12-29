@@ -39,7 +39,7 @@ type Service interface {
 	HTTP(gate string) API
 
 	//APIRegIntercept API注册拦截器
-	APIRegIntercept(f func(url, explain string))
+	APIRegIntercept(f func(gate, group, url string, level int8, isAuth bool, explain string))
 
 	//Run 启动服务
 	Run() error
