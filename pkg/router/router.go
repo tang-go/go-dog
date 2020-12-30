@@ -90,7 +90,7 @@ func (pointer *Router) analysisStruct(first bool, index *int, class interface{})
 	}
 	//递归解析上线
 	if !first {
-		if *index > 100 {
+		if *index > 10 {
 			tgs := map[string]string{
 				"type":        "object",
 				"description": t.Kind().String(),
