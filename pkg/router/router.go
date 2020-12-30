@@ -70,11 +70,11 @@ func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[st
 		panic("第二个返回值必须为error")
 	}
 	pointer.methods[strings.ToLower(name)] = &methodstruct{name: name, method: method, ctxType: ctxType, argType: argType}
-	return pointer.analysisStruct(true, nil, pointer.new(argType)), pointer.analysisStruct(true, nil, pointer.new(replyType))
+	return pointer.analysisStruct(nil, "", pointer.new(argType)), pointer.analysisStruct(nil, "", pointer.new(replyType))
 }
 
 //analysisStruct 解析参数
-func (pointer *Router) analysisStruct(first bool, index *int, class interface{}) map[string]interface{} {
+func (pointer *Router) analysisStruct(index *int, name string, class interface{}) map[string]interface{} {
 	explain := make(map[string]interface{})
 	t := reflect.TypeOf(class)
 	if t.Kind() == reflect.Ptr {
@@ -88,26 +88,17 @@ func (pointer *Router) analysisStruct(first bool, index *int, class interface{})
 		explain[strings.ToLower(t.Name())] = tgs
 		return explain
 	}
-	//递归解析上线
-	if !first {
-		if *index > 10 {
-			tgs := map[string]string{
-				"type":        "object",
-				"description": t.Kind().String(),
-			}
-			explain[strings.ToLower(t.Name())] = tgs
-			return explain
-		}
-		*index = *index + 1
-	}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
 		//检测每一个字段的深度
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
 			class := pointer.new(t.Field(i).Type)
-			index := 0
-			tg := pointer.analysisStruct(false, &index, class)
+			if index == nil {
+				i := 0
+				index = &i
+			}
+			tg := pointer.analysisStruct(index, "", class)
 			tgs := map[string]interface{}{
 				"type":        "object",
 				"description": t.Field(i).Tag.Get("description"),
@@ -124,14 +115,26 @@ func (pointer *Router) analysisStruct(first bool, index *int, class interface{})
 			}
 			kind := classType.Kind()
 			if kind == reflect.Struct {
-				index := 0
-				tg := pointer.analysisStruct(false, &index, class)
+				if index == nil {
+					i := 0
+					index = &i
+				}
+				tg := make(map[string]interface{})
+				if classType.Name() == name {
+					*index = *index + 1
+					if *index < 2 {
+						tg = pointer.analysisStruct(index, classType.Name(), class)
+					}
+				} else {
+					tg = pointer.analysisStruct(index, classType.Name(), class)
+				}
 				tgs := map[string]interface{}{
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       tg,
 				}
 				explain[t.Field(i).Tag.Get("json")] = tgs
+
 			} else {
 				tgs := map[string]interface{}{
 					"type":        "array",
