@@ -180,16 +180,13 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
 		return
 	}
-
 	timeoutstr := c.Request.Header.Get("TimeOut")
 	if timeoutstr == "" {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout不能为空"))
-		return
+		timeoutstr = "6"
 	}
 	timeout, err := strconv.Atoi(timeoutstr)
 	if err != nil {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
-		return
+		timeout = 6
 	}
 	if timeout <= 0 {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout必须大于0"))
@@ -197,17 +194,15 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	}
 	istest := c.Request.Header.Get("IsTest")
 	if istest == "" {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "istest不能为空"))
-		return
+		istest = "false"
+	}
+	isTest, err := strconv.ParseBool(istest)
+	if err != nil {
+		isTest = false
 	}
 	traceID := c.Request.Header.Get("TraceID")
 	if traceID == "" {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
-		return
-	}
-	isTest, err := strconv.ParseBool(istest)
-	if err != nil {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
 	}
 
@@ -322,13 +317,11 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	}
 	timeoutstr := c.Request.Header.Get("TimeOut")
 	if timeoutstr == "" {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout不能为空"))
-		return
+		timeoutstr = "6"
 	}
 	timeout, err := strconv.Atoi(timeoutstr)
 	if err != nil {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
-		return
+		timeout = 6
 	}
 	if timeout <= 0 {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout必须大于0"))
@@ -336,17 +329,15 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	}
 	istest := c.Request.Header.Get("IsTest")
 	if istest == "" {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "istest不能为空"))
-		return
+		istest = "false"
+	}
+	isTest, err := strconv.ParseBool(istest)
+	if err != nil {
+		isTest = false
 	}
 	traceID := c.Request.Header.Get("TraceID")
 	if traceID == "" {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
-		return
-	}
-	isTest, err := strconv.ParseBool(istest)
-	if err != nil {
-		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
 	}
 
