@@ -211,7 +211,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		data := c.Query(key)
 		if data == "" {
 			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("参数%s不正确", key)))
-			return
+			continue
 		}
 		vali, ok := value.(map[string]interface{})
 		if !ok {
