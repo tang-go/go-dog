@@ -209,7 +209,6 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	for key, value := range apiservice.Method.Request {
 		data := c.Query(key)
 		if data == "" {
-			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("参数%s不正确", key)))
 			continue
 		}
 		vali, ok := value.(map[string]interface{})
@@ -726,13 +725,20 @@ func createGETAPI(tags, summary, name string, isAuth bool, request, respone map[
 		if vali, ok := value.(map[string]interface{}); ok {
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]
+			re, ok3 := vali["requide"]
+			required := false
+			if ok3 {
+				if re == "true" {
+					required = true
+				}
+			}
 			if ok1 == true && ok2 == true {
 				api.Get.Parameters = append(api.Get.Parameters, Parameters{
 					Type:        t(tp.(string)),
 					Description: des.(string),
 					Name:        key,
 					In:          "query",
-					Required:    false,
+					Required:    required,
 				})
 			}
 		}

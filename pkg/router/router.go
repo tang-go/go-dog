@@ -84,6 +84,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 		tgs := map[string]string{
 			"type":        t.Kind().String(),
 			"description": t.Kind().String(),
+			"requide":     "false",
 		}
 		explain[strings.ToLower(t.Name())] = tgs
 		return explain
@@ -103,6 +104,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 				"type":        "object",
 				"description": t.Field(i).Tag.Get("description"),
 				"object":      tg,
+				"requide":     t.Field(i).Tag.Get("requide"),
 			}
 			explain[t.Field(i).Tag.Get("json")] = tgs
 			continue
@@ -132,6 +134,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       tg,
+					"requide":     t.Field(i).Tag.Get("requide"),
 				}
 				explain[t.Field(i).Tag.Get("json")] = tgs
 
@@ -140,6 +143,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       kind.String(),
+					"requide":     t.Field(i).Tag.Get("requide"),
 				}
 				explain[t.Field(i).Tag.Get("json")] = tgs
 			}
@@ -148,6 +152,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 		tgs := map[string]string{
 			"type":        t.Field(i).Tag.Get("type"),
 			"description": t.Field(i).Tag.Get("description"),
+			"requide":     t.Field(i).Tag.Get("requide"),
 		}
 		explain[t.Field(i).Tag.Get("json")] = tgs
 	}
