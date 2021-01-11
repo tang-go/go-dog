@@ -205,7 +205,6 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
 		return
 	}
-
 	p := make(map[string]interface{})
 	for key, value := range apiservice.Method.Request {
 		data := c.Query(key)
