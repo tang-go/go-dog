@@ -207,19 +207,30 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	}
 	p := make(map[string]interface{})
 	for key, value := range apiservice.Method.Request {
-		data := c.Query(key)
-		if data == "" {
-			continue
-		}
 		vali, ok := value.(map[string]interface{})
 		if !ok {
-			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("参数%v类型不正确", value)))
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("定义参数参数%v类型错误", value)))
 			return
 		}
 		tp, ok2 := vali["type"].(string)
 		if !ok2 {
-			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("参数%v类型不是string", vali["type"])))
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("定义参数参数%v类型错误", value)))
 			return
+		}
+		re, ok3 := vali["requide"]
+		required := false
+		if ok3 {
+			if re == "true" {
+				required = true
+			}
+		}
+		data := c.Query(key)
+		if data == "" {
+			if required {
+				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("参数%s必须传入", key)))
+				return
+			}
+			continue
 		}
 		v, err := transformation(tp, data)
 		if err != nil {
