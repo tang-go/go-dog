@@ -733,7 +733,7 @@ func createGETAPI(tags, summary, name string, isAuth bool, request, respone map[
 					Description: des.(string),
 					Name:        key,
 					In:          "query",
-					Required:    true,
+					Required:    false,
 				})
 			}
 		}
