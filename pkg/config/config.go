@@ -193,6 +193,7 @@ func NewConfig() *Config {
 			c.Host = host.String()
 		}
 	}
+
 	//先看环境变量是否有端口号
 	port := os.Getenv("PORT")
 	if port != "" {
@@ -209,6 +210,148 @@ func NewConfig() *Config {
 		}
 		c.Port = p
 	}
+	//Discovery 服务发现
+	discovery := os.Getenv("DISCOVERY")
+	if discovery != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(discovery), &array); err != nil {
+			c.Discovery = array
+		}
+	}
+	//Redis地址
+	redis := os.Getenv("REDIS")
+	if redis != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(redis), &array); err != nil {
+			c.Redis = array
+		}
+	}
+	//Etcd地址
+	etcd := os.Getenv("ETCD")
+	if etcd != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(etcd), &array); err != nil {
+			c.Etcd = array
+		}
+	}
+	//Kafka地址
+	kafka := os.Getenv("KAFKA")
+	if kafka != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(kafka), &array); err != nil {
+			c.Kafka = array
+		}
+	}
+	//Nats地址
+	nats := os.Getenv("NATS")
+	if nats != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(nats), &array); err != nil {
+			c.Nats = array
+		}
+	}
+	//RocketMq地址
+	rocketMq := os.Getenv("ROCKETMQ")
+	if rocketMq != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(rocketMq), &array); err != nil {
+			c.RocketMq = array
+		}
+	}
+	//nsq地址
+	nsq := os.Getenv("NSQ")
+	if nsq != "" {
+		var array []string
+		if err := json.Unmarshal([]byte(nsq), &array); err != nil {
+			c.Nsq = array
+		}
+	}
+	//Jaeger 链路追踪地址
+	jaeger := os.Getenv("JAEGER")
+	if jaeger != "" {
+		c.Jaeger = jaeger
+	}
+	//读数据库
+	{
+		readMysqlIP := os.Getenv("READ_MYSQL_IP")
+		if readMysqlIP != "" {
+			c.ReadMysql.DbIP = readMysqlIP
+		}
+		readMysqlPwd := os.Getenv("READ_MYSQL_PWD")
+		if readMysqlPwd != "" {
+			c.ReadMysql.DbPWd = readMysqlPwd
+		}
+		readMysqlName := os.Getenv("READ_MYSQL_NAME")
+		if readMysqlName != "" {
+			c.ReadMysql.DbName = readMysqlName
+		}
+		readMysqlUser := os.Getenv("READ_MYSQL_USER")
+		if readMysqlUser != "" {
+			c.ReadMysql.DbUser = readMysqlUser
+		}
+		readMysqlMaxIdleConns := os.Getenv("READ_MYSQL_MAX_IDLE")
+		if readMysqlMaxIdleConns != "" {
+			maxIdleConns, err := strconv.Atoi(readMysqlMaxIdleConns)
+			if err != nil {
+				c.ReadMysql.MaxIdleConns = maxIdleConns
+			}
+		}
+		readMysqlMaxOpenConns := os.Getenv("READ_MYSQL_MAX_OPEN")
+		if readMysqlMaxOpenConns != "" {
+			maxOpenConns, err := strconv.Atoi(readMysqlMaxOpenConns)
+			if err != nil {
+				c.ReadMysql.MaxOpenConns = maxOpenConns
+			}
+		}
+		readMysqlOpenLog := os.Getenv("READ_MYSQL_OPEN_LOG")
+		if readMysqlOpenLog != "" {
+			openLog, err := strconv.ParseBool(readMysqlOpenLog)
+			if err != nil {
+				c.ReadMysql.OpenLog = openLog
+			}
+		}
+	}
+	//写数据库
+	{
+		writeMysqlIP := os.Getenv("WRITE_MYSQL_IP")
+		if writeMysqlIP != "" {
+			c.WriteMysql.DbIP = writeMysqlIP
+		}
+		writeMysqlPwd := os.Getenv("WRITE_MYSQL_PWD")
+		if writeMysqlPwd != "" {
+			c.WriteMysql.DbPWd = writeMysqlPwd
+		}
+		writeMysqlName := os.Getenv("WRITE_MYSQL_NAME")
+		if writeMysqlName != "" {
+			c.WriteMysql.DbName = writeMysqlName
+		}
+		writeMysqlUser := os.Getenv("WRITE_MYSQL_USER")
+		if writeMysqlUser != "" {
+			c.WriteMysql.DbUser = writeMysqlUser
+		}
+		writeMysqlMaxIdleConns := os.Getenv("WRITE_MYSQL_MAX_IDLE")
+		if writeMysqlMaxIdleConns != "" {
+			maxIdleConns, err := strconv.Atoi(writeMysqlMaxIdleConns)
+			if err != nil {
+				c.WriteMysql.MaxIdleConns = maxIdleConns
+			}
+		}
+		writeMysqlMaxOpenConns := os.Getenv("WRITE_MYSQL_MAX_OPEN")
+		if writeMysqlMaxOpenConns != "" {
+			maxOpenConns, err := strconv.Atoi(writeMysqlMaxOpenConns)
+			if err != nil {
+				c.WriteMysql.MaxOpenConns = maxOpenConns
+			}
+		}
+		writeMysqlOpenLog := os.Getenv("WRITE_MYSQL_OPEN_LOG")
+		if writeMysqlOpenLog != "" {
+			openLog, err := strconv.ParseBool(writeMysqlOpenLog)
+			if err != nil {
+				c.WriteMysql.OpenLog = openLog
+			}
+		}
+	}
+
 	//设置运行模式
 	runmode := os.Getenv("RUNMODE")
 	if runmode != "" {
