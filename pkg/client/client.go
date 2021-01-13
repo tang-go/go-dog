@@ -87,6 +87,7 @@ func NewClient(param ...interface{}) plugins.Client {
 		client.codec = codec.NewCodec()
 	}
 	client.managerclient = NewManagerClient(client.codec)
+	time.Sleep(2 * time.Second)
 	return client
 }
 
