@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/tang-go/go-dog/lib/net"
 	"github.com/tang-go/go-dog/log"
@@ -214,64 +215,43 @@ func NewConfig() *Config {
 	//Discovery 服务发现
 	discovery := os.Getenv("DISCOVERY")
 	if discovery != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(discovery), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(discovery, ",")
 		c.Discovery = array
 	}
 	//Redis地址
 	redis := os.Getenv("REDIS")
 	if redis != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(redis), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(redis, ",")
 		c.Redis = array
 	}
 	//Etcd地址
 	etcd := os.Getenv("ETCD")
 	if etcd != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(etcd), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(etcd, ",")
 		c.Etcd = array
 	}
 	//Kafka地址
 	kafka := os.Getenv("KAFKA")
 	if kafka != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(kafka), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(kafka, ",")
 		c.Kafka = array
 	}
 	//Nats地址
 	nats := os.Getenv("NATS")
 	if nats != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(nats), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(nats, ",")
 		c.Nats = array
 	}
 	//RocketMq地址
 	rocketMq := os.Getenv("ROCKETMQ")
 	if rocketMq != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(rocketMq), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(rocketMq, ",")
 		c.RocketMq = array
 	}
 	//nsq地址
 	nsq := os.Getenv("NSQ")
 	if nsq != "" {
-		var array []string
-		if err := json.Unmarshal([]byte(nsq), &array); err != nil {
-			panic(err)
-		}
+		array := strings.Split(nsq, ",")
 		c.Nsq = array
 	}
 	//Jaeger 链路追踪地址
