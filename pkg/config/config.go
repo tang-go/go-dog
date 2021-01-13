@@ -199,8 +199,9 @@ func NewConfig() *Config {
 	if port != "" {
 		p, err := strconv.Atoi(port)
 		if err != nil {
-			c.Port = p
+			panic(err.Error())
 		}
+		c.Port = p
 	}
 	if c.Port <= 0 {
 		//获取随机端口
@@ -215,56 +216,63 @@ func NewConfig() *Config {
 	if discovery != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(discovery), &array); err != nil {
-			c.Discovery = array
+			panic(err)
 		}
+		c.Discovery = array
 	}
 	//Redis地址
 	redis := os.Getenv("REDIS")
 	if redis != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(redis), &array); err != nil {
-			c.Redis = array
+			panic(err)
 		}
+		c.Redis = array
 	}
 	//Etcd地址
 	etcd := os.Getenv("ETCD")
 	if etcd != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(etcd), &array); err != nil {
-			c.Etcd = array
+			panic(err)
 		}
+		c.Etcd = array
 	}
 	//Kafka地址
 	kafka := os.Getenv("KAFKA")
 	if kafka != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(kafka), &array); err != nil {
-			c.Kafka = array
+			panic(err)
 		}
+		c.Kafka = array
 	}
 	//Nats地址
 	nats := os.Getenv("NATS")
 	if nats != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(nats), &array); err != nil {
-			c.Nats = array
+			panic(err)
 		}
+		c.Nats = array
 	}
 	//RocketMq地址
 	rocketMq := os.Getenv("ROCKETMQ")
 	if rocketMq != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(rocketMq), &array); err != nil {
-			c.RocketMq = array
+			panic(err)
 		}
+		c.RocketMq = array
 	}
 	//nsq地址
 	nsq := os.Getenv("NSQ")
 	if nsq != "" {
 		var array []string
 		if err := json.Unmarshal([]byte(nsq), &array); err != nil {
-			c.Nsq = array
+			panic(err)
 		}
+		c.Nsq = array
 	}
 	//Jaeger 链路追踪地址
 	jaeger := os.Getenv("JAEGER")
@@ -293,22 +301,25 @@ func NewConfig() *Config {
 		if readMysqlMaxIdleConns != "" {
 			maxIdleConns, err := strconv.Atoi(readMysqlMaxIdleConns)
 			if err != nil {
-				c.ReadMysql.MaxIdleConns = maxIdleConns
+				panic(err)
 			}
+			c.ReadMysql.MaxIdleConns = maxIdleConns
 		}
 		readMysqlMaxOpenConns := os.Getenv("READ_MYSQL_MAX_OPEN")
 		if readMysqlMaxOpenConns != "" {
 			maxOpenConns, err := strconv.Atoi(readMysqlMaxOpenConns)
 			if err != nil {
-				c.ReadMysql.MaxOpenConns = maxOpenConns
+				panic(err)
 			}
+			c.ReadMysql.MaxOpenConns = maxOpenConns
 		}
 		readMysqlOpenLog := os.Getenv("READ_MYSQL_OPEN_LOG")
 		if readMysqlOpenLog != "" {
 			openLog, err := strconv.ParseBool(readMysqlOpenLog)
 			if err != nil {
-				c.ReadMysql.OpenLog = openLog
+				panic(err)
 			}
+			c.ReadMysql.OpenLog = openLog
 		}
 	}
 	//写数据库
@@ -333,22 +344,25 @@ func NewConfig() *Config {
 		if writeMysqlMaxIdleConns != "" {
 			maxIdleConns, err := strconv.Atoi(writeMysqlMaxIdleConns)
 			if err != nil {
-				c.WriteMysql.MaxIdleConns = maxIdleConns
+				panic(err)
 			}
+			c.WriteMysql.MaxIdleConns = maxIdleConns
 		}
 		writeMysqlMaxOpenConns := os.Getenv("WRITE_MYSQL_MAX_OPEN")
 		if writeMysqlMaxOpenConns != "" {
 			maxOpenConns, err := strconv.Atoi(writeMysqlMaxOpenConns)
 			if err != nil {
-				c.WriteMysql.MaxOpenConns = maxOpenConns
+				panic(err)
 			}
+			c.WriteMysql.MaxOpenConns = maxOpenConns
 		}
 		writeMysqlOpenLog := os.Getenv("WRITE_MYSQL_OPEN_LOG")
 		if writeMysqlOpenLog != "" {
 			openLog, err := strconv.ParseBool(writeMysqlOpenLog)
 			if err != nil {
-				c.WriteMysql.OpenLog = openLog
+				panic(err)
 			}
+			c.WriteMysql.OpenLog = openLog
 		}
 	}
 
