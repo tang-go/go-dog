@@ -29,11 +29,17 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 		panic("connect to mysql error:" + err.Error())
 	}
 	//设置最大空闲连接数
-	read.SetMaxIdleConns(cfg.GetReadMysql().MaxIdleConns)
+	if cfg.GetReadMysql().MaxIdleConns > 0 {
+		read.SetMaxIdleConns(cfg.GetReadMysql().MaxIdleConns)
+	}
 	//设置数据库最大打开连接数
-	read.SetMaxOpenConns(cfg.GetReadMysql().MaxOpenConns)
+	if cfg.GetReadMysql().MaxOpenConns > 0 {
+		read.SetMaxOpenConns(cfg.GetReadMysql().MaxOpenConns)
+	}
 	//设置链接可重用时间
-	read.SetConnMaxLifetime(time.Duration(cfg.GetReadMysql().ConnMaxLifetime) * time.Second)
+	if cfg.GetReadMysql().ConnMaxLifetime > 0 {
+		read.SetConnMaxLifetime(time.Duration(cfg.GetReadMysql().ConnMaxLifetime) * time.Second)
+	}
 	//设置日志
 	read.SetLogger(new(Logger))
 	read.ShowSQL(cfg.GetReadMysql().OpenLog)
@@ -52,11 +58,17 @@ func NewMysql(cfg plugins.Cfg) *Mysql {
 		panic("connect to mysql error:" + err.Error())
 	}
 	//设置最大空闲连接数
-	write.SetMaxIdleConns(cfg.GetWriteMysql().MaxIdleConns)
+	if cfg.GetWriteMysql().MaxIdleConns > 0 {
+		write.SetMaxIdleConns(cfg.GetWriteMysql().MaxIdleConns)
+	}
 	//设置数据库最大打开连接数
-	write.SetMaxOpenConns(cfg.GetWriteMysql().MaxOpenConns)
+	if cfg.GetWriteMysql().MaxOpenConns > 0 {
+		write.SetMaxOpenConns(cfg.GetWriteMysql().MaxOpenConns)
+	}
 	//设置链接可重用时间
-	write.SetConnMaxLifetime(time.Duration(cfg.GetWriteMysql().ConnMaxLifetime) * time.Second)
+	if cfg.GetWriteMysql().ConnMaxLifetime > 0 {
+		write.SetConnMaxLifetime(time.Duration(cfg.GetWriteMysql().ConnMaxLifetime) * time.Second)
+	}
 	//设置日志
 	write.SetLogger(new(Logger))
 	write.ShowSQL(cfg.GetWriteMysql().OpenLog)
