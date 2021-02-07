@@ -265,7 +265,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		//验证权限
 		if g.authfunc != nil {
 			if err := g.authfunc(g.GetClient(), ctx, token, url); err != nil {
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不正确"))
 				return
 			}
@@ -277,7 +277,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	if g.getRequestIntercept != nil {
 		if reposne, ok, err := g.getRequestIntercept(ctx, url, body); ok {
 			if err != nil {
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 				return
 			}
@@ -380,7 +380,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 		//验证权限
 		if g.authfunc != nil {
 			if err := g.authfunc(g.GetClient(), ctx, token, url); err != nil {
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不正确"))
 				return
 			}
@@ -392,7 +392,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	if g.postRequestIntercept != nil {
 		if reposne, ok, err := g.postRequestIntercept(ctx, url, body); ok {
 			if err != nil {
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 				return
 			}
@@ -947,12 +947,12 @@ func (g *Gateway) ReadDoc() string {
 		},
 	}).Parse(docs)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return docs
 	}
 	var tpl bytes.Buffer
 	if err := t.Execute(&tpl, SwaggerInfo); err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return docs
 	}
 	return tpl.String()

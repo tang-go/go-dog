@@ -139,12 +139,12 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	case plugins.RandomMode:
 		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
@@ -154,7 +154,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		err = client.Call(ctx, name, method, args, reply)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return err
 		}
@@ -165,7 +165,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.fusing.AddError(service.Key, err)
 				return false
 			}
@@ -174,7 +174,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			err = client.Call(ctx, name, method, args, reply)
 			if err != nil {
 				//添加错误
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				e = err
 				return false
@@ -186,12 +186,12 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	case plugins.HashMode:
 		service, err := c.selector.HashMode(c.discovery, c.fusing, name, method)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
@@ -210,12 +210,12 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	default:
 		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			return err
 		}
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
@@ -246,12 +246,12 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	case plugins.RandomMode:
 		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return nil, customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
@@ -274,7 +274,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.fusing.AddError(service.Key, err)
 				return false
 			}
@@ -299,7 +299,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		}
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return nil, customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
@@ -318,12 +318,12 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	default:
 		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			return nil, err
 		}
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return nil, customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 		}
@@ -354,7 +354,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
 			e = err
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddError(service.Key, err)
 			return false
 		}
@@ -371,7 +371,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		return false
 	})
 	if e != nil {
-		log.Errorln(e.Error())
+		log.Traceln(e.Error())
 	}
 	return e
 }
@@ -387,13 +387,13 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 
 	service, err := c.selector.GetByAddress(c.discovery, address, c.fusing, name, method)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	ctx.SetSource(fmt.Sprintf("%s:%d", c.cfg.GetHost(), c.cfg.GetPort()))
 	client, err := c.managerclient.GetClient(service)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		c.fusing.AddError(service.Key, err)
 		return customerror.EnCodeError(customerror.InternalServerError, "建立链接失败")
 	}

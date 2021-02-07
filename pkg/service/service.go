@@ -354,7 +354,7 @@ func (s *Service) _Run() error {
 		}
 		conn, err := l.Accept()
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			continue
 		}
 		go s._ServeConn(conn)

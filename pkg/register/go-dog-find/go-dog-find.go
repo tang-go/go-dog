@@ -68,13 +68,13 @@ func (d *GoDogRegister) _ConnectClient(address string) error {
 	buff, err := login.EnCode(login)
 	if err != nil {
 		conn.Close()
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	if err := d._SendMsg(conn, param.Login, buff); err != nil {
 		//断线开启重新链接
 		conn.Close()
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	d.conn = conn
@@ -90,11 +90,11 @@ func (d *GoDogRegister) _SendMsg(conn net.Conn, cmd int8, buff []byte) error {
 	event.Data = buff
 	data, err := event.EnCode(event)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	if _, err := io.WriteByTime(conn, data, time.Now().Add(d.ttl)); err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	return nil
@@ -114,7 +114,7 @@ func (d *GoDogRegister) _Watch() {
 		if err != nil {
 			d.closeheart <- true
 			d.conn.Close()
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			break
 		}
 	}
@@ -135,7 +135,7 @@ func (d *GoDogRegister) RegisterRPCService(ctx context.Context, info *serviceinf
 	info.Key = key
 	val, err := json.Marshal(info)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	reg := &param.RegReq{
@@ -147,11 +147,11 @@ func (d *GoDogRegister) RegisterRPCService(ctx context.Context, info *serviceinf
 	}
 	buff, err := reg.EnCode(reg)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	if err := d._SendMsg(d.conn, param.Reg, buff); err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	d.rpcinfo = info
@@ -164,7 +164,7 @@ func (d *GoDogRegister) RegisterAPIService(ctx context.Context, info *serviceinf
 	info.Key = key
 	val, err := json.Marshal(info)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	reg := &param.RegReq{
@@ -176,11 +176,11 @@ func (d *GoDogRegister) RegisterAPIService(ctx context.Context, info *serviceinf
 	}
 	buff, err := reg.EnCode(reg)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	if err := d._SendMsg(d.conn, param.Reg, buff); err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	d.apiinfo = info
@@ -197,7 +197,7 @@ func (d *GoDogRegister) _Heart() {
 			if err := d._SendMsg(d.conn, param.Heart, nil); err != nil {
 				//断线开启重新链接
 				d.conn.Close()
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 			}
 		}
 

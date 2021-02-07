@@ -163,14 +163,14 @@ func (d *GoDogDiscovery) _ConnectClient(address string) error {
 	buff, err := login.EnCode(login)
 	if err != nil {
 		conn.Close()
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	//发送消息
 	if err := d._SendMsg(conn, param.Login, buff); err != nil {
 		//断线开启重新链接
 		conn.Close()
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	d.conn = conn
@@ -197,11 +197,11 @@ func (d *GoDogDiscovery) _SendMsg(conn net.Conn, cmd int8, buff []byte) error {
 	event.Data = buff
 	data, err := event.EnCode(event)
 	if err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	if _, err := io.WriteByTime(conn, data, time.Now().Add(d.ttl)); err != nil {
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		return err
 	}
 	return nil
@@ -214,12 +214,12 @@ func (d *GoDogDiscovery) _Watch() {
 		if err != nil {
 			d.closeheart <- true
 			d.conn.Close()
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			break
 		}
 		event := new(param.Event)
 		if err := event.DeCode(buff, event); err != nil {
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			continue
 		}
 		switch event.Cmd {
@@ -227,7 +227,7 @@ func (d *GoDogDiscovery) _Watch() {
 		case param.Listen:
 			listen := new(param.ListenRes)
 			if err := listen.DeCode(event.Data, listen); err != nil {
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				continue
 			}
 			if listen.Label == param.APILabel {
@@ -258,7 +258,7 @@ func (d *GoDogDiscovery) _RPCWatch(datas []param.Data) {
 		if _, ok := d.rpcdata[data.Key]; !ok {
 			info := new(serviceinfo.RPCServiceInfo)
 			if err := json.Unmarshal([]byte(data.Value), info); err != nil {
-				log.Errorln(err.Error(), data.Key, data.Value)
+				log.Traceln(err.Error(), data.Key, data.Value)
 				continue
 			}
 			d.rpcdata[data.Key] = info
@@ -283,7 +283,7 @@ func (d *GoDogDiscovery) _APIWatch(datas []param.Data) {
 		if _, ok := d.apidata[data.Key]; !ok {
 			info := new(serviceinfo.APIServiceInfo)
 			if err := json.Unmarshal([]byte(data.Value), info); err != nil {
-				log.Errorln(err.Error(), data.Key, data.Value)
+				log.Traceln(err.Error(), data.Key, data.Value)
 				continue
 			}
 			apis := make([]*serviceinfo.API, 0)
@@ -340,7 +340,7 @@ func (d *GoDogDiscovery) _Heart() {
 			if err := d._SendMsg(d.conn, param.Heart, nil); err != nil {
 				//断线开启重新链接
 				d.conn.Close()
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 			}
 		}
 
