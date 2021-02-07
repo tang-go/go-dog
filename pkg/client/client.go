@@ -201,7 +201,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		err = client.Call(ctx, name, method, args, reply)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return err
 		}
@@ -225,7 +225,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		err = client.Call(ctx, name, method, args, reply)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return err
 		}
@@ -261,7 +261,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		res, err := client.SendRequest(ctx, name, method, code, args)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return nil, err
 		}
@@ -283,7 +283,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			res, err = client.SendRequest(ctx, name, method, code, args)
 			if err != nil {
 				//添加错误
-				log.Errorln(err.Error())
+				log.Traceln(err.Error())
 				c.fusing.AddErrorMethod(service.Key, method, err)
 				e = err
 				return false
@@ -309,7 +309,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		res, err := client.SendRequest(ctx, name, method, code, args)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return nil, err
 		}
@@ -333,7 +333,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		res, err := client.SendRequest(ctx, name, method, code, args)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			return nil, err
 		}
@@ -363,7 +363,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		err = client.Call(context.WithTimeout(ctx, int64(time.Second*5)), name, method, args, reply)
 		if err != nil {
 			//添加错误
-			log.Errorln(err.Error())
+			log.Traceln(err.Error())
 			c.fusing.AddErrorMethod(service.Key, method, err)
 			e = err
 			return false
@@ -403,7 +403,7 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 	err = client.Call(ctx, name, method, args, reply)
 	if err != nil {
 		//添加错误
-		log.Errorln(err.Error())
+		log.Traceln(err.Error())
 		c.fusing.AddErrorMethod(service.Key, method, err)
 		return err
 	}
