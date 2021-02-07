@@ -45,7 +45,7 @@ func (f *Fusing) SetFusingTTL(ttl time.Duration) {
 	f.ttl = ttl
 }
 
-//AddMethod 添加服务错误
+//AddError 添加服务错误
 func (f *Fusing) AddError(servicekey string, err error) {
 	f.lock.Lock()
 	f.err[servicekey] = err
@@ -56,19 +56,18 @@ func (f *Fusing) AddError(servicekey string, err error) {
 func (f *Fusing) AddErrorMethod(servicekey, methodname string, err error) {
 	myError := customerror.DeCodeError(err)
 	//只有系统错误才进入限流统计
-	if myError.Code != customerror.RPCNotFind &&
-		myError.Code != customerror.RequestTimeout &&
-		myError.Code != customerror.InternalServerError &&
-		myError.Code != customerror.UnknownError &&
-		myError.Code != customerror.ConnectClose &&
-		myError.Code != customerror.SeviceLimitError {
+	if myError.Code == customerror.RPCNotFind ||
+		myError.Code == customerror.RequestTimeout ||
+		myError.Code == customerror.InternalServerError ||
+		myError.Code == customerror.ConnectClose ||
+		myError.Code == customerror.SeviceLimitError {
+		f.lock.Lock()
+		if m, ok := f.methods[servicekey+"@"+methodname]; ok {
+			m.errnum++
+		}
+		f.lock.Unlock()
 		return
 	}
-	f.lock.Lock()
-	if m, ok := f.methods[servicekey+"@"+methodname]; ok {
-		m.errnum++
-	}
-	f.lock.Unlock()
 }
 
 //AddMethod 添加请求
