@@ -9,18 +9,41 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sipt/GoJsoner"
 	"github.com/tang-go/go-dog/lib/net"
 	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/nacos"
+)
 
-	"github.com/sipt/GoJsoner"
+const (
+	localModel = "local"
+	nacosModel = "nacos"
 )
 
 var (
 	configpath string
+	modle      string
 )
+
+//NacosConfig 配置
+type NacosConfig struct {
+	//命名空间 空为默认
+	Namespace string `json:"namespace"`
+	//用户名称
+	Username string `json:"username"`
+	//密码
+	Password string `json:"passwork"`
+	//关心配置的DataID
+	DataID string `json:"data_id"`
+	//关心配置的组
+	Group string `json:"group"`
+	//Nacos 地址
+	Address []nacos.Address `json:"address"`
+}
 
 func init() {
 	flag.StringVar(&configpath, "config", "./config/config.json", "config配置路径")
+	flag.StringVar(&modle, "model", "local", "loacl 本地配置中心;nacos nacos配置中心")
 }
 
 //Config 配置
@@ -29,6 +52,10 @@ type Config struct {
 	ServerName string `json:"server_name"`
 	//服务说明
 	Explain string `json:"explain"`
+	//ClusterName 集群名称
+	ClusterName string `json:"cluster_name"`
+	//GroupName 分组名称
+	GroupName string `json:"group_name"`
 	//使用端口号
 	Port int `json:"port"`
 	//Discovery 服务发现
@@ -55,6 +82,8 @@ type Config struct {
 	Host string `json:"host"`
 	//运行日志等级 panic fatal error warn info debug trace
 	Runmode string `json:"runmode"`
+	//模式
+	Model string `json:"-"`
 }
 
 //MysqlCfg mysql配置
@@ -75,6 +104,16 @@ type MysqlCfg struct {
 	ConnMaxLifetime int `json:"conn_max_lifetime"`
 	//日志开关
 	OpenLog bool `json:"open_log"`
+}
+
+//GetClusterName 获取集群名称
+func (c *Config) GetClusterName() string {
+	return c.ClusterName
+}
+
+//GetGroupName 获取分组名称
+func (c *Config) GetGroupName() string {
+	return c.GroupName
 }
 
 //GetServerName 获取服务名称
@@ -152,26 +191,68 @@ func (c *Config) GetJaeger() string {
 	return c.Jaeger
 }
 
+//GetModel 获取模式
+func (c *Config) GetModel() string {
+	return c.Model
+}
+
 //NewConfig 初始化Config
 func NewConfig() *Config {
-	c := new(Config)
 	//从文件读取json文件并且解析
 	flag.Parse()
-	s := os.Getenv("config")
-	if s == "" {
-		gameConfigData, err := ioutil.ReadFile(configpath)
-		if err != nil {
-			panic(err.Error())
+	c := new(Config)
+	c.Model = modle
+	//走nacos配置中心
+	if modle == nacosModel {
+		//初始化naocs
+		s := os.Getenv("config")
+		nacosConfig := new(NacosConfig)
+		if s == "" {
+			configData, err := ioutil.ReadFile(configpath)
+			if err != nil {
+				panic(err.Error())
+			}
+			configResult, err := GoJsoner.Discard(string(configData))
+			if err != nil {
+				panic(err.Error())
+			}
+			err = json.Unmarshal([]byte(configResult), nacosConfig)
+			if err != nil {
+				panic(err.Error())
+			}
+		} else {
+			configResult, err := GoJsoner.Discard(s)
+			if err != nil {
+				panic(err.Error())
+			}
+			err = json.Unmarshal([]byte(configResult), nacosConfig)
+			if err != nil {
+				panic(err.Error())
+			}
 		}
-		gameConfigResult, err := GoJsoner.Discard(string(gameConfigData))
-		if err != nil {
-			panic(err.Error())
+		if namespace := os.Getenv("NAMESPACE"); namespace != "" {
+			nacosConfig.Namespace = namespace
 		}
-		err = json.Unmarshal([]byte(gameConfigResult), c)
-		if err != nil {
-			panic(err.Error())
+		if username := os.Getenv("USERNAME"); username != "" {
+			nacosConfig.Username = username
 		}
-	} else {
+		if password := os.Getenv("PASSWORK"); password != "" {
+			nacosConfig.Password = password
+		}
+		if dataID := os.Getenv("DATA_ID"); dataID != "" {
+			nacosConfig.DataID = dataID
+		}
+		if group := os.Getenv("GROUP"); group != "" {
+			nacosConfig.Group = group
+		}
+		//初始化nacos
+		nacos.Init(nacosConfig.Namespace, nacosConfig.Username, nacosConfig.Password, nacosConfig.Address)
+		//初始化配置
+		s, err := nacos.GetConfig().GetConfig(nacosConfig.DataID, nacosConfig.Group)
+		if err != nil {
+			panic(err)
+		}
+		//解析配置
 		gameConfigResult, err := GoJsoner.Discard(s)
 		if err != nil {
 			panic(err.Error())
@@ -180,8 +261,32 @@ func NewConfig() *Config {
 		if err != nil {
 			panic(err.Error())
 		}
+	} else {
+		s := os.Getenv("config")
+		if s == "" {
+			gameConfigData, err := ioutil.ReadFile(configpath)
+			if err != nil {
+				panic(err.Error())
+			}
+			gameConfigResult, err := GoJsoner.Discard(string(gameConfigData))
+			if err != nil {
+				panic(err.Error())
+			}
+			err = json.Unmarshal([]byte(gameConfigResult), c)
+			if err != nil {
+				panic(err.Error())
+			}
+		} else {
+			gameConfigResult, err := GoJsoner.Discard(s)
+			if err != nil {
+				panic(err.Error())
+			}
+			err = json.Unmarshal([]byte(gameConfigResult), c)
+			if err != nil {
+				panic(err.Error())
+			}
+		}
 	}
-
 	host := os.Getenv("HOST")
 	if host != "" {
 		c.Host = host
@@ -346,6 +451,18 @@ func NewConfig() *Config {
 		}
 	}
 
+	//设置集群名称
+	clusterName := os.Getenv("CLUSTER_NAME")
+	if clusterName != "" {
+		c.ClusterName = clusterName
+	}
+
+	//设置服务分组
+	groupName := os.Getenv("GROUP_NAME")
+	if groupName != "" {
+		c.GroupName = groupName
+	}
+
 	//设置运行模式
 	runmode := os.Getenv("RUNMODE")
 	if runmode != "" {
@@ -383,7 +500,11 @@ func NewConfig() *Config {
 	fmt.Println("*             	   Cfg  Init                    *")
 	fmt.Println("*                                              *")
 	fmt.Println("************************************************")
+	fmt.Println("### Model:        ", c.Model)
 	fmt.Println("### ServerName:   ", c.ServerName)
+	fmt.Println("### ClusterName:  ", c.ClusterName)
+	fmt.Println("### GroupName:    ", c.GroupName)
+	fmt.Println("### Explain:      ", c.Explain)
 	fmt.Println("### Port:         ", c.Port)
 	fmt.Println("### Discovery:    ", c.Discovery)
 	fmt.Println("### Redis:        ", c.Redis)

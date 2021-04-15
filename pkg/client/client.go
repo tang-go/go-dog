@@ -11,6 +11,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
 	discovery "github.com/tang-go/go-dog/pkg/discovery/go-dog-find"
+	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
 	"github.com/tang-go/go-dog/pkg/fusing"
 	"github.com/tang-go/go-dog/pkg/limit"
 	"github.com/tang-go/go-dog/pkg/selector"
@@ -63,12 +64,16 @@ func NewClient(param ...interface{}) plugins.Client {
 		client.cfg = config.NewConfig()
 	}
 	if client.discovery == nil {
-		//使用默认服务发现中心
-		client.discovery = discovery.NewGoDogDiscovery(client.cfg.GetDiscovery())
-		//默认只监听RPC服务
-		client.discovery.WatchRPC()
-		//链接服务发现中心
-		client.discovery.ConnectClient()
+		if client.cfg.GetModel() == plugins.NacosModel {
+			client.discovery = nacosDiscovery.NewDiscovery(client.cfg)
+			client.discovery.WatchRPC()
+		} else {
+			//使用默认服务发现中心
+			dog := discovery.NewGoDogDiscovery(client.cfg.GetDiscovery())
+			dog.WatchRPC()
+			dog.ConnectClient()
+			client.discovery = dog
+		}
 	}
 	if client.fusing == nil {
 		//使用默认的熔断插件

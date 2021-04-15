@@ -13,9 +13,6 @@ type Discovery interface {
 	//WatchRPC 监听api服务
 	WatchRPC()
 
-	//ConnectClient 建立链接
-	ConnectClient()
-
 	//GetAllAPIService 获取所有API服务
 	GetAllAPIService() (services []*serviceinfo.APIServiceInfo)
 

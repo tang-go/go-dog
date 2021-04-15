@@ -25,15 +25,16 @@ type Method struct {
 
 //APIServiceInfo 提供HTTP API请求的服务（组成路由格式:name/version/path）
 type APIServiceInfo struct {
-	Key       string //注册时候使用的唯一key
-	Name      string //服务名称
-	Address   string //服务地址
-	Port      int    //端口
-	API       []*API //服务方法
-	Explain   string //服务说明
-	Longitude int64  //经度
-	Latitude  int64  //纬度
-	Time      string //服务上线时间
+	Key       string    //注册时候使用的唯一key
+	Name      string    //服务名称
+	Address   string    //服务地址
+	Port      int       //端口
+	API       []*API    //API方法
+	Methods   []*Method //服务方法
+	Explain   string    //服务说明
+	Longitude int64     //经度
+	Latitude  int64     //纬度
+	Time      string    //服务上线时间
 }
 
 //API 服务提供的API接口

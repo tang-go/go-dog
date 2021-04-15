@@ -21,6 +21,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/context"
 	"github.com/tang-go/go-dog/pkg/limit"
 	register "github.com/tang-go/go-dog/pkg/register/go-dog-find"
+	nacosRegister "github.com/tang-go/go-dog/pkg/register/nacos"
 	"github.com/tang-go/go-dog/pkg/router"
 	"github.com/tang-go/go-dog/pkg/rpc"
 	"github.com/tang-go/go-dog/plugins"
@@ -181,7 +182,11 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 	}
 	if service.register == nil {
 		//使用默认注册中心
-		service.register = register.NewGoDogRegister(service.cfg.GetDiscovery())
+		if service.cfg.GetModel() == plugins.NacosModel {
+			service.register = nacosRegister.NewNacosRegister(service.cfg)
+		} else {
+			service.register = register.NewGoDogRegister(service.cfg.GetDiscovery())
+		}
 	}
 	if service.router == nil {
 		//默认路由
@@ -321,32 +326,29 @@ func (s *Service) _Run() error {
 	}
 	defer l.Close()
 	name := s.name
-	if name == "" {
-		name = s.cfg.GetServerName()
-	}
-	//注册RPC方法到etcd
-	if len(s.methods) > 0 {
-		info := serviceinfo.RPCServiceInfo{
-			Name:    name,
-			Address: s.cfg.GetHost(),
-			Port:    s.cfg.GetPort(),
-			Explain: s.cfg.GetExplain(),
-			Methods: s.methods,
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
-		}
-		s.register.RegisterRPCService(context.Background(), &info)
-	}
-	//注册API方法到etcd
 	if len(s.api) > 0 {
 		info := serviceinfo.APIServiceInfo{
 			Name:    name,
 			Address: s.cfg.GetHost(),
 			Port:    s.cfg.GetPort(),
 			API:     s.api,
+			Methods: s.methods,
 			Explain: s.cfg.GetExplain(),
 			Time:    time.Now().Format("2006-01-02 15:04:05"),
 		}
 		s.register.RegisterAPIService(context.Background(), &info)
+	} else {
+		if len(s.methods) > 0 {
+			info := serviceinfo.RPCServiceInfo{
+				Name:    name,
+				Address: s.cfg.GetHost(),
+				Port:    s.cfg.GetPort(),
+				Explain: s.cfg.GetExplain(),
+				Methods: s.methods,
+				Time:    time.Now().Format("2006-01-02 15:04:05"),
+			}
+			s.register.RegisterRPCService(context.Background(), &info)
+		}
 	}
 	for {
 		if atomic.LoadInt32(&s.close) > 0 {

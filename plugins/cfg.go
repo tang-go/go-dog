@@ -2,13 +2,26 @@ package plugins
 
 import "github.com/tang-go/go-dog/pkg/config"
 
+const (
+	//本地配置模式
+	LocalModel = "local"
+	//nacos配置模式
+	NacosModel = "nacos"
+)
+
 //Cfg 配置接口
 type Cfg interface {
 	//GetServerName 获取服务名称
-	GetServerName() string
+	//GetServerName() string
 
 	//GetExplain 获取服务说明
 	GetExplain() string
+
+	//获取集群名称
+	GetClusterName() string
+
+	//获取分组名称
+	GetGroupName() string
 
 	//GetPort 获取端口
 	GetPort() int
@@ -48,4 +61,7 @@ type Cfg interface {
 
 	//GetJaeger 获取链路追踪地址
 	GetJaeger() string
+
+	//GetModel 获取模式
+	GetModel() string
 }

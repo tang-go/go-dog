@@ -25,6 +25,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
 	discovery "github.com/tang-go/go-dog/pkg/discovery/go-dog-find"
+	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
 )
@@ -32,6 +33,7 @@ import (
 //Gateway 服务发现
 type Gateway struct {
 	listenAPI             sync.Map
+	name                  string
 	client                plugins.Client
 	cfg                   plugins.Cfg
 	jaeger                *jaeger.Jaeger
@@ -43,19 +45,26 @@ type Gateway struct {
 	getResponseIntercept  func(c plugins.Context, url string, request []byte, response []byte)
 	postRequestIntercept  func(c plugins.Context, url string, request []byte) ([]byte, bool, error)
 	postResponseIntercept func(c plugins.Context, url string, request []byte, response []byte)
-	discovery             *discovery.GoDogDiscovery
+	discovery             plugins.Discovery
 }
 
 //NewGateway  新建发现服务
 func NewGateway(name string) *Gateway {
 	gateway := new(Gateway)
+	gateway.name = name
 	//初始化配置
 	gateway.cfg = config.NewConfig()
 	//初始化服务发现
-	gateway.discovery = discovery.NewGoDogDiscovery(gateway.cfg.GetDiscovery())
-	gateway.discovery.WatchRPC()
-	gateway.discovery.WatchAPI(name)
-	gateway.discovery.ConnectClient()
+	if gateway.cfg.GetModel() == plugins.NacosModel {
+		gateway.discovery = nacosDiscovery.NewDiscovery(gateway.cfg)
+		gateway.discovery.WatchAPI(name)
+	} else {
+		goDogFind := discovery.NewGoDogDiscovery(gateway.cfg.GetDiscovery())
+		goDogFind.WatchRPC()
+		goDogFind.WatchAPI(name)
+		goDogFind.ConnectClient()
+		gateway.discovery = goDogFind
+	}
 	//初始化rpc服务
 	gateway.client = client.NewClient(gateway.cfg, gateway.discovery)
 	//初始化自定义请求
@@ -887,11 +896,11 @@ var SwaggerInfo = swaggerInfo{Schemes: []string{}}
 func (g *Gateway) assembleDocs() string {
 	info := Info{
 		Description: "",
-		Title:       "go-dog网管API文档",
+		Title:       g.name + "网管API文档",
 		Version:     "{{.Version}}",
 	}
-	info.Contact.Name = "有bug请联系电话13688460148"
-	info.Contact.URL = "tel:13688460148"
+	// info.Contact.Name = "有bug请联系电话13688460148"
+	// info.Contact.URL = "tel:13688460148"
 
 	paths := make(map[string]interface{})
 	definitions := make(map[string]Definitions)

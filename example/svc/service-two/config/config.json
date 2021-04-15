@@ -1,0 +1,17 @@
+{
+  //账号
+  "username": "nacos",
+  //密码
+  "passwork": "nacos",
+  //配置的ID
+  "data_id":"service-two",
+  //配置组
+  "group":"example",
+  //nacos地址
+  "address": [
+    {
+      "ip":"127.0.0.1",
+      "port":8848
+    }
+  ]
+}
