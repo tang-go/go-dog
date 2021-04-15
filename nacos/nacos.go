@@ -1,29 +1,48 @@
 package nacos
 
 import (
+	"sync"
+
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 )
 
-var gNacos *Nacos
+//Init 初始化
+func Init(namespace, username, password string, address []Address) {
+	gOnce.Do(func() {
+		gNacos = newNacos(namespace, username, password, address)
+	})
+}
 
-//Nacos nacos配置中心
+//GetRegister 获取注册中心
+func GetRegister() *Register {
+	return gNacos.register
+}
+
+//GetDiscovery 获取服务发现
+func GetDiscovery() *Discovery {
+	return gNacos.discovery
+}
+
+//GetConfig 获取配置中心
+func GetConfig() *Config {
+	return gNacos.config
+}
+
+var (
+	gNacos *Nacos
+	gOnce  sync.Once
+)
+
 type Nacos struct {
 	register  *Register
 	discovery *Discovery
 	config    *Config
 }
-
-//Address 地址
 type Address struct {
-	IP   string `json:"ip"`
-	Port uint64 `json:"port"`
-}
-
-//初始化nacos
-func Init(namespace, username, password string, address []Address) {
-	gNacos = newNacos(namespace, username, password, address)
+	IP   string
+	Port uint64
 }
 
 //newNacos 初始化私有nacos对象
@@ -75,19 +94,4 @@ func newNacos(namespace, username, password string, address []Address) *Nacos {
 	n.register = newRegister(inamingClient)
 	n.config = newConfig(configClient)
 	return n
-}
-
-//GetRegister 获取注册中心
-func GetRegister() *Register {
-	return gNacos.register
-}
-
-//GetDiscovery 获取服务发现
-func GetDiscovery() *Discovery {
-	return gNacos.discovery
-}
-
-//GetConfig 获取配置中心
-func GetConfig() *Config {
-	return gNacos.config
 }

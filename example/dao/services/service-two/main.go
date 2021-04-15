@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/tang-go/go-dog/example/svc/service-two/router"
-	service "github.com/tang-go/go-dog/example/svc/service-two/servcie"
+	"github.com/tang-go/go-dog/example/dao/services/service-two/router"
+	service "github.com/tang-go/go-dog/example/dao/services/service-two/servcie"
 	"github.com/tang-go/go-dog/log"
 )
 

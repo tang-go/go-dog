@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
@@ -53,14 +52,14 @@ func (d *Discovery) WatchAPI(gate string) {
 		d.ctx,
 		"API",
 		[]string{d.cfg.GetClusterName()},
-		func(i model.Instance) {
+		func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
 			info := new(serviceinfo.APIServiceInfo)
 			info.Key = i.Metadata["Key"]
 			info.Time = i.Metadata["Time"]
 			info.Explain = i.Metadata["Explain"]
-			info.Name = i.Metadata["Name"]
+			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
 			if err := json.Unmarshal([]byte(i.Metadata["API"]), &info.API); err != nil {
@@ -106,14 +105,14 @@ func (d *Discovery) WatchAPI(gate string) {
 				Latitude:  info.Latitude,
 				Time:      info.Time,
 			}
-		}, func(i model.Instance) {
+		}, func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
 			info := new(serviceinfo.APIServiceInfo)
 			info.Key = i.Metadata["Key"]
 			info.Time = i.Metadata["Time"]
 			info.Explain = i.Metadata["Explain"]
-			info.Name = i.Metadata["Name"]
+			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
 			if err := json.Unmarshal([]byte(i.Metadata["API"]), &info.API); err != nil {
@@ -148,14 +147,14 @@ func (d *Discovery) WatchRPC() {
 		d.ctx,
 		"RPC",
 		[]string{d.cfg.GetClusterName()},
-		func(i model.Instance) {
+		func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
 			info := new(serviceinfo.RPCServiceInfo)
 			info.Key = i.Metadata["Key"]
 			info.Time = i.Metadata["Time"]
 			info.Explain = i.Metadata["Explain"]
-			info.Name = i.Metadata["Name"]
+			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
 			if err := json.Unmarshal([]byte(i.Metadata["Methods"]), &info.Methods); err != nil {
@@ -164,14 +163,14 @@ func (d *Discovery) WatchRPC() {
 			}
 			d.rpcdata[info.Key] = info
 			log.Tracef("rpc 上线 | %s | %s | %s:%d ", info.Name, info.Key, info.Address, info.Port)
-		}, func(i model.Instance) {
+		}, func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
 			info := new(serviceinfo.RPCServiceInfo)
 			info.Key = i.Metadata["Key"]
 			info.Time = i.Metadata["Time"]
 			info.Explain = i.Metadata["Explain"]
-			info.Name = i.Metadata["Name"]
+			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
 			delete(d.rpcdata, info.Key)

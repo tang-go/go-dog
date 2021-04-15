@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/nacos-group/nacos-sdk-go/vo"
 	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
@@ -28,7 +27,7 @@ func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPC
 	key := "rpc/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
 	info.Key = key
 	methods, _ := json.Marshal(info.Methods)
-	param := vo.RegisterInstanceParam{
+	param := nacos.RegisterInstanceParam{
 		Ip:          info.Address,
 		Port:        uint64(info.Port),
 		Weight:      10,
@@ -58,7 +57,7 @@ func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.API
 	info.Key = key
 	api, _ := json.Marshal(info.API)
 	methods, _ := json.Marshal(info.Methods)
-	param := vo.RegisterInstanceParam{
+	param := nacos.RegisterInstanceParam{
 		Ip:          info.Address,
 		Port:        uint64(info.Port),
 		Weight:      10,

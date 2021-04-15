@@ -899,8 +899,6 @@ func (g *Gateway) assembleDocs() string {
 		Title:       g.name + "网管API文档",
 		Version:     "{{.Version}}",
 	}
-	// info.Contact.Name = "有bug请联系电话13688460148"
-	// info.Contact.URL = "tel:13688460148"
 
 	paths := make(map[string]interface{})
 	definitions := make(map[string]Definitions)

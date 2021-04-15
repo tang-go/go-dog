@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/tang-go/go-dog/example/define"
-	service "github.com/tang-go/go-dog/example/svc/service-one/servcie"
+	service "github.com/tang-go/go-dog/example/svc/services/service-one/servcie"
 	"github.com/tang-go/go-dog/plugins"
 )
 
