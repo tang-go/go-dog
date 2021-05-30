@@ -29,7 +29,6 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sipt/GoJsoner v0.0.0-20170413020122-3e1341522aa6
 	github.com/soheilhy/cmux v0.1.5 // indirect
-	github.com/stretchr/testify v1.7.0
 	github.com/swaggo/gin-swagger v1.3.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
@@ -46,6 +45,6 @@ require (
 )
 
 replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 	github.com/coreos/bbolt v1.3.4 => go.etcd.io/bbolt v1.3.4
+	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 )
