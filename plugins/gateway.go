@@ -4,6 +4,8 @@ import "github.com/gin-gonic/gin"
 
 //Gateway 网关
 type Gateway interface {
+	//SwaggerAuthCheck swagger权限检测
+	SwaggerAuthCheck(swaggerAuthCheck func(token string) error)
 
 	//GetRequestIntercept 拦截get请求
 	GetRequestIntercept(f func(c Context, url string, request []byte) ([]byte, bool, error))

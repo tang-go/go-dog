@@ -76,7 +76,7 @@ func (d *Discovery) WatchAPI(gate string) {
 					continue
 				}
 				apis = append(apis, method)
-				url := "/" + method.Path
+				url := method.Kind + method.Path
 				if api, ok := d.apis[url]; ok {
 					api.Count++
 					d.apis[url] = api
@@ -125,7 +125,7 @@ func (d *Discovery) WatchAPI(gate string) {
 					continue
 				}
 				apis = append(apis, method)
-				url := "/" + method.Path
+				url := method.Kind + method.Path
 				if api, ok := d.apis[url]; ok {
 					api.Count--
 					if api.Count <= 0 {

@@ -82,10 +82,28 @@ func (a *API) GET(name string, path string, explain string, fn interface{}) {
 	if a.api.Group == "" {
 		a.api.Group = a.s.name
 	}
+	if a.api.Version == "" {
+		a.api.Version = "v1"
+	}
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
 	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
+}
+
+//DELETE APi DELETE路由
+func (a *API) DELETE(name string, path string, explain string, fn interface{}) {
+	a.api.Path = path
+	if a.api.Group == "" {
+		a.api.Group = a.s.name
+	}
+	if a.api.Version == "" {
+		a.api.Version = "v1"
+	}
+	if a.api.Level <= 0 {
+		a.api.Level = 1
+	}
+	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.DELETE, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //POST POST路由
@@ -101,6 +119,21 @@ func (a *API) POST(name string, path string, explain string, fn interface{}) {
 		a.api.Level = 1
 	}
 	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
+}
+
+//PUT PUT路由
+func (a *API) PUT(name string, path string, explain string, fn interface{}) {
+	a.api.Path = path
+	if a.api.Group == "" {
+		a.api.Group = a.s.name
+	}
+	if a.api.Version == "" {
+		a.api.Version = "v1"
+	}
+	if a.api.Level <= 0 {
+		a.api.Level = 1
+	}
+	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.PUT, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //Service 服务
@@ -264,7 +297,7 @@ func (s *Service) APIRegIntercept(f func(gate, group, url string, level int8, is
 //RegisterAPI 注册API方法--注册给网管
 func (s *Service) _RegisterAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
-	url := fmt.Sprintf("api/%s/%s/%s", s.name, version, path)
+	url := fmt.Sprintf("/api/%s/%s/%s", s.name, version, path)
 	api := &serviceinfo.API{
 		Gate:     gate,
 		Name:     methodname,

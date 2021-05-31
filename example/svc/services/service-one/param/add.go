@@ -1,8 +1,8 @@
 package param
 
 type AddReq struct {
-	X int64 `json:"x" description:"加数X" type:"int64"`
-	Y int64 `json:"y" description:"加数Y" type:"int64"`
+	X int64 `json:"x" description:"加数X" type:"int64" required:"true"`
+	Y int64 `json:"y" description:"加数Y" type:"int64" required:"true"`
 }
 
 type AddRsp struct {

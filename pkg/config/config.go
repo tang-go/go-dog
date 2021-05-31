@@ -42,8 +42,9 @@ type NacosConfig struct {
 }
 
 func init() {
-	flag.StringVar(&configpath, "config", "./config/config.json", "config配置路径")
-	flag.StringVar(&modle, "model", "local", "loacl 本地配置中心;nacos nacos配置中心")
+	flag.StringVar(&configpath, "c", "./config/config.json", "config配置路径")
+	flag.StringVar(&modle, "m", "local", "loacl 本地配置中心;nacos nacos配置中心")
+
 }
 
 //Config 配置

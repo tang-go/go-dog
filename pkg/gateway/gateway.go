@@ -75,6 +75,11 @@ func NewGateway(name string) *Gateway {
 	return gateway
 }
 
+//SwaggerAuthCheck swagger权限检测
+func (g *Gateway) SwaggerAuthCheck(swaggerAuthCheck func(token string) error) {
+	g.swaggerAuthCheck = swaggerAuthCheck
+}
+
 //GetRequestIntercept 拦截get请求
 func (g *Gateway) GetRequestIntercept(f func(c plugins.Context, url string, request []byte) ([]byte, bool, error)) {
 	g.getRequestIntercept = f
@@ -132,12 +137,11 @@ func (g *Gateway) Run(port int) error {
 	for url, f := range g.customPost {
 		router.POST(url, f)
 	}
-	//swagger 文档
 	router.GET("/swagger/*any", g.getSwagger)
-	//添加路由
-	router.POST("/api/*router", g.routerPostResolution)
-	//GET请求
-	router.GET("/api/*router", g.routerGetResolution)
+	router.POST("/api/*router", g.routerPostAndPutResolution)
+	router.PUT("/api/*router", g.routerPostAndPutResolution)
+	router.GET("/api/*router", g.routerGetAndDeleteResolution)
+	router.DELETE("/api/*router", g.routerGetAndDeleteResolution)
 	c := make(chan os.Signal)
 	//监听指定信号
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
@@ -156,40 +160,40 @@ func (g *Gateway) Run(port int) error {
 
 //getSwagger 获取swagger
 func (g *Gateway) getSwagger(c *gin.Context) {
-	token := c.Query("token")
 	if c.Param("any") == "/swagger.json" {
-		if token == "" {
-			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不能为空"))
-			return
-		}
 		if g.swaggerAuthCheck != nil {
+			token := c.Query("token")
+			if token == "" {
+				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不能为空"))
+				return
+			}
 			if err := g.swaggerAuthCheck(token); err != nil {
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 				return
 			}
 		}
 		c.String(200, g.ReadDoc())
-		log.Traceln("获取swagger", token)
 		return
 	}
 	ginSwagger.WrapHandler(swaggerFiles.Handler, func(c *ginSwagger.Config) {
-		c.URL = "swagger.json?token=" + token
+		c.URL = "swagger.json"
 	})(c)
 }
 
-//routerGetResolution get路由解析
-func (g *Gateway) routerGetResolution(c *gin.Context) {
-	url := "/api" + c.Param("router")
+//routerGetAndDeleteResolution get/delete路由解析
+func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
+	url := c.Request.Method + "/api" + c.Param("router")
+	log.Traceln(url)
 	apiservice, ok := g.discovery.GetAPIByURL(url)
 	if !ok {
-		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由URL错误"))
 		return
 	}
 	if c.Request.Method != apiservice.Method.Kind {
-		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由Method错误"))
 		return
 	}
-	timeoutstr := c.Request.Header.Get("TimeOut")
+	timeoutstr := c.Request.Header.Get("timeOut")
 	if timeoutstr == "" {
 		timeoutstr = "6"
 	}
@@ -201,7 +205,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout必须大于0"))
 		return
 	}
-	istest := c.Request.Header.Get("IsTest")
+	istest := c.Request.Header.Get("isTest")
 	if istest == "" {
 		istest = "false"
 	}
@@ -209,7 +213,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	if err != nil {
 		isTest = false
 	}
-	traceID := c.Request.Header.Get("TraceID")
+	traceID := c.Request.Header.Get("traceID")
 	if traceID == "" {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
 		return
@@ -226,7 +230,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("定义参数参数%v类型错误", value)))
 			return
 		}
-		re, ok3 := vali["requide"]
+		re, ok3 := vali["required"]
 		required := false
 		if ok3 {
 			if re == "true" {
@@ -266,7 +270,7 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	}
 	//查看方法是否需要验证权限
 	if apiservice.Method.IsAuth {
-		token := c.Request.Header.Get("Token")
+		token := c.Request.Header.Get("token")
 		if token == "" {
 			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不能为空"))
 			return
@@ -320,20 +324,21 @@ func (g *Gateway) routerGetResolution(c *gin.Context) {
 	return
 }
 
-// routerPostResolution post路由解析
-func (g *Gateway) routerPostResolution(c *gin.Context) {
+// routerPostAndPutResolution post/put路由解析
+func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 	//路由解析
-	url := c.Request.URL.String()
+	url := c.Request.Method + c.Request.URL.String()
+	log.Traceln(url)
 	apiservice, ok := g.discovery.GetAPIByURL(url)
 	if !ok {
-		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由URL错误"))
 		return
 	}
 	if c.Request.Method != apiservice.Method.Kind {
-		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由错误"))
+		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由Method错误"))
 		return
 	}
-	timeoutstr := c.Request.Header.Get("TimeOut")
+	timeoutstr := c.Request.Header.Get("timeOut")
 	if timeoutstr == "" {
 		timeoutstr = "6"
 	}
@@ -345,7 +350,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "timeout必须大于0"))
 		return
 	}
-	istest := c.Request.Header.Get("IsTest")
+	istest := c.Request.Header.Get("isTest")
 	if istest == "" {
 		istest = "false"
 	}
@@ -353,7 +358,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	if err != nil {
 		isTest = false
 	}
-	traceID := c.Request.Header.Get("TraceID")
+	traceID := c.Request.Header.Get("traceID")
 	if traceID == "" {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "traceID不能为空"))
 		return
@@ -364,8 +369,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
 	}
-	body, err = g.validation(string(body), apiservice.Method.Request)
-	if err != nil {
+	if err := g.validation(body, apiservice.Method.Request); err != nil {
 		c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, err.Error()))
 		return
 	}
@@ -381,7 +385,7 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 	}
 	//查看方法是否需要验证权限
 	if apiservice.Method.IsAuth {
-		token := c.Request.Header.Get("Token")
+		token := c.Request.Header.Get("token")
 		if token == "" {
 			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不能为空"))
 			return
@@ -436,18 +440,18 @@ func (g *Gateway) routerPostResolution(c *gin.Context) {
 }
 
 //validation 验证参数
-func (g *Gateway) validation(param string, tem map[string]interface{}) ([]byte, error) {
+func (g *Gateway) validation(param []byte, tem map[string]interface{}) error {
 	p := make(map[string]interface{})
-	if err := g.GetClient().GetCodec().DeCode("json", []byte(param), &p); err != nil {
-		return nil, err
+	if err := g.GetClient().GetCodec().DeCode("json", param, &p); err != nil {
+		return err
 	}
 	for key := range p {
 		if _, ok := tem[key]; !ok {
 			log.Traceln("模版", tem, "传入参数", p)
-			return nil, fmt.Errorf("不存在key为%s的参数", key)
+			return fmt.Errorf("不存在值为%s的参数", key)
 		}
 	}
-	return g.GetClient().GetCodec().EnCode("json", p)
+	return nil
 }
 
 //logger 自定义日志输出
@@ -497,12 +501,12 @@ func (g *Gateway) cors() gin.HandlerFunc {
 
 //Docs 文档内容
 type Docs struct {
-	Swagger     string                 `json:"swagger"`
-	Info        Info                   `json:"info"`
-	Host        string                 `json:"host"`
-	BasePath    string                 `json:"basePath"`
-	Paths       map[string]interface{} `json:"paths"`
-	Definitions map[string]Definitions `json:"definitions"`
+	Swagger     string                            `json:"swagger"`
+	Info        Info                              `json:"info"`
+	Host        string                            `json:"host"`
+	BasePath    string                            `json:"basePath"`
+	Paths       map[string]map[string]interface{} `json:"paths"`
+	Definitions map[string]Definitions            `json:"definitions"`
 }
 
 //Info 信息
@@ -536,16 +540,6 @@ type Description struct {
 //Ref 链接
 type Ref struct {
 	Ref string `json:"$ref,omitempty"`
-}
-
-//POSTAPI POST API结构体
-type POSTAPI struct {
-	Post Body `json:"post"`
-}
-
-//GETAPI GETAPI API结构体
-type GETAPI struct {
-	Get Body `json:"get"`
 }
 
 //Body 请求
@@ -669,14 +663,14 @@ func transformation(tp string, value string) (interface{}, error) {
 	}
 }
 
-//createPOSTAPI 创建一个POSTAPI
-func createPOSTAPI(tags, summary, name string, isAuth bool, request, respone map[string]interface{}) (a POSTAPI, definitions []Definitions) {
-	api := POSTAPI{Post: Body{
+//createPostAndPutAPI 创建一个POST/PUT API
+func createPostAndPutAPI(kind, tags, summary, name string, isAuth bool, request, respone map[string]interface{}) (a Body, definitions []Definitions) {
+	api := Body{
 		Consumes: []string{"application/json"},
 		Produces: []string{"application/json"},
 		Tags:     []string{tags},
 		Summary:  summary,
-	}}
+	}
 	parameters := Parameters{
 		Description: "请求内容",
 		Name:        "body",
@@ -689,63 +683,63 @@ func createPOSTAPI(tags, summary, name string, isAuth bool, request, respone map
 
 	parameters.Schema.Type = "object"
 	parameters.Schema.Ref = "#/definitions/" + requestName
-	api.Post.Parameters = []Parameters{
+	api.Parameters = []Parameters{
 		{
 			Type:        "integer",
 			Description: "请求超时时间,单位秒",
-			Name:        "TimeOut",
+			Name:        "timeOut",
 			In:          "header",
 			Required:    true,
 		},
 		{
 			Type:        "string",
 			Description: "链路请求ID",
-			Name:        "TraceID",
+			Name:        "traceID",
 			In:          "header",
 			Required:    true,
 		},
 		{
 			Type:        "boolean",
 			Description: "是否是测试请求",
-			Name:        "IsTest",
+			Name:        "isTest",
 			In:          "header",
 			Required:    true,
 		},
 	}
 	if isAuth {
-		api.Post.Parameters = append(api.Post.Parameters, Parameters{
+		api.Parameters = append(api.Parameters, Parameters{
 			Type:        "string",
 			Description: "验证Token",
-			Name:        "Token",
+			Name:        "token",
 			In:          "header",
 			Required:    true,
 		})
 	}
-	api.Post.Parameters = append(api.Post.Parameters, parameters)
+	api.Parameters = append(api.Parameters, parameters)
 
-	responeName := strings.Replace(tags+"."+name+".post.Respone", "/", ".", -1)
+	responeName := strings.Replace(tags+"."+name+"."+kind+".Respone", "/", ".", -1)
 	responeProperties := createDefinitions(responeName, respone)
 	definitions = append(definitions, responeProperties...)
 
-	api.Post.Responses.Code200.Description = "请求成功返回参数"
-	api.Post.Responses.Code200.Schema.Type = "object"
-	api.Post.Responses.Code200.Schema.Ref = "#/definitions/" + responeName
+	api.Responses.Code200.Description = "请求成功返回参数"
+	api.Responses.Code200.Schema.Type = "object"
+	api.Responses.Code200.Schema.Ref = "#/definitions/" + responeName
 
 	return api, definitions
 }
 
-//createGETAPI 创建一个GETAPI
-func createGETAPI(tags, summary, name string, isAuth bool, request, respone map[string]interface{}) (a GETAPI, definitions []Definitions) {
-	api := GETAPI{Get: Body{
+//createGetAndDeleteAPI 创建一个GET/DELETE API
+func createGetAndDeleteAPI(kind, tags, summary, name string, isAuth bool, request, respone map[string]interface{}) (a Body, definitions []Definitions) {
+	api := Body{
 		Consumes: []string{"application/json"},
 		Tags:     []string{tags},
 		Summary:  summary,
-	}}
+	}
 	for key, value := range request {
 		if vali, ok := value.(map[string]interface{}); ok {
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]
-			re, ok3 := vali["requide"]
+			re, ok3 := vali["required"]
 			required := false
 			if ok3 {
 				if re == "true" {
@@ -753,7 +747,7 @@ func createGETAPI(tags, summary, name string, isAuth bool, request, respone map[
 				}
 			}
 			if ok1 == true && ok2 == true {
-				api.Get.Parameters = append(api.Get.Parameters, Parameters{
+				api.Parameters = append(api.Parameters, Parameters{
 					Type:        t(tp.(string)),
 					Description: des.(string),
 					Name:        key,
@@ -763,45 +757,45 @@ func createGETAPI(tags, summary, name string, isAuth bool, request, respone map[
 			}
 		}
 	}
-	api.Get.Parameters = append(api.Get.Parameters,
+	api.Parameters = append(api.Parameters,
 		Parameters{
 			Type:        "integer",
 			Description: "请求超时时间,单位秒",
-			Name:        "TimeOut",
+			Name:        "timeOut",
 			In:          "header",
 			Required:    true,
 		},
 		Parameters{
 			Type:        "string",
 			Description: "链路请求ID",
-			Name:        "TraceID",
+			Name:        "traceID",
 			In:          "header",
 			Required:    true,
 		},
 		Parameters{
 			Type:        "boolean",
 			Description: "是否是测试请求",
-			Name:        "IsTest",
+			Name:        "isTest",
 			In:          "header",
 			Required:    true,
 		})
 	if isAuth {
-		api.Get.Parameters = append(api.Get.Parameters, Parameters{
+		api.Parameters = append(api.Parameters, Parameters{
 			Type:        "string",
 			Description: "验证Token",
-			Name:        "Token",
+			Name:        "token",
 			In:          "header",
 			Required:    true,
 		})
 	}
 
-	responeName := strings.Replace(tags+"."+name+".get.Respone", "/", ".", -1)
+	responeName := strings.Replace(tags+"."+name+"."+kind+".Respone", "/", ".", -1)
 	responeProperties := createDefinitions(responeName, respone)
 	definitions = append(definitions, responeProperties...)
 
-	api.Get.Responses.Code200.Description = "请求成功返回参数"
-	api.Get.Responses.Code200.Schema.Type = "object"
-	api.Get.Responses.Code200.Schema.Ref = "#/definitions/" + responeName
+	api.Responses.Code200.Description = "请求成功返回参数"
+	api.Responses.Code200.Schema.Type = "object"
+	api.Responses.Code200.Schema.Ref = "#/definitions/" + responeName
 
 	return api, definitions
 }
@@ -900,32 +894,88 @@ func (g *Gateway) assembleDocs() string {
 		Version:     "{{.Version}}",
 	}
 
-	paths := make(map[string]interface{})
+	paths := make(map[string]map[string]interface{})
 	definitions := make(map[string]Definitions)
 
-	g.discovery.RangeAPI(func(url string, api *serviceinfo.ServcieAPI) {
-		if api.Method.Kind == "POST" {
-			api, d := createPOSTAPI(
-				api.Explain+"["+api.Tags+"]",
-				api.Method.Explain,
-				api.Method.Name,
-				api.Method.IsAuth,
-				api.Method.Request,
-				api.Method.Response)
-			paths[url] = api
+	g.discovery.RangeAPI(func(url string, service *serviceinfo.ServcieAPI) {
+		switch service.Method.Kind {
+		case string(plugins.POST):
+			api, d := createPostAndPutAPI(
+				service.Method.Kind,
+				service.Explain+"["+service.Tags+"]",
+				service.Method.Explain,
+				service.Method.Name,
+				service.Method.IsAuth,
+				service.Method.Request,
+				service.Method.Response)
+			if value, ok := paths[service.Method.Path]; ok {
+				value["post"] = api
+				paths[service.Method.Path] = value
+			} else {
+				value := make(map[string]interface{})
+				value["post"] = api
+				paths[service.Method.Path] = value
+			}
 			for _, definition := range d {
 				definitions[definition.Name] = definition
 			}
-		}
-		if api.Method.Kind == "GET" {
-			api, d := createGETAPI(
-				api.Explain+"["+api.Tags+"]",
-				api.Method.Explain,
-				api.Method.Name,
-				api.Method.IsAuth,
-				api.Method.Request,
-				api.Method.Response)
-			paths[url] = api
+		case string(plugins.PUT):
+			api, d := createPostAndPutAPI(
+				service.Method.Kind,
+				service.Explain+"["+service.Tags+"]",
+				service.Method.Explain,
+				service.Method.Name,
+				service.Method.IsAuth,
+				service.Method.Request,
+				service.Method.Response)
+			if value, ok := paths[service.Method.Path]; ok {
+				value["put"] = api
+				paths[service.Method.Path] = value
+			} else {
+				value := make(map[string]interface{})
+				value["put"] = api
+				paths[service.Method.Path] = value
+			}
+			for _, definition := range d {
+				definitions[definition.Name] = definition
+			}
+		case string(plugins.GET):
+			api, d := createGetAndDeleteAPI(
+				service.Method.Kind,
+				service.Explain+"["+service.Tags+"]",
+				service.Method.Explain,
+				service.Method.Name,
+				service.Method.IsAuth,
+				service.Method.Request,
+				service.Method.Response)
+			if value, ok := paths[service.Method.Path]; ok {
+				value["get"] = api
+				paths[service.Method.Path] = value
+			} else {
+				value := make(map[string]interface{})
+				value["get"] = api
+				paths[service.Method.Path] = value
+			}
+			for _, definition := range d {
+				definitions[definition.Name] = definition
+			}
+		case string(plugins.DELETE):
+			api, d := createGetAndDeleteAPI(
+				service.Method.Kind,
+				service.Explain+"["+service.Tags+"]",
+				service.Method.Explain,
+				service.Method.Name,
+				service.Method.IsAuth,
+				service.Method.Request,
+				service.Method.Response)
+			if value, ok := paths[service.Method.Path]; ok {
+				value["delete"] = api
+				paths[service.Method.Path] = value
+			} else {
+				value := make(map[string]interface{})
+				value["delete"] = api
+				paths[service.Method.Path] = value
+			}
 			for _, definition := range d {
 				definitions[definition.Name] = definition
 			}

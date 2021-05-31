@@ -15,6 +15,9 @@ func ExampleRouter(router plugins.Service, s *service.Service) {
 			shopV1 := shopNoAuth.APIGroup("演示相关").APIVersion("v1")
 			{
 				shopV1.APILevel(4).POST("Add", "add", "加法", s.Add)
+				shopV1.APILevel(4).PUT("Add", "add", "加法", s.Add)
+				shopV1.APILevel(4).GET("Add", "add", "加法", s.Add)
+				shopV1.APILevel(4).DELETE("Add", "add", "加法", s.Add)
 			}
 		}
 	}

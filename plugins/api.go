@@ -23,4 +23,10 @@ type API interface {
 
 	//POST POST路由
 	POST(name string, path string, explain string, fn interface{})
+
+	//PUT PUT路由
+	PUT(name string, path string, explain string, fn interface{})
+
+	//DELETE DELETE路由
+	DELETE(name string, path string, explain string, fn interface{})
 }
