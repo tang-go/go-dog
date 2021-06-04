@@ -39,9 +39,9 @@ func NewRouter() *Router {
 
 //RegisterByMethod 注册方法
 func (pointer *Router) RegisterByMethod(name string, fn interface{}) (arg map[string]interface{}, reply map[string]interface{}) {
-	if _, ok := pointer.methods[name]; ok {
-		panic("此函数名称已经存在")
-	}
+	// if _, ok := pointer.methods[strings.ToLower(name)]; ok {
+	// 	panic("此函数名称已经存在")
+	// }
 	method, ok := fn.(reflect.Value)
 	if !ok {
 		method = reflect.ValueOf(fn)
@@ -80,17 +80,21 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
+	required := "false"
 	if t.Kind() != reflect.Struct {
 		tgs := map[string]string{
 			"type":        t.Kind().String(),
 			"description": t.Kind().String(),
-			"required":    "false",
+			"required":    required,
 		}
 		explain[strings.ToLower(t.Name())] = tgs
 		return explain
 	}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
+		if t.Field(i).Tag.Get("required") == "true" {
+			required = "true"
+		}
 		//检测每一个字段的深度
 		kind := t.Field(i).Type.Kind()
 		if kind == reflect.Struct {
@@ -104,7 +108,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 				"type":        "object",
 				"description": t.Field(i).Tag.Get("description"),
 				"object":      tg,
-				"required":    t.Field(i).Tag.Get("required"),
+				"required":    required,
 			}
 			explain[t.Field(i).Tag.Get("json")] = tgs
 			continue
@@ -134,7 +138,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       tg,
-					"required":    t.Field(i).Tag.Get("required"),
+					"required":    required,
 				}
 				explain[t.Field(i).Tag.Get("json")] = tgs
 
@@ -143,7 +147,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 					"type":        "array",
 					"description": t.Field(i).Tag.Get("description"),
 					"slice":       kind.String(),
-					"required":    t.Field(i).Tag.Get("required"),
+					"required":    required,
 				}
 				explain[t.Field(i).Tag.Get("json")] = tgs
 			}
@@ -152,7 +156,7 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 		tgs := map[string]string{
 			"type":        t.Field(i).Tag.Get("type"),
 			"description": t.Field(i).Tag.Get("description"),
-			"required":    t.Field(i).Tag.Get("required"),
+			"required":    required,
 		}
 		explain[t.Field(i).Tag.Get("json")] = tgs
 	}

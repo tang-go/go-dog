@@ -24,7 +24,6 @@ import (
 	"github.com/tang-go/go-dog/pkg/client"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
-	discovery "github.com/tang-go/go-dog/pkg/discovery/go-dog-find"
 	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
@@ -58,12 +57,6 @@ func NewGateway(name string) *Gateway {
 	if gateway.cfg.GetModel() == plugins.NacosModel {
 		gateway.discovery = nacosDiscovery.NewDiscovery(gateway.cfg)
 		gateway.discovery.WatchAPI(name)
-	} else {
-		goDogFind := discovery.NewGoDogDiscovery(gateway.cfg.GetDiscovery())
-		goDogFind.WatchRPC()
-		goDogFind.WatchAPI(name)
-		goDogFind.ConnectClient()
-		gateway.discovery = goDogFind
 	}
 	//初始化rpc服务
 	gateway.client = client.NewClient(gateway.cfg, gateway.discovery)
@@ -183,7 +176,6 @@ func (g *Gateway) getSwagger(c *gin.Context) {
 //routerGetAndDeleteResolution get/delete路由解析
 func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 	url := c.Request.Method + "/api" + c.Param("router")
-	log.Traceln(url)
 	apiservice, ok := g.discovery.GetAPIByURL(url)
 	if !ok {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由URL错误"))
@@ -220,14 +212,14 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 	}
 	p := make(map[string]interface{})
 	for key, value := range apiservice.Method.Request {
-		vali, ok := value.(map[string]interface{})
+		vali, ok := value.(map[interface{}]interface{})
 		if !ok {
-			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("定义参数参数%v类型错误", value)))
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("传入参数%v类型错误", value)))
 			return
 		}
 		tp, ok2 := vali["type"].(string)
 		if !ok2 {
-			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("定义参数参数%v类型错误", value)))
+			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("传入参数%v类型错误", value)))
 			return
 		}
 		re, ok3 := vali["required"]
@@ -677,7 +669,7 @@ func createPostAndPutAPI(kind, tags, summary, name string, isAuth bool, request,
 		In:          "body",
 		Required:    true,
 	}
-	requestName := strings.Replace(tags+"."+name+".post.Request", "/", ".", -1)
+	requestName := strings.Replace(tags+"."+name+"."+kind+".Request", "/", ".", -1)
 	requestProperties := createDefinitions(requestName, request)
 	definitions = append(definitions, requestProperties...)
 
@@ -736,7 +728,7 @@ func createGetAndDeleteAPI(kind, tags, summary, name string, isAuth bool, reques
 		Summary:  summary,
 	}
 	for key, value := range request {
-		if vali, ok := value.(map[string]interface{}); ok {
+		if vali, ok := value.(map[interface{}]interface{}); ok {
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]
 			re, ok3 := vali["required"]
@@ -804,7 +796,7 @@ func createGetAndDeleteAPI(kind, tags, summary, name string, isAuth bool, reques
 func createDefinitions(name string, mp map[string]interface{}) (definitions []Definitions) {
 	properties := make(map[string]Description)
 	for key, value := range mp {
-		if vali, ok := value.(map[string]interface{}); ok {
+		if vali, ok := value.(map[interface{}]interface{}); ok {
 			slice, ok := vali["slice"]
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]

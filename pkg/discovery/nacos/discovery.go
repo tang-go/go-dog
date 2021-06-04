@@ -2,13 +2,14 @@ package discovery
 
 import (
 	"context"
-	"encoding/json"
+	"strings"
 	"sync"
 
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
+	"gopkg.in/yaml.v2"
 )
 
 //Discovery 服务发现
@@ -55,6 +56,10 @@ func (d *Discovery) WatchAPI(gate string) {
 		func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
+			if _, ok := d.apidata[i.Metadata["Key"]]; ok {
+				log.Traceln(i.Metadata["Key"], "已经存在")
+				return
+			}
 			info := new(serviceinfo.APIServiceInfo)
 			info.Key = i.Metadata["Key"]
 			info.Time = i.Metadata["Time"]
@@ -62,12 +67,14 @@ func (d *Discovery) WatchAPI(gate string) {
 			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
-			if err := json.Unmarshal([]byte(i.Metadata["API"]), &info.API); err != nil {
-				log.Traceln(err.Error())
+			dataID := strings.Replace(info.Name, "/", "-", -1)
+			apiConfig, err := nacos.GetConfig().GetConfig(dataID, "API")
+			if err != nil {
+				log.Errorln(err.Error())
 				return
 			}
-			if err := json.Unmarshal([]byte(i.Metadata["Methods"]), &info.Methods); err != nil {
-				log.Traceln(err.Error())
+			if err := yaml.Unmarshal([]byte(apiConfig), &info.API); err != nil {
+				log.Errorln(err.Error())
 				return
 			}
 			apis := make([]*serviceinfo.API, 0)
@@ -108,23 +115,15 @@ func (d *Discovery) WatchAPI(gate string) {
 		}, func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
-			info := new(serviceinfo.APIServiceInfo)
-			info.Key = i.Metadata["Key"]
-			info.Time = i.Metadata["Time"]
-			info.Explain = i.Metadata["Explain"]
-			info.Name = i.ServiceName
-			info.Address = i.Ip
-			info.Port = int(i.Port)
-			if err := json.Unmarshal([]byte(i.Metadata["API"]), &info.API); err != nil {
-				log.Traceln(err.Error())
+			info, ok := d.apidata[i.Metadata["Key"]]
+			if !ok {
+				log.Traceln(i.Metadata["Key"], "不存在")
 				return
 			}
-			apis := make([]*serviceinfo.API, 0)
 			for _, method := range info.API {
 				if method.Gate != d.gate {
 					continue
 				}
-				apis = append(apis, method)
 				url := method.Kind + method.Path
 				if api, ok := d.apis[url]; ok {
 					api.Count--
@@ -157,10 +156,6 @@ func (d *Discovery) WatchRPC() {
 			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
-			if err := json.Unmarshal([]byte(i.Metadata["Methods"]), &info.Methods); err != nil {
-				log.Traceln(err.Error())
-				return
-			}
 			d.rpcdata[info.Key] = info
 			log.Tracef("rpc 上线 | %s | %s | %s:%d ", info.Name, info.Key, info.Address, info.Port)
 		}, func(i nacos.Instance) {

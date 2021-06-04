@@ -2,17 +2,21 @@ package register
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
+	"gopkg.in/yaml.v2"
 )
 
 //EtcdRegister nacos 服务注册
 type Register struct {
-	cfg plugins.Cfg
+	cfg    plugins.Cfg
+	dataID string
+	group  string
 }
 
 //NewNacosRegister 初始化一个nacos服务注册中心
@@ -26,7 +30,13 @@ func NewNacosRegister(cfg plugins.Cfg) *Register {
 func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPCServiceInfo) error {
 	key := "rpc/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
 	info.Key = key
-	methods, _ := json.Marshal(info.Methods)
+	methods, _ := yaml.Marshal(info.Methods)
+	s.dataID = strings.Replace(info.Name, "/", "-", -1)
+	s.group = "Method"
+	if _, err := nacos.GetConfig().PublishConfig(s.dataID, s.group, string(methods)); err != nil {
+		log.Errorln(err.Error())
+		return err
+	}
 	param := nacos.RegisterInstanceParam{
 		Ip:          info.Address,
 		Port:        uint64(info.Port),
@@ -38,7 +48,6 @@ func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPC
 		GroupName:   "RPC",
 		Ephemeral:   true,
 		Metadata: map[string]string{
-			"Methods":   string(methods),
 			"Time":      info.Time,
 			"Key":       info.Key,
 			"Name":      info.Name,
@@ -55,8 +64,13 @@ func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPC
 func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.APIServiceInfo) error {
 	key := "api/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
 	info.Key = key
-	api, _ := json.Marshal(info.API)
-	methods, _ := json.Marshal(info.Methods)
+	api, _ := yaml.Marshal(info.API)
+	s.dataID = strings.Replace(info.Name, "/", "-", -1)
+	s.group = "API"
+	if _, err := nacos.GetConfig().PublishConfig(s.dataID, s.group, string(api)); err != nil {
+		log.Errorln(err.Error())
+		return err
+	}
 	param := nacos.RegisterInstanceParam{
 		Ip:          info.Address,
 		Port:        uint64(info.Port),
@@ -68,8 +82,6 @@ func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.API
 		GroupName:   "API",
 		Ephemeral:   true,
 		Metadata: map[string]string{
-			"Methods":   string(methods),
-			"API":       string(api),
 			"Time":      info.Time,
 			"Key":       info.Key,
 			"Name":      info.Name,
@@ -84,6 +96,7 @@ func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.API
 
 // Cancellation 注销服务
 func (s *Register) Cancellation() error {
+	nacos.GetConfig().DeleteConfig(s.dataID, s.group)
 	nacos.GetRegister().DeregisterInstance()
 	return nil
 }

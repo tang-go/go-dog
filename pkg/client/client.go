@@ -10,7 +10,6 @@ import (
 	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
-	discovery "github.com/tang-go/go-dog/pkg/discovery/go-dog-find"
 	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
 	"github.com/tang-go/go-dog/pkg/fusing"
 	"github.com/tang-go/go-dog/pkg/limit"
@@ -67,12 +66,6 @@ func NewClient(param ...interface{}) plugins.Client {
 		if client.cfg.GetModel() == plugins.NacosModel {
 			client.discovery = nacosDiscovery.NewDiscovery(client.cfg)
 			client.discovery.WatchRPC()
-		} else {
-			//使用默认服务发现中心
-			dog := discovery.NewGoDogDiscovery(client.cfg.GetDiscovery())
-			dog.WatchRPC()
-			dog.ConnectClient()
-			client.discovery = dog
 		}
 	}
 	if client.fusing == nil {

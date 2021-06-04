@@ -20,7 +20,6 @@ import (
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
 	"github.com/tang-go/go-dog/pkg/limit"
-	register "github.com/tang-go/go-dog/pkg/register/go-dog-find"
 	nacosRegister "github.com/tang-go/go-dog/pkg/register/nacos"
 	"github.com/tang-go/go-dog/pkg/router"
 	"github.com/tang-go/go-dog/pkg/rpc"
@@ -217,8 +216,6 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 		//使用默认注册中心
 		if service.cfg.GetModel() == plugins.NacosModel {
 			service.register = nacosRegister.NewNacosRegister(service.cfg)
-		} else {
-			service.register = register.NewGoDogRegister(service.cfg.GetDiscovery())
 		}
 	}
 	if service.router == nil {
@@ -311,15 +308,6 @@ func (s *Service) _RegisterAPI(gate, group, methodname, version, path string, ki
 		Path:     url,
 		Kind:     string(kind),
 	}
-	method := &serviceinfo.Method{
-		Name:     methodname,
-		Level:    level,
-		Explain:  explain,
-		IsAuth:   isAuth,
-		Request:  req,
-		Response: rep,
-	}
-	s.methods = append(s.methods, method)
 	s.api = append(s.api, api)
 	if isAuth {
 		s.authMethod[strings.ToLower(methodname)] = methodname

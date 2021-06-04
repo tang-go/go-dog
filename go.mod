@@ -39,6 +39,7 @@ require (
 	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 	google.golang.org/genproto v0.0.0-20210113195801-ae06605f4595 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v1.0.5

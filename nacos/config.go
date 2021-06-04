@@ -46,3 +46,11 @@ func (c *Config) ListenConfig(dataID, group string, onChange func(namespace, gro
 		OnChange: onChange,
 	})
 }
+
+//DeleteConfig 删除配置
+func (c *Config) DeleteConfig(dataID, group string) (bool, error) {
+	return c.client.DeleteConfig(vo.ConfigParam{
+		DataId: dataID,
+		Group:  group,
+	})
+}
