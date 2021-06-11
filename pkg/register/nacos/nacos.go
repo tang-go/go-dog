@@ -3,13 +3,10 @@ package register
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"gopkg.in/yaml.v2"
 )
 
 //EtcdRegister nacos 服务注册
@@ -27,16 +24,9 @@ func NewNacosRegister(cfg plugins.Cfg) *Register {
 }
 
 //RegisterRPCService 注册RPC服务
-func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPCServiceInfo) error {
-	key := "rpc/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
-	info.Key = key
-	methods, _ := yaml.Marshal(info.Methods)
-	s.dataID = strings.Replace(info.Name, "/", "-", -1)
-	s.group = "Method"
-	if _, err := nacos.GetConfig().PublishConfig(s.dataID, s.group, string(methods)); err != nil {
-		log.Errorln(err.Error())
-		return err
-	}
+func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.ServiceInfo) error {
+	info.Key = fmt.Sprintf("%s:%d", info.Address, info.Port)
+	info.Group = "RPC"
 	param := nacos.RegisterInstanceParam{
 		Ip:          info.Address,
 		Port:        uint64(info.Port),
@@ -49,7 +39,6 @@ func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPC
 		Ephemeral:   true,
 		Metadata: map[string]string{
 			"Time":      info.Time,
-			"Key":       info.Key,
 			"Name":      info.Name,
 			"Longitude": fmt.Sprintf("%d", info.Longitude),
 			"Latitude":  fmt.Sprintf("%d", info.Latitude),
@@ -60,17 +49,10 @@ func (s *Register) RegisterRPCService(ctx context.Context, info *serviceinfo.RPC
 	return nil
 }
 
-//RegisterAPIService 注册API服务
-func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.APIServiceInfo) error {
-	key := "api/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
-	info.Key = key
-	api, _ := yaml.Marshal(info.API)
-	s.dataID = strings.Replace(info.Name, "/", "-", -1)
-	s.group = "API"
-	if _, err := nacos.GetConfig().PublishConfig(s.dataID, s.group, string(api)); err != nil {
-		log.Errorln(err.Error())
-		return err
-	}
+//RegisterHTTPService 注册HTTP服务
+func (s *Register) RegisterHTTPService(ctx context.Context, info *serviceinfo.ServiceInfo) error {
+	info.Key = fmt.Sprintf("%s:%d", info.Address, info.Port)
+	info.Group = "HTTP"
 	param := nacos.RegisterInstanceParam{
 		Ip:          info.Address,
 		Port:        uint64(info.Port),
@@ -79,11 +61,10 @@ func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.API
 		Healthy:     true,
 		ClusterName: s.cfg.GetClusterName(),
 		ServiceName: info.Name,
-		GroupName:   "API",
+		GroupName:   "HTTP",
 		Ephemeral:   true,
 		Metadata: map[string]string{
 			"Time":      info.Time,
-			"Key":       info.Key,
 			"Name":      info.Name,
 			"Longitude": fmt.Sprintf("%d", info.Longitude),
 			"Latitude":  fmt.Sprintf("%d", info.Latitude),
@@ -96,7 +77,6 @@ func (s *Register) RegisterAPIService(ctx context.Context, info *serviceinfo.API
 
 // Cancellation 注销服务
 func (s *Register) Cancellation() error {
-	nacos.GetConfig().DeleteConfig(s.dataID, s.group)
 	nacos.GetRegister().DeregisterInstance()
 	return nil
 }

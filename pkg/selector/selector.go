@@ -25,7 +25,7 @@ func NewSelector() *Selector {
 }
 
 //GetByAddress 通过地址获取rpc服务信息
-func (s *Selector) GetByAddress(discovery plugins.Discovery, address string, fusing plugins.Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error) {
+func (s *Selector) GetByAddress(discovery plugins.Discovery, address string, fusing plugins.Fusing, name string, method string) (*serviceinfo.ServiceInfo, error) {
 	services := discovery.GetRPCServiceByName(name)
 	for _, service := range services {
 		if !fusing.IsFusing(service.Key, method) {
@@ -38,8 +38,8 @@ func (s *Selector) GetByAddress(discovery plugins.Discovery, address string, fus
 }
 
 //RandomMode 随机模式(失败即返回)
-func (s *Selector) RandomMode(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error) {
-	var rpc []*serviceinfo.RPCServiceInfo
+func (s *Selector) RandomMode(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string) (*serviceinfo.ServiceInfo, error) {
+	var rpc []*serviceinfo.ServiceInfo
 	services := discovery.GetRPCServiceByName(name)
 	for _, service := range services {
 		if !fusing.IsFusing(service.Key, method) {
@@ -57,7 +57,7 @@ func (s *Selector) RandomMode(discovery plugins.Discovery, fusing plugins.Fusing
 }
 
 //RangeMode 遍历模式(一个返回成功,或者全部返回失败))
-func (s *Selector) RangeMode(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string, f func(*serviceinfo.RPCServiceInfo) bool) error {
+func (s *Selector) RangeMode(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string, f func(*serviceinfo.ServiceInfo) bool) error {
 	services := discovery.GetRPCServiceByName(name)
 	count := len(services)
 	if count <= 0 {
@@ -74,11 +74,11 @@ func (s *Selector) RangeMode(discovery plugins.Discovery, fusing plugins.Fusing,
 }
 
 //HashMode 通过hash值访问一个服务(失败即返回)
-func (s *Selector) HashMode(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error) {
+func (s *Selector) HashMode(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string) (*serviceinfo.ServiceInfo, error) {
 	return nil, customerror.EnCodeError(customerror.InternalServerError, "暂时没有开启一致性hash")
 }
 
 //Custom 自定义 --目前默认随机
-func (s *Selector) Custom(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string) (*serviceinfo.RPCServiceInfo, error) {
+func (s *Selector) Custom(discovery plugins.Discovery, fusing plugins.Fusing, name string, method string) (*serviceinfo.ServiceInfo, error) {
 	return s.RandomMode(discovery, fusing, name, method)
 }

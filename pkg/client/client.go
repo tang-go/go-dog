@@ -115,12 +115,12 @@ func (c *Client) GetCodec() plugins.Codec {
 }
 
 //GetAllRPCService 获取所有RPC服务
-func (c *Client) GetAllRPCService() (services []*serviceinfo.RPCServiceInfo) {
+func (c *Client) GetAllRPCService() (services []*serviceinfo.ServiceInfo) {
 	return c.discovery.GetAllRPCService()
 }
 
 //GetAllAPIService 获取所有API服务
-func (c *Client) GetAllAPIService() (services []*serviceinfo.APIServiceInfo) {
+func (c *Client) GetAllAPIService() (services []*serviceinfo.ServiceInfo) {
 	return c.discovery.GetAllAPIService()
 }
 
@@ -160,7 +160,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	//遍历模式
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
-		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
+		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				log.Traceln(err.Error())
@@ -268,7 +268,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 		var res []byte
-		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
+		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
@@ -348,7 +348,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 	c.wait.Add(1)
 	defer c.wait.Done()
 	var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
-	e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.RPCServiceInfo) bool {
+	e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
 			e = err
@@ -388,7 +388,7 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 		log.Traceln(err.Error())
 		return err
 	}
-	ctx.SetSource(fmt.Sprintf("%s:%d", c.cfg.GetHost(), c.cfg.GetPort()))
+	ctx.SetSource(fmt.Sprintf("%s:%d", c.cfg.GetHost(), c.cfg.GetRPCPort()))
 	client, err := c.managerclient.GetClient(service)
 	if err != nil {
 		log.Traceln(err.Error())

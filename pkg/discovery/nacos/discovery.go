@@ -2,26 +2,28 @@ package discovery
 
 import (
 	"context"
-	"strings"
+	"encoding/json"
+	"fmt"
 	"sync"
 
+	"github.com/tang-go/go-dog/lib/net"
 	"github.com/tang-go/go-dog/log"
 	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
-	"gopkg.in/yaml.v2"
 )
+
+var apiOnce sync.Once
+var rpcOnce sync.Once
 
 //Discovery 服务发现
 type Discovery struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
 	cfg        plugins.Cfg
-	watchAPI   bool
-	watchRPC   bool
 	closeheart chan bool
-	apidata    map[string]*serviceinfo.APIServiceInfo
-	rpcdata    map[string]*serviceinfo.RPCServiceInfo
+	apidata    map[string]*serviceinfo.ServiceInfo
+	rpcdata    map[string]*serviceinfo.ServiceInfo
 	apis       map[string]*serviceinfo.ServcieAPI
 	gate       string
 	lock       sync.RWMutex
@@ -34,24 +36,38 @@ func NewDiscovery(cfg plugins.Cfg) *Discovery {
 		ctx:        ctx,
 		cancel:     cancel,
 		cfg:        cfg,
-		watchAPI:   false,
-		watchRPC:   false,
 		closeheart: make(chan bool),
-		apidata:    make(map[string]*serviceinfo.APIServiceInfo),
-		rpcdata:    make(map[string]*serviceinfo.RPCServiceInfo),
+		apidata:    make(map[string]*serviceinfo.ServiceInfo),
+		rpcdata:    make(map[string]*serviceinfo.ServiceInfo),
 		apis:       make(map[string]*serviceinfo.ServcieAPI),
 		gate:       "",
 	}
+	dis.WatchRPC()
 	return dis
 }
 
 //WatchAPI 监听api服务--区分网关使用
 func (d *Discovery) WatchAPI(gate string) {
-	d.watchAPI = true
+	apiOnce.Do(func() {
+		log.Traceln("监听api")
+		d.watchAPI(gate)
+	})
+}
+
+//WatchRPC 监听rpc服务
+func (d *Discovery) WatchRPC() {
+	rpcOnce.Do(func() {
+		log.Traceln("监听rpc")
+		d.watchRPC()
+	})
+}
+
+//WatchAPI 监听api服务--区分网关使用
+func (d *Discovery) watchAPI(gate string) {
 	d.gate = gate
 	nacos.GetDiscovery().Discovery(
 		d.ctx,
-		"API",
+		"HTTP",
 		[]string{d.cfg.GetClusterName()},
 		func(i nacos.Instance) {
 			d.lock.Lock()
@@ -60,23 +76,18 @@ func (d *Discovery) WatchAPI(gate string) {
 				log.Traceln(i.Metadata["Key"], "已经存在")
 				return
 			}
-			info := new(serviceinfo.APIServiceInfo)
-			info.Key = i.Metadata["Key"]
-			info.Time = i.Metadata["Time"]
-			info.Explain = i.Metadata["Explain"]
-			info.Name = i.ServiceName
-			info.Address = i.Ip
-			info.Port = int(i.Port)
-			dataID := strings.Replace(info.Name, "/", "-", -1)
-			apiConfig, err := nacos.GetConfig().GetConfig(dataID, "API")
+			url := fmt.Sprintf("http://%s:%d/apis", i.Ip, i.Port)
+			apiConfig, err := net.HttpsGet(url)
 			if err != nil {
 				log.Errorln(err.Error())
 				return
 			}
-			if err := yaml.Unmarshal([]byte(apiConfig), &info.API); err != nil {
+			info := new(serviceinfo.ServiceInfo)
+			if err := json.Unmarshal(apiConfig, info); err != nil {
 				log.Errorln(err.Error())
 				return
 			}
+			info.Key = fmt.Sprintf("%s:%d", i.Ip, i.Port)
 			apis := make([]*serviceinfo.API, 0)
 			for _, method := range info.API {
 				if method.Gate != d.gate {
@@ -99,19 +110,7 @@ func (d *Discovery) WatchAPI(gate string) {
 					log.Tracef("api 上线 | %s | %s | %s ", info.Name, info.Key, url)
 				}
 			}
-			info.API = apis
 			d.apidata[info.Key] = info
-			d.rpcdata[info.Key] = &serviceinfo.RPCServiceInfo{
-				Key:       info.Key,
-				Name:      info.Name,
-				Address:   info.Address,
-				Port:      info.Port,
-				Methods:   info.Methods,
-				Explain:   info.Explain,
-				Longitude: info.Longitude,
-				Latitude:  info.Latitude,
-				Time:      info.Time,
-			}
 		}, func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
@@ -134,14 +133,12 @@ func (d *Discovery) WatchAPI(gate string) {
 				}
 			}
 			delete(d.apidata, info.Key)
-			delete(d.rpcdata, info.Key)
 		},
 	)
 }
 
 //WatchRPC 监听api服务
-func (d *Discovery) WatchRPC() {
-	d.watchRPC = true
+func (d *Discovery) watchRPC() {
 	nacos.GetDiscovery().Discovery(
 		d.ctx,
 		"RPC",
@@ -149,25 +146,27 @@ func (d *Discovery) WatchRPC() {
 		func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
-			info := new(serviceinfo.RPCServiceInfo)
-			info.Key = i.Metadata["Key"]
+			info := new(serviceinfo.ServiceInfo)
+			info.Group = "RPC"
 			info.Time = i.Metadata["Time"]
 			info.Explain = i.Metadata["Explain"]
 			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
+			info.Key = fmt.Sprintf("%s:%d", info.Address, info.Port)
 			d.rpcdata[info.Key] = info
 			log.Tracef("rpc 上线 | %s | %s | %s:%d ", info.Name, info.Key, info.Address, info.Port)
 		}, func(i nacos.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
-			info := new(serviceinfo.RPCServiceInfo)
-			info.Key = i.Metadata["Key"]
+			info := new(serviceinfo.ServiceInfo)
+			info.Group = "RPC"
 			info.Time = i.Metadata["Time"]
 			info.Explain = i.Metadata["Explain"]
 			info.Name = i.ServiceName
 			info.Address = i.Ip
 			info.Port = int(i.Port)
+			info.Key = fmt.Sprintf("%s:%d", info.Address, info.Port)
 			delete(d.rpcdata, info.Key)
 			log.Tracef("rpc 下线 | %s | %s | %s:%d ", info.Name, info.Key, info.Address, info.Port)
 		},
@@ -175,7 +174,7 @@ func (d *Discovery) WatchRPC() {
 }
 
 //GetAllAPIService 获取所有API服务
-func (d *Discovery) GetAllAPIService() (services []*serviceinfo.APIServiceInfo) {
+func (d *Discovery) GetAllAPIService() (services []*serviceinfo.ServiceInfo) {
 	d.lock.RLock()
 	for _, service := range d.apidata {
 		services = append(services, service)
@@ -185,7 +184,7 @@ func (d *Discovery) GetAllAPIService() (services []*serviceinfo.APIServiceInfo) 
 }
 
 //GetAllRPCService 获取所有RPC服务
-func (d *Discovery) GetAllRPCService() (services []*serviceinfo.RPCServiceInfo) {
+func (d *Discovery) GetAllRPCService() (services []*serviceinfo.ServiceInfo) {
 	d.lock.RLock()
 	for _, service := range d.rpcdata {
 		services = append(services, service)
@@ -195,7 +194,7 @@ func (d *Discovery) GetAllRPCService() (services []*serviceinfo.RPCServiceInfo) 
 }
 
 //GetRPCServiceByName 通过名称获取RPC服务
-func (d *Discovery) GetRPCServiceByName(name string) (services []*serviceinfo.RPCServiceInfo) {
+func (d *Discovery) GetRPCServiceByName(name string) (services []*serviceinfo.ServiceInfo) {
 	d.lock.RLock()
 	for _, service := range d.rpcdata {
 		if service.Name == name {
@@ -224,7 +223,7 @@ func (d *Discovery) RangeAPI(f func(url string, api *serviceinfo.ServcieAPI)) {
 }
 
 //GetAPIServiceByName 通过名称获取API服务
-func (d *Discovery) GetAPIServiceByName(name string) (services []*serviceinfo.APIServiceInfo) {
+func (d *Discovery) GetAPIServiceByName(name string) (services []*serviceinfo.ServiceInfo) {
 	d.lock.RLock()
 	for _, service := range d.apidata {
 		if service.Name == name {

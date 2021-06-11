@@ -212,7 +212,7 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 	}
 	p := make(map[string]interface{})
 	for key, value := range apiservice.Method.Request {
-		vali, ok := value.(map[interface{}]interface{})
+		vali, ok := value.(map[string]interface{})
 		if !ok {
 			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("传入参数%v类型错误", value)))
 			return
@@ -670,6 +670,7 @@ func createPostAndPutAPI(kind, tags, summary, name string, isAuth bool, request,
 		Required:    true,
 	}
 	requestName := strings.Replace(tags+"."+name+"."+kind+".Request", "/", ".", -1)
+	log.Traceln(request)
 	requestProperties := createDefinitions(requestName, request)
 	definitions = append(definitions, requestProperties...)
 
@@ -728,7 +729,7 @@ func createGetAndDeleteAPI(kind, tags, summary, name string, isAuth bool, reques
 		Summary:  summary,
 	}
 	for key, value := range request {
-		if vali, ok := value.(map[interface{}]interface{}); ok {
+		if vali, ok := value.(map[string]interface{}); ok {
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]
 			re, ok3 := vali["required"]
@@ -796,7 +797,7 @@ func createGetAndDeleteAPI(kind, tags, summary, name string, isAuth bool, reques
 func createDefinitions(name string, mp map[string]interface{}) (definitions []Definitions) {
 	properties := make(map[string]Description)
 	for key, value := range mp {
-		if vali, ok := value.(map[interface{}]interface{}); ok {
+		if vali, ok := value.(map[string]interface{}); ok {
 			slice, ok := vali["slice"]
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]

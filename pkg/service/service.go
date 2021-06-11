@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	customerror "github.com/tang-go/go-dog/error"
 	"github.com/tang-go/go-dog/header"
 	"github.com/tang-go/go-dog/jaeger"
@@ -87,7 +89,7 @@ func (a *API) GET(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
+	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //DELETE APi DELETE路由
@@ -102,7 +104,7 @@ func (a *API) DELETE(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.DELETE, a.api.Level, a.api.IsAuth, explain, fn)
+	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.DELETE, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //POST POST路由
@@ -117,7 +119,7 @@ func (a *API) POST(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
+	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //PUT PUT路由
@@ -132,7 +134,7 @@ func (a *API) PUT(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s._RegisterAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.PUT, a.api.Level, a.api.IsAuth, explain, fn)
+	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.PUT, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //Service 服务
@@ -153,12 +155,12 @@ type Service struct {
 	interceptor plugins.Interceptor
 	//服务发现
 	discovery plugins.Discovery
-	//方法
-	methods []*serviceinfo.Method
 	//鉴权方法
 	authMethod map[string]string
-	//对网管注册的api
-	api []*serviceinfo.API
+	//api信息
+	api *serviceinfo.ServiceInfo
+	//rpc服务信息
+	rpc *serviceinfo.ServiceInfo
 	//客户端
 	client plugins.Client
 	//参数编码器
@@ -238,6 +240,22 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 			service.client = client.NewClient(service.cfg)
 		}
 	}
+	//注册rpc服务
+	service.rpc = &serviceinfo.ServiceInfo{
+		Name:    service.name,
+		Address: service.cfg.GetHost(),
+		Port:    service.cfg.GetRPCPort(),
+		Explain: service.cfg.GetExplain(),
+		Time:    time.Now().Format("2006-01-02 15:04:05"),
+	}
+	//注册http服务
+	service.api = &serviceinfo.ServiceInfo{
+		Name:    service.name,
+		Address: service.cfg.GetHost(),
+		Port:    service.cfg.GetHTTPPort(),
+		Explain: service.cfg.GetExplain(),
+		Time:    time.Now().Format("2006-01-02 15:04:05"),
+	}
 	return service
 }
 
@@ -272,7 +290,7 @@ func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn i
 		Request:  req,
 		Response: rep,
 	}
-	s.methods = append(s.methods, method)
+	s.rpc.Methods = append(s.rpc.Methods, method)
 	if isAuth {
 		s.authMethod[strings.ToLower(name)] = name
 	}
@@ -292,7 +310,7 @@ func (s *Service) APIRegIntercept(f func(gate, group, url string, level int8, is
 }
 
 //RegisterAPI 注册API方法--注册给网管
-func (s *Service) _RegisterAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
+func (s *Service) registerAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
 	url := fmt.Sprintf("/api/%s/%s/%s", s.name, version, path)
 	api := &serviceinfo.API{
@@ -308,7 +326,7 @@ func (s *Service) _RegisterAPI(gate, group, methodname, version, path string, ki
 		Path:     url,
 		Kind:     string(kind),
 	}
-	s.api = append(s.api, api)
+	s.api.API = append(s.api.API, api)
 	if isAuth {
 		s.authMethod[strings.ToLower(methodname)] = methodname
 	}
@@ -329,48 +347,111 @@ func (s *Service) Run() error {
 	//监听指定信号
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		err := s._Run()
+		err := s.runTCP()
 		if err != nil {
 			panic(err.Error())
 		}
 	}()
+	go func() {
+		err := s.runHTTP()
+		if err != nil {
+			panic(err.Error())
+		}
+	}()
+	log.Infoln("服务启动成功...")
 	msg := <-c
 	s.Close()
 	return fmt.Errorf("收到kill信号:%s", msg)
 }
 
-//_Run 启动
-func (s *Service) _Run() error {
-	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.cfg.GetPort()))
+//_RunHTTP 启动HTTP
+func (s *Service) runHTTP() error {
+	//注册http接口服务
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(s.cors())
+	router.Use(s.logger())
+
+	router.GET("/metrics", s.metrics)
+	router.GET("/apis", s.getAPI)
+	router.GET("/rpc", s.getRPC)
+	httpport := fmt.Sprintf(":%d", s.cfg.GetHTTPPort())
+	s.register.RegisterHTTPService(context.Background(), s.api)
+	err := router.Run(httpport)
+	if err != nil {
+		panic(err.Error())
+	}
+	return nil
+}
+
+//metrics 监控
+func (s *Service) metrics(c *gin.Context) {
+	c.JSON(http.StatusOK, "metrics")
+}
+
+//getAPI 方法api信息
+func (s *Service) getAPI(c *gin.Context) {
+	c.JSON(http.StatusOK, s.api)
+}
+
+//getRPC 获取rpc服务信息
+func (s *Service) getRPC(c *gin.Context) {
+	c.JSON(http.StatusOK, s.rpc)
+}
+
+//logger 自定义日志输出
+func (s *Service) logger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 开始时间
+		start := time.Now()
+		// 处理请求
+		c.Next()
+		// 结束时间
+		end := time.Now()
+		//执行时间
+		latency := end.Sub(start)
+		path := c.Request.URL.Path
+		clientIP := c.ClientIP()
+		method := c.Request.Method
+		statusCode := c.Writer.Status()
+		log.Tracef("| %3d | %13v | %15s | %s  %s \n",
+			statusCode,
+			latency,
+			clientIP,
+			method,
+			path,
+		)
+	}
+}
+
+//cors 处理跨域问题
+func (s *Service) cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		method := c.Request.Method
+
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Headers", "Content-Type,TraceID, IsTest, Token,TimeOut")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+		c.Header("Access-Control-Allow-Credentials", "true")
+
+		//放行所有OPTIONS方法
+		if method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+		}
+		// 处理请求
+		c.Next()
+	}
+}
+
+//_RunTCP 启动TCP
+func (s *Service) runTCP() error {
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.cfg.GetRPCPort()))
 	if err != nil {
 		return err
 	}
 	defer l.Close()
-	name := s.name
-	if len(s.api) > 0 {
-		info := serviceinfo.APIServiceInfo{
-			Name:    name,
-			Address: s.cfg.GetHost(),
-			Port:    s.cfg.GetPort(),
-			API:     s.api,
-			Methods: s.methods,
-			Explain: s.cfg.GetExplain(),
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
-		}
-		s.register.RegisterAPIService(context.Background(), &info)
-	} else {
-		if len(s.methods) > 0 {
-			info := serviceinfo.RPCServiceInfo{
-				Name:    name,
-				Address: s.cfg.GetHost(),
-				Port:    s.cfg.GetPort(),
-				Explain: s.cfg.GetExplain(),
-				Methods: s.methods,
-				Time:    time.Now().Format("2006-01-02 15:04:05"),
-			}
-			s.register.RegisterRPCService(context.Background(), &info)
-		}
-	}
+	s.register.RegisterRPCService(context.Background(), s.rpc)
 	for {
 		if atomic.LoadInt32(&s.close) > 0 {
 			return nil
@@ -380,12 +461,12 @@ func (s *Service) _Run() error {
 			log.Traceln(err.Error())
 			continue
 		}
-		go s._ServeConn(conn)
+		go s.serveConn(conn)
 	}
 }
 
 //_Log 日志
-func (s *Service) _Log(address, name, method string, respone *header.Response) func() {
+func (s *Service) log(address, name, method string, respone *header.Response) func() {
 	start := time.Now()
 	return func() {
 		if respone.Error != nil {
@@ -409,7 +490,7 @@ func (s *Service) _Log(address, name, method string, respone *header.Response) f
 }
 
 // ServeConn 拦截一个链接
-func (s *Service) _ServeConn(conn net.Conn) {
+func (s *Service) serveConn(conn net.Conn) {
 	serviceRPC := rpc.NewServiceRPC(conn, s.codec)
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
@@ -420,7 +501,7 @@ func (s *Service) _ServeConn(conn net.Conn) {
 			rep.Name = req.Name
 			rep.Code = req.Code
 			if s.GetCfg().GetRunmode() == "trace" || s.GetCfg().GetRunmode() == "debug" || s.GetCfg().GetRunmode() == "info" {
-				defer s._Log(req.Address, req.Name, req.Method, rep)()
+				defer s.log(req.Address, req.Name, req.Method, rep)()
 			}
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {

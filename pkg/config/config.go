@@ -57,8 +57,10 @@ type Config struct {
 	ClusterName string `json:"cluster_name"`
 	//GroupName 分组名称
 	GroupName string `json:"group_name"`
-	//使用端口号
-	Port int `json:"port"`
+	//RPC使用的端口
+	RPCPort int `json:"rpc_port"`
+	//HTTP使用的端口
+	HTTPPort int `json:"http_port"`
 	//Discovery 服务发现
 	Discovery []string `json:"discovery"`
 	//Redis地址
@@ -122,9 +124,14 @@ func (c *Config) GetServerName() string {
 	return c.ServerName
 }
 
-//GetPort 获取端口
-func (c *Config) GetPort() int {
-	return c.Port
+//GetRPCPort 获取RPC端口
+func (c *Config) GetRPCPort() int {
+	return c.RPCPort
+}
+
+//GetHTTPPort 获取HTTP端口
+func (c *Config) GetHTTPPort() int {
+	return c.HTTPPort
 }
 
 //GetExplain 获取服务说明
@@ -302,21 +309,38 @@ func NewConfig() *Config {
 	}
 
 	//先看环境变量是否有端口号
-	port := os.Getenv("PORT")
-	if port != "" {
-		p, err := strconv.Atoi(port)
+	rpcport := os.Getenv("RPC_PORT")
+	if rpcport != "" {
+		p, err := strconv.Atoi(rpcport)
 		if err != nil {
 			panic(err.Error())
 		}
-		c.Port = p
+		c.RPCPort = p
 	}
-	if c.Port <= 0 {
+	if c.RPCPort <= 0 {
 		//获取随机端口
 		p, err := net.GetFreePort()
 		if err != nil {
 			panic(err.Error())
 		}
-		c.Port = p
+		c.RPCPort = p
+	}
+	//先看环境变量是否有端口号
+	httpport := os.Getenv("HTTP_PORT")
+	if httpport != "" {
+		p, err := strconv.Atoi(httpport)
+		if err != nil {
+			panic(err.Error())
+		}
+		c.HTTPPort = p
+	}
+	if c.HTTPPort <= 0 {
+		//获取随机端口
+		p, err := net.GetFreePort()
+		if err != nil {
+			panic(err.Error())
+		}
+		c.HTTPPort = p
 	}
 	//Discovery 服务发现
 	discovery := os.Getenv("DISCOVERY")
@@ -506,7 +530,8 @@ func NewConfig() *Config {
 	fmt.Println("### ClusterName:  ", c.ClusterName)
 	fmt.Println("### GroupName:    ", c.GroupName)
 	fmt.Println("### Explain:      ", c.Explain)
-	fmt.Println("### Port:         ", c.Port)
+	fmt.Println("### RPCPort:      ", c.RPCPort)
+	fmt.Println("### HTTPPort:     ", c.HTTPPort)
 	fmt.Println("### Discovery:    ", c.Discovery)
 	fmt.Println("### Redis:        ", c.Redis)
 	fmt.Println("### Etcd:         ", c.Etcd)

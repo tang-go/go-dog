@@ -35,10 +35,10 @@ type Client interface {
 	GetLimit() Limit
 
 	//GetAllRPCService 获取所有RPC服务
-	GetAllRPCService() (services []*serviceinfo.RPCServiceInfo)
+	GetAllRPCService() (services []*serviceinfo.ServiceInfo)
 
 	//GetAllAPIService 获取所有API服务
-	GetAllAPIService() (services []*serviceinfo.APIServiceInfo)
+	GetAllAPIService() (services []*serviceinfo.ServiceInfo)
 
 	//Call 调用函数
 	Call(ctx Context, mode Mode, name string, method string, args interface{}, reply interface{}) error

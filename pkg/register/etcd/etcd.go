@@ -36,7 +36,7 @@ func NewEtcdRegister(address []string) *EtcdRegister {
 }
 
 //RegisterRPCService 注册RPC服务
-func (s *EtcdRegister) RegisterRPCService(ctx context.Context, info *serviceinfo.RPCServiceInfo) error {
+func (s *EtcdRegister) RegisterRPCService(ctx context.Context, info *serviceinfo.ServiceInfo) error {
 	key := "rpc/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
 	info.Key = key
 	val, _ := json.Marshal(info)
@@ -65,7 +65,7 @@ func (s *EtcdRegister) RegisterRPCService(ctx context.Context, info *serviceinfo
 }
 
 //RegisterAPIService 注册API服务
-func (s *EtcdRegister) RegisterAPIService(ctx context.Context, info *serviceinfo.APIServiceInfo) error {
+func (s *EtcdRegister) RegisterAPIService(ctx context.Context, info *serviceinfo.ServiceInfo) error {
 	key := "api/" + fmt.Sprintf("%s:%d", info.Address, info.Port)
 	info.Key = key
 	val, _ := json.Marshal(info)

@@ -33,7 +33,7 @@ func NewManagerClient(codec plugins.Codec) *ManagerClient {
 }
 
 //GetClient 获取客户端
-func (m *ManagerClient) GetClient(service *serviceinfo.RPCServiceInfo) (*rpc.ClientRPC, error) {
+func (m *ManagerClient) GetClient(service *serviceinfo.ServiceInfo) (*rpc.ClientRPC, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	client, ok := m.clients[service.Key]

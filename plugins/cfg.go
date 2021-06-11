@@ -23,8 +23,11 @@ type Cfg interface {
 	//获取分组名称
 	GetGroupName() string
 
-	//GetPort 获取端口
-	GetPort() int
+	//GetRPCPort 获取RPC端口
+	GetRPCPort() int
+
+	//GetHTTPPort 获取HTTP端口
+	GetHTTPPort() int
 
 	//GetDiscovery 获取服务发现配置
 	GetDiscovery() []string

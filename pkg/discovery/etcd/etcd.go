@@ -15,9 +15,9 @@ import (
 //EtcdDiscovery 服务发现
 type EtcdDiscovery struct {
 	client                 *clientv3.Client //etcd 客户端
-	rpcServcieOnlineNotice func(string, *serviceinfo.RPCServiceInfo)
+	rpcServcieOnlineNotice func(string, *serviceinfo.ServiceInfo)
 	rpcServcieOffineNotice func(string)
-	apiServcieOnlineNotice func(string, *serviceinfo.APIServiceInfo)
+	apiServcieOnlineNotice func(string, *serviceinfo.ServiceInfo)
 	apiServcieOffineNotice func(string)
 }
 
@@ -37,7 +37,7 @@ func NewEtcdDiscovery(address []string) *EtcdDiscovery {
 }
 
 //RegRPCServiceOnlineNotice 注册RPC服务上线通知
-func (d *EtcdDiscovery) RegRPCServiceOnlineNotice(f func(string, *serviceinfo.RPCServiceInfo)) {
+func (d *EtcdDiscovery) RegRPCServiceOnlineNotice(f func(string, *serviceinfo.ServiceInfo)) {
 	d.rpcServcieOnlineNotice = f
 }
 
@@ -47,7 +47,7 @@ func (d *EtcdDiscovery) RegRPCServiceOfflineNotice(f func(string)) {
 }
 
 //RegAPIServiceOnlineNotice 注册API服务上线通知
-func (d *EtcdDiscovery) RegAPIServiceOnlineNotice(f func(string, *serviceinfo.APIServiceInfo)) {
+func (d *EtcdDiscovery) RegAPIServiceOnlineNotice(f func(string, *serviceinfo.ServiceInfo)) {
 	d.apiServcieOnlineNotice = f
 }
 
@@ -65,7 +65,7 @@ func (d *EtcdDiscovery) WatchRPCService() {
 	}
 	for _, ev := range resp.Kvs {
 		if d.rpcServcieOnlineNotice != nil {
-			info := serviceinfo.RPCServiceInfo{}
+			info := serviceinfo.ServiceInfo{}
 			if err := json.Unmarshal(ev.Value, &info); err != nil {
 				continue
 			}
@@ -79,7 +79,7 @@ func (d *EtcdDiscovery) WatchRPCService() {
 				switch ev.Type {
 				case mvccpb.PUT: //修改或者新增
 					if d.rpcServcieOnlineNotice != nil {
-						info := serviceinfo.RPCServiceInfo{}
+						info := serviceinfo.ServiceInfo{}
 						if err := json.Unmarshal(ev.Kv.Value, &info); err != nil {
 							log.Errorln(err.Error(), ev.Kv.Key, ev.Kv.Value)
 							return
@@ -105,7 +105,7 @@ func (d *EtcdDiscovery) WatchAPIService() {
 	}
 	for _, ev := range resp.Kvs {
 		if d.apiServcieOnlineNotice != nil {
-			info := serviceinfo.APIServiceInfo{}
+			info := serviceinfo.ServiceInfo{}
 			if err := json.Unmarshal(ev.Value, &info); err != nil {
 				continue
 			}
@@ -119,7 +119,7 @@ func (d *EtcdDiscovery) WatchAPIService() {
 				switch ev.Type {
 				case mvccpb.PUT: //修改或者新增
 					if d.apiServcieOnlineNotice != nil {
-						info := serviceinfo.APIServiceInfo{}
+						info := serviceinfo.ServiceInfo{}
 						if err := json.Unmarshal(ev.Kv.Value, &info); err != nil {
 							log.Errorln(err.Error(), ev.Kv.Key, ev.Kv.Value)
 							return

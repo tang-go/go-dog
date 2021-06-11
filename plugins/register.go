@@ -10,10 +10,10 @@ import (
 type Register interface {
 
 	//RegisterRPCService 注册RPC服务
-	RegisterRPCService(ctx context.Context, info *serviceinfo.RPCServiceInfo) error
+	RegisterRPCService(ctx context.Context, info *serviceinfo.ServiceInfo) error
 
-	//RegisterAPIService 注册API服务
-	RegisterAPIService(ctx context.Context, info *serviceinfo.APIServiceInfo) error
+	//RegisterHTTPService 注册HTTP服务
+	RegisterHTTPService(ctx context.Context, info *serviceinfo.ServiceInfo) error
 
 	// Cancellation 注销服务
 	Cancellation() error
