@@ -31,9 +31,6 @@ type Client interface {
 	//GetFusing 获取熔断插件
 	GetFusing() Fusing
 
-	//GetLimit 获取限流插件
-	GetLimit() Limit
-
 	//GetAllRPCService 获取所有RPC服务
 	GetAllRPCService() (services []*serviceinfo.ServiceInfo)
 

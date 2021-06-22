@@ -25,6 +25,11 @@ var (
 	modle      string
 )
 
+const (
+	_MaxClientRequestCount  int = 100000
+	_MaxServiceRequestCount int = 10000
+)
+
 //NacosConfig 配置
 type NacosConfig struct {
 	//命名空间 空为默认
@@ -85,6 +90,10 @@ type Config struct {
 	Host string `json:"host"`
 	//运行日志等级 panic fatal error warn info debug trace
 	Runmode string `json:"runmode"`
+	//服务端最大接受的处理数量
+	MaxServiceLimitRequest int `json:"max_service_limit_request"`
+	//客户端最大的请求数量
+	MaxClientLimitRequest int `json:"max_client_limit_request"`
 	//模式
 	Model string `json:"-"`
 }
@@ -204,6 +213,16 @@ func (c *Config) GetModel() string {
 	return c.Model
 }
 
+//GetMaxServiceLimitRequest 获取服务器最大的限流数
+func (c *Config) GetMaxServiceLimitRequest() int {
+	return c.MaxServiceLimitRequest
+}
+
+//GetMaxClientLimitRequest 获取客户端最大的限流数
+func (c *Config) GetMaxClientLimitRequest() int {
+	return c.MaxClientLimitRequest
+}
+
 //NewConfig 初始化Config
 func NewConfig() *Config {
 	//从文件读取json文件并且解析
@@ -307,7 +326,30 @@ func NewConfig() *Config {
 			c.Host = host.String()
 		}
 	}
-
+	//服务器限流
+	maxServiceLimitRequest := os.Getenv("MAX_SERVICE_LIMIT_REQUEST")
+	if maxServiceLimitRequest != "" {
+		p, err := strconv.Atoi(maxServiceLimitRequest)
+		if err != nil {
+			panic(err.Error())
+		}
+		c.MaxServiceLimitRequest = p
+	}
+	if c.MaxServiceLimitRequest <= 0 {
+		c.MaxServiceLimitRequest = _MaxServiceRequestCount
+	}
+	//客户端限流
+	maxClientLimitRequest := os.Getenv("MAX_CLIENT_LIMIT_REQUEST")
+	if maxClientLimitRequest != "" {
+		p, err := strconv.Atoi(maxClientLimitRequest)
+		if err != nil {
+			panic(err.Error())
+		}
+		c.MaxClientLimitRequest = p
+	}
+	if c.MaxClientLimitRequest <= 0 {
+		c.MaxClientLimitRequest = _MaxClientRequestCount
+	}
 	//先看环境变量是否有端口号
 	rpcport := os.Getenv("RPC_PORT")
 	if rpcport != "" {
@@ -543,6 +585,8 @@ func NewConfig() *Config {
 	fmt.Println("### WriteMysql:   ", c.WriteMysql)
 	fmt.Println("### Jaeger:       ", c.Jaeger)
 	fmt.Println("### Host:         ", c.Host)
+	fmt.Println("### ServiceLimit: ", c.MaxServiceLimitRequest)
+	fmt.Println("### ClientLimit:  ", c.MaxClientLimitRequest)
 	fmt.Println("### RunMode:      ", c.Runmode)
 	log.Traceln("日志初始化完成")
 	return c

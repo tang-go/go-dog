@@ -19,10 +19,6 @@ import (
 	"github.com/tang-go/go-dog/serviceinfo"
 )
 
-const (
-	_MaxClientRequestCount = 100000
-)
-
 //Client 客户端
 type Client struct {
 	cfg           plugins.Cfg
@@ -78,7 +74,7 @@ func NewClient(param ...interface{}) plugins.Client {
 	}
 	if client.limit == nil {
 		//使用默认的流量限制
-		client.limit = limit.NewLimit(_MaxClientRequestCount)
+		client.limit = limit.NewLimit(client.cfg.GetMaxClientLimitRequest())
 	}
 	if client.codec == nil {
 		//使用默认的参数编码

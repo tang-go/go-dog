@@ -30,10 +30,6 @@ import (
 	"github.com/tang-go/go-dog/serviceinfo"
 )
 
-const (
-	_MaxServiceRequestCount = 100000
-)
-
 //API api路由组件
 type API struct {
 	api *serviceinfo.API
@@ -226,7 +222,7 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 	}
 	if service.limit == nil {
 		//默认限流插件
-		service.limit = limit.NewLimit(_MaxServiceRequestCount)
+		service.limit = limit.NewLimit(service.cfg.GetMaxServiceLimitRequest())
 	}
 	if service.interceptor == nil {
 		//链路追踪插件

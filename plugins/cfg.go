@@ -67,4 +67,10 @@ type Cfg interface {
 
 	//GetModel 获取模式
 	GetModel() string
+
+	//GetMaxServiceLimitRequest 获取服务器最大的限流数
+	GetMaxServiceLimitRequest() int
+
+	//GetMaxClientLimitRequest 获取客户端最大的限流数
+	GetMaxClientLimitRequest() int
 }
