@@ -24,6 +24,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/client"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
+	consulRegister "github.com/tang-go/go-dog/pkg/discovery/consul"
 	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
@@ -54,10 +55,13 @@ func NewGateway(name string) *Gateway {
 	//初始化配置
 	gateway.cfg = config.NewConfig()
 	//初始化服务发现
-	if gateway.cfg.GetModel() == plugins.NacosModel {
+	if gateway.cfg.GetModel() == config.NacosDiscoveryModel {
 		gateway.discovery = nacosDiscovery.NewDiscovery(gateway.cfg)
-		gateway.discovery.WatchAPI(name)
 	}
+	if gateway.cfg.GetDiscoveryModel() == config.ConsulDiscoveryModel {
+		gateway.discovery = consulRegister.NewDiscovery(gateway.cfg)
+	}
+	gateway.discovery.WatchAPI(name)
 	//初始化rpc服务
 	gateway.client = client.NewClient(gateway.cfg, gateway.discovery)
 	//初始化自定义请求

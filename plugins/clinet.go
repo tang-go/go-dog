@@ -1,9 +1,5 @@
 package plugins
 
-import (
-	"github.com/tang-go/go-dog/serviceinfo"
-)
-
 //Mode 模式
 type Mode int8
 
@@ -30,12 +26,6 @@ type Client interface {
 
 	//GetFusing 获取熔断插件
 	GetFusing() Fusing
-
-	//GetAllRPCService 获取所有RPC服务
-	GetAllRPCService() (services []*serviceinfo.ServiceInfo)
-
-	//GetAllAPIService 获取所有API服务
-	GetAllAPIService() (services []*serviceinfo.ServiceInfo)
 
 	//Call 调用函数
 	Call(ctx Context, mode Mode, name string, method string, args interface{}, reply interface{}) error

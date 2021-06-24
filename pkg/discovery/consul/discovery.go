@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/tang-go/go-dog/consul"
 	"github.com/tang-go/go-dog/lib/net"
 	"github.com/tang-go/go-dog/log"
-	"github.com/tang-go/go-dog/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
 )
@@ -42,6 +42,7 @@ func NewDiscovery(cfg plugins.Cfg) *Discovery {
 		apis:       make(map[string]*serviceinfo.ServcieAPI),
 		gate:       "",
 	}
+	consul.Init(cfg.GetConsul())
 	dis.WatchRPC()
 	return dis
 }
@@ -65,19 +66,18 @@ func (d *Discovery) WatchRPC() {
 //WatchAPI 监听api服务--区分网关使用
 func (d *Discovery) watchAPI(gate string) {
 	d.gate = gate
-	nacos.GetDiscovery().Discovery(
+	consul.GetDiscovery().Discovery(
 		d.ctx,
-		"HTTP",
-		[]string{d.cfg.GetClusterName()},
-		func(i nacos.Instance) {
+		[]string{"HTTP", d.cfg.GetClusterName()},
+		func(i consul.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
-			key := fmt.Sprintf("%s:%d", i.Ip, i.Port)
+			key := fmt.Sprintf("%s:%d", i.Address, i.Port)
 			if _, ok := d.apidata[key]; ok {
 				log.Traceln(key, "已经存在")
 				return
 			}
-			url := fmt.Sprintf("http://%s:%d/apis", i.Ip, i.Port)
+			url := fmt.Sprintf("http://%s:%d/apis", i.Address, i.Port)
 			apiConfig, err := net.HttpsGet(url)
 			if err != nil {
 				log.Errorln(err.Error())
@@ -112,10 +112,10 @@ func (d *Discovery) watchAPI(gate string) {
 				}
 			}
 			d.apidata[info.Key] = info
-		}, func(i nacos.Instance) {
+		}, func(i consul.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
-			key := fmt.Sprintf("%s:%d", i.Ip, i.Port)
+			key := fmt.Sprintf("%s:%d", i.Address, i.Port)
 			info, ok := d.apidata[key]
 			if !ok {
 				log.Traceln(key, "不存在")
@@ -141,32 +141,31 @@ func (d *Discovery) watchAPI(gate string) {
 
 //WatchRPC 监听api服务
 func (d *Discovery) watchRPC() {
-	nacos.GetDiscovery().Discovery(
+	consul.GetDiscovery().Discovery(
 		d.ctx,
-		"RPC",
-		[]string{d.cfg.GetClusterName()},
-		func(i nacos.Instance) {
+		[]string{"RPC", d.cfg.GetClusterName()},
+		func(i consul.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
 			info := new(serviceinfo.ServiceInfo)
 			info.Group = "RPC"
-			info.Time = i.Metadata["Time"]
-			info.Explain = i.Metadata["Explain"]
-			info.Name = i.ServiceName
-			info.Address = i.Ip
+			info.Time = i.Meta["Time"]
+			info.Explain = i.Meta["Explain"]
+			info.Name = i.Service
+			info.Address = i.Address
 			info.Port = int(i.Port)
 			info.Key = fmt.Sprintf("%s:%d", info.Address, info.Port)
 			d.rpcdata[info.Key] = info
 			log.Tracef("rpc 上线 | %s | %s | %s:%d ", info.Name, info.Key, info.Address, info.Port)
-		}, func(i nacos.Instance) {
+		}, func(i consul.Instance) {
 			d.lock.Lock()
 			defer d.lock.Unlock()
 			info := new(serviceinfo.ServiceInfo)
 			info.Group = "RPC"
-			info.Time = i.Metadata["Time"]
-			info.Explain = i.Metadata["Explain"]
-			info.Name = i.ServiceName
-			info.Address = i.Ip
+			info.Time = i.Meta["Time"]
+			info.Explain = i.Meta["Explain"]
+			info.Name = i.Service
+			info.Address = i.Address
 			info.Port = int(i.Port)
 			info.Key = fmt.Sprintf("%s:%d", info.Address, info.Port)
 			delete(d.rpcdata, info.Key)

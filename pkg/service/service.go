@@ -22,6 +22,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
 	"github.com/tang-go/go-dog/pkg/limit"
+	consulRegister "github.com/tang-go/go-dog/pkg/register/consul"
 	nacosRegister "github.com/tang-go/go-dog/pkg/register/nacos"
 	"github.com/tang-go/go-dog/pkg/router"
 	"github.com/tang-go/go-dog/pkg/rpc"
@@ -212,8 +213,12 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 	}
 	if service.register == nil {
 		//使用默认注册中心
-		if service.cfg.GetModel() == plugins.NacosModel {
+		if service.cfg.GetDiscoveryModel() == config.NacosDiscoveryModel {
 			service.register = nacosRegister.NewNacosRegister(service.cfg)
+		}
+		//使用consul
+		if service.cfg.GetDiscoveryModel() == config.ConsulDiscoveryModel {
+			service.register = consulRegister.NewConsulRegister(service.cfg)
 		}
 	}
 	if service.router == nil {

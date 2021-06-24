@@ -19,10 +19,15 @@ const (
 	localModel = "local"
 	nacosModel = "nacos"
 )
+const (
+	ConsulDiscoveryModel = "consul"
+	NacosDiscoveryModel  = "nacos"
+)
 
 var (
-	configpath string
-	modle      string
+	configpath     string
+	modle          string
+	discoveryModel string
 )
 
 const (
@@ -48,7 +53,8 @@ type NacosConfig struct {
 
 func init() {
 	flag.StringVar(&configpath, "c", "./config/config.json", "config配置路径")
-	flag.StringVar(&modle, "m", "nacos", "nacos nacos配置中心")
+	flag.StringVar(&discoveryModel, "d", "consul", "nacos nacos服务发型模式;consul consul服务发型模式")
+	flag.StringVar(&modle, "m", "loacl", "loacl 本地配置模式;nacos nacos配置模式")
 
 }
 
@@ -66,8 +72,8 @@ type Config struct {
 	RPCPort int `json:"rpc_port"`
 	//HTTP使用的端口
 	HTTPPort int `json:"http_port"`
-	//Discovery 服务发现
-	Discovery []string `json:"discovery"`
+	//Consul Consul地址
+	Consul string `json:"consul"`
 	//Redis地址
 	Redis []string `json:"redis"`
 	//Etcd地址
@@ -86,6 +92,8 @@ type Config struct {
 	ReadMysql *MysqlCfg `json:"read_mysql"`
 	//写数据库地址
 	WriteMysql *MysqlCfg `json:"write_mysql"`
+	//Nacos 地址
+	Nacos *NacosConfig `json:"nacos"`
 	//本机地址
 	Host string `json:"host"`
 	//运行日志等级 panic fatal error warn info debug trace
@@ -96,6 +104,8 @@ type Config struct {
 	MaxClientLimitRequest int `json:"max_client_limit_request"`
 	//模式
 	Model string `json:"-"`
+	//服务发型模式
+	DiscoveryModel string `json:"-"`
 }
 
 //MysqlCfg mysql配置
@@ -148,9 +158,9 @@ func (c *Config) GetExplain() string {
 	return c.Explain
 }
 
-//GetDiscovery 获取服务发现配置
-func (c *Config) GetDiscovery() []string {
-	return c.Discovery
+//GetConsul 获取consul
+func (c *Config) GetConsul() string {
+	return c.Consul
 }
 
 //GetRedis 获取redis配置
@@ -213,6 +223,11 @@ func (c *Config) GetModel() string {
 	return c.Model
 }
 
+//GetDiscoveryModel 获取服务发现模型
+func (c *Config) GetDiscoveryModel() string {
+	return c.DiscoveryModel
+}
+
 //GetMaxServiceLimitRequest 获取服务器最大的限流数
 func (c *Config) GetMaxServiceLimitRequest() int {
 	return c.MaxServiceLimitRequest
@@ -229,25 +244,89 @@ func NewConfig() *Config {
 	flag.Parse()
 	c := new(Config)
 	c.Model = modle
-	//走nacos配置中心
-	if modle == nacosModel {
-		//初始化naocs
-		s := os.Getenv("config")
+	c.DiscoveryModel = discoveryModel
+	c.initCfgModel()
+	c.initEnv()
+	fmt.Println("************************************************")
+	fmt.Println("*                                              *")
+	fmt.Println("*             	   Cfg  Init                    *")
+	fmt.Println("*                                              *")
+	fmt.Println("************************************************")
+	fmt.Println("### Model:        ", c.Model)
+	fmt.Println("### ServerName:   ", c.ServerName)
+	fmt.Println("### ClusterName:  ", c.ClusterName)
+	fmt.Println("### GroupName:    ", c.GroupName)
+	fmt.Println("### Explain:      ", c.Explain)
+	fmt.Println("### RPCPort:      ", c.RPCPort)
+	fmt.Println("### HTTPPort:     ", c.HTTPPort)
+	fmt.Println("### Consul:       ", c.Consul)
+	fmt.Println("### Redis:        ", c.Redis)
+	fmt.Println("### Etcd:         ", c.Etcd)
+	fmt.Println("### Kafka:        ", c.Kafka)
+	fmt.Println("### Nats:         ", c.Nats)
+	fmt.Println("### RocketMq:     ", c.RocketMq)
+	fmt.Println("### Nsq:          ", c.Nsq)
+	fmt.Println("### ReadMysql:    ", c.ReadMysql)
+	fmt.Println("### WriteMysql:   ", c.WriteMysql)
+	fmt.Println("### Jaeger:       ", c.Jaeger)
+	fmt.Println("### Host:         ", c.Host)
+	fmt.Println("### ServiceLimit: ", c.MaxServiceLimitRequest)
+	fmt.Println("### ClientLimit:  ", c.MaxClientLimitRequest)
+	fmt.Println("### RunMode:      ", c.Runmode)
+	log.Traceln("日志初始化完成")
+	return c
+}
+
+func (c *Config) initLog() {
+	//初始化日志
+	switch c.GetRunmode() {
+	case "panic":
+		log.SetLevel(log.PanicLevel)
+		break
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+		break
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+		break
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+		break
+	case "info":
+		log.SetLevel(log.InfoLevel)
+		break
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+		break
+	case "trace":
+		log.SetLevel(log.TraceLevel)
+		break
+	default:
+		log.SetLevel(log.TraceLevel)
+		break
+	}
+}
+
+func (c *Config) initCfgModel() {
+	switch c.Model {
+	case nacosModel:
+		//远程nacos配置模型
 		nacosConfig := new(NacosConfig)
-		if s == "" {
-			configData, err := ioutil.ReadFile(configpath)
-			if err != nil {
-				panic(err.Error())
-			}
-			configResult, err := GoJsoner.Discard(string(configData))
-			if err != nil {
-				panic(err.Error())
-			}
-			err = json.Unmarshal([]byte(configResult), nacosConfig)
-			if err != nil {
-				panic(err.Error())
-			}
-		} else {
+		configData, err := ioutil.ReadFile(configpath)
+		if err != nil {
+			panic(err.Error())
+		}
+		configResult, err := GoJsoner.Discard(string(configData))
+		if err != nil {
+			panic(err.Error())
+		}
+		err = json.Unmarshal([]byte(configResult), nacosConfig)
+		if err != nil {
+			panic(err.Error())
+		}
+		//从环境变量获取
+		s := os.Getenv("config")
+		if s != "" {
 			configResult, err := GoJsoner.Discard(s)
 			if err != nil {
 				panic(err.Error())
@@ -275,12 +354,12 @@ func NewConfig() *Config {
 		//初始化nacos
 		nacos.Init(nacosConfig.Namespace, nacosConfig.Username, nacosConfig.Password, nacosConfig.Address)
 		//初始化配置
-		s, err := nacos.GetConfig().GetConfig(nacosConfig.DataID, nacosConfig.Group)
+		cfg, err := nacos.GetConfig().GetConfig(nacosConfig.DataID, nacosConfig.Group)
 		if err != nil {
 			panic(err)
 		}
 		//解析配置
-		gameConfigResult, err := GoJsoner.Discard(s)
+		gameConfigResult, err := GoJsoner.Discard(cfg)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -288,22 +367,22 @@ func NewConfig() *Config {
 		if err != nil {
 			panic(err.Error())
 		}
-	} else {
+	default:
+		//默认本地模式
+		gameConfigData, err := ioutil.ReadFile(configpath)
+		if err != nil {
+			panic(err.Error())
+		}
+		gameConfigResult, err := GoJsoner.Discard(string(gameConfigData))
+		if err != nil {
+			panic(err.Error())
+		}
+		err = json.Unmarshal([]byte(gameConfigResult), c)
+		if err != nil {
+			panic(err.Error())
+		}
 		s := os.Getenv("config")
-		if s == "" {
-			gameConfigData, err := ioutil.ReadFile(configpath)
-			if err != nil {
-				panic(err.Error())
-			}
-			gameConfigResult, err := GoJsoner.Discard(string(gameConfigData))
-			if err != nil {
-				panic(err.Error())
-			}
-			err = json.Unmarshal([]byte(gameConfigResult), c)
-			if err != nil {
-				panic(err.Error())
-			}
-		} else {
+		if s != "" {
 			gameConfigResult, err := GoJsoner.Discard(s)
 			if err != nil {
 				panic(err.Error())
@@ -314,6 +393,9 @@ func NewConfig() *Config {
 			}
 		}
 	}
+}
+
+func (c *Config) initEnv() {
 	host := os.Getenv("HOST")
 	if host != "" {
 		c.Host = host
@@ -384,11 +466,10 @@ func NewConfig() *Config {
 		}
 		c.HTTPPort = p
 	}
-	//Discovery 服务发现
-	discovery := os.Getenv("DISCOVERY")
-	if discovery != "" {
-		array := strings.Split(discovery, ",")
-		c.Discovery = array
+	//consul consul地址
+	consul := os.Getenv("CONSUL")
+	if consul != "" {
+		c.Consul = consul
 	}
 	//Redis地址
 	redis := os.Getenv("REDIS")
@@ -535,59 +616,4 @@ func NewConfig() *Config {
 	if runmode != "" {
 		c.Runmode = runmode
 	}
-	//初始化日志
-	switch c.GetRunmode() {
-	case "panic":
-		log.SetLevel(log.PanicLevel)
-		break
-	case "fatal":
-		log.SetLevel(log.FatalLevel)
-		break
-	case "error":
-		log.SetLevel(log.ErrorLevel)
-		break
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-		break
-	case "info":
-		log.SetLevel(log.InfoLevel)
-		break
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-		break
-	case "trace":
-		log.SetLevel(log.TraceLevel)
-		break
-	default:
-		log.SetLevel(log.TraceLevel)
-		break
-	}
-	fmt.Println("************************************************")
-	fmt.Println("*                                              *")
-	fmt.Println("*             	   Cfg  Init                    *")
-	fmt.Println("*                                              *")
-	fmt.Println("************************************************")
-	fmt.Println("### Model:        ", c.Model)
-	fmt.Println("### ServerName:   ", c.ServerName)
-	fmt.Println("### ClusterName:  ", c.ClusterName)
-	fmt.Println("### GroupName:    ", c.GroupName)
-	fmt.Println("### Explain:      ", c.Explain)
-	fmt.Println("### RPCPort:      ", c.RPCPort)
-	fmt.Println("### HTTPPort:     ", c.HTTPPort)
-	fmt.Println("### Discovery:    ", c.Discovery)
-	fmt.Println("### Redis:        ", c.Redis)
-	fmt.Println("### Etcd:         ", c.Etcd)
-	fmt.Println("### Kafka:        ", c.Kafka)
-	fmt.Println("### Nats:         ", c.Nats)
-	fmt.Println("### RocketMq:     ", c.RocketMq)
-	fmt.Println("### Nsq:          ", c.Nsq)
-	fmt.Println("### ReadMysql:    ", c.ReadMysql)
-	fmt.Println("### WriteMysql:   ", c.WriteMysql)
-	fmt.Println("### Jaeger:       ", c.Jaeger)
-	fmt.Println("### Host:         ", c.Host)
-	fmt.Println("### ServiceLimit: ", c.MaxServiceLimitRequest)
-	fmt.Println("### ClientLimit:  ", c.MaxClientLimitRequest)
-	fmt.Println("### RunMode:      ", c.Runmode)
-	log.Traceln("日志初始化完成")
-	return c
 }

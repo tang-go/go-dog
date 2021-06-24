@@ -10,6 +10,7 @@ import (
 	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
+	consulRegister "github.com/tang-go/go-dog/pkg/discovery/consul"
 	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
 	"github.com/tang-go/go-dog/pkg/fusing"
 	"github.com/tang-go/go-dog/pkg/limit"
@@ -59,9 +60,11 @@ func NewClient(param ...interface{}) plugins.Client {
 		client.cfg = config.NewConfig()
 	}
 	if client.discovery == nil {
-		if client.cfg.GetModel() == plugins.NacosModel {
+		if client.cfg.GetModel() == config.NacosDiscoveryModel {
 			client.discovery = nacosDiscovery.NewDiscovery(client.cfg)
-			client.discovery.WatchRPC()
+		}
+		if client.cfg.GetDiscoveryModel() == config.ConsulDiscoveryModel {
+			client.discovery = consulRegister.NewDiscovery(client.cfg)
 		}
 	}
 	if client.fusing == nil {
@@ -110,15 +113,15 @@ func (c *Client) GetCodec() plugins.Codec {
 	return c.codec
 }
 
-//GetAllRPCService 获取所有RPC服务
-func (c *Client) GetAllRPCService() (services []*serviceinfo.ServiceInfo) {
-	return c.discovery.GetAllRPCService()
-}
+// //GetAllRPCService 获取所有RPC服务
+// func (c *Client) GetAllRPCService() (services []*serviceinfo.ServiceInfo) {
+// 	return c.discovery.GetAllRPCService()
+// }
 
-//GetAllAPIService 获取所有API服务
-func (c *Client) GetAllAPIService() (services []*serviceinfo.ServiceInfo) {
-	return c.discovery.GetAllAPIService()
-}
+// //GetAllAPIService 获取所有API服务
+// func (c *Client) GetAllAPIService() (services []*serviceinfo.ServiceInfo) {
+// 	return c.discovery.GetAllAPIService()
+// }
 
 //Call 调用函数
 func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, method string, args interface{}, reply interface{}) error {

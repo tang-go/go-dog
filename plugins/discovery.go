@@ -13,12 +13,6 @@ type Discovery interface {
 	//WatchRPC 监听api服务
 	WatchRPC()
 
-	//GetAllAPIService 获取所有API服务
-	GetAllAPIService() (services []*serviceinfo.ServiceInfo)
-
-	//GetAllRPCService 获取所有RPC服务
-	GetAllRPCService() (services []*serviceinfo.ServiceInfo)
-
 	//GetRPCServiceByName 通过名称获取RPC服务
 	GetRPCServiceByName(name string) (services []*serviceinfo.ServiceInfo)
 

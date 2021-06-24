@@ -19,6 +19,7 @@ require (
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
+	github.com/hashicorp/consul/api v1.8.1
 	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.10
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3
@@ -47,5 +48,6 @@ require (
 
 replace (
 	github.com/coreos/bbolt v1.3.4 => go.etcd.io/bbolt v1.3.4
+	github.com/mitchellh/cli v1.1.0 => github.com/mitchellh/cli v1.1.2
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 )

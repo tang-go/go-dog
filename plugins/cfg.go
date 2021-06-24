@@ -2,13 +2,6 @@ package plugins
 
 import "github.com/tang-go/go-dog/pkg/config"
 
-const (
-	//本地配置模式
-	LocalModel = "local"
-	//nacos配置模式
-	NacosModel = "nacos"
-)
-
 //Cfg 配置接口
 type Cfg interface {
 	//GetServerName 获取服务名称
@@ -29,8 +22,8 @@ type Cfg interface {
 	//GetHTTPPort 获取HTTP端口
 	GetHTTPPort() int
 
-	//GetDiscovery 获取服务发现配置
-	GetDiscovery() []string
+	//GetConsul 获取consul
+	GetConsul() string
 
 	//GetRedis 获取redis配置
 	GetRedis() []string
@@ -73,4 +66,7 @@ type Cfg interface {
 
 	//GetMaxClientLimitRequest 获取客户端最大的限流数
 	GetMaxClientLimitRequest() int
+
+	//GetDiscoveryModel 获取服务发现模型
+	GetDiscoveryModel() string
 }
