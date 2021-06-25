@@ -1,6 +1,9 @@
 package plugins
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/tang-go/go-dog/metrics"
+)
 
 //Gateway 网关
 type Gateway interface {
@@ -35,4 +38,7 @@ type Gateway interface {
 
 	//Run 启动
 	Run(port int) error
+
+	//AddMetricValue 添加metric采集的值
+	AddMetricValue(metricValue []*metrics.MetricValue)
 }

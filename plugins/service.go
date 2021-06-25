@@ -1,5 +1,7 @@
 package plugins
 
+import "github.com/tang-go/go-dog/metrics"
+
 //HTTPKind http请求类型
 type HTTPKind string
 
@@ -43,4 +45,7 @@ type Service interface {
 
 	//Run 启动服务
 	Run() error
+
+	//AddMetricValue 添加metric采集的值
+	AddMetricValue(metricValue []*metrics.MetricValue)
 }

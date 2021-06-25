@@ -15,12 +15,15 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	customerror "github.com/tang-go/go-dog/error"
 	"github.com/tang-go/go-dog/jaeger"
 	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/metrics"
 	"github.com/tang-go/go-dog/pkg/client"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
@@ -46,6 +49,7 @@ type Gateway struct {
 	postRequestIntercept  func(c plugins.Context, url string, request []byte) ([]byte, bool, error)
 	postResponseIntercept func(c plugins.Context, url string, request []byte, response []byte)
 	discovery             plugins.Discovery
+	metricValue           []*metrics.MetricValue
 }
 
 //NewGateway  新建发现服务
@@ -69,7 +73,38 @@ func NewGateway(name string) *Gateway {
 	gateway.customGet = make(map[string]func(c *gin.Context))
 	//初始化链路追踪
 	gateway.jaeger = jaeger.NewJaeger(name, gateway.cfg)
+
+	//默认监控
+	labels := []string{Method, Path, Status}
+	gateway.metricValue = []*metrics.MetricValue{
+		{
+			ValueType: metrics.Counter,
+			Name:      ReqCount,
+			Help:      "Counter. Total number of HTTP requests made",
+			Labels:    labels,
+		}, {
+			ValueType: metrics.Histogram,
+			Name:      ReqDuration,
+			Help:      "Histogram. HTTP request latencies in seconds",
+			Labels:    labels,
+		}, {
+			ValueType: metrics.Summary,
+			Name:      ReqSizeBytes,
+			Help:      "Summary. HTTP request sizes in bytes",
+			Labels:    labels,
+		}, {
+			ValueType: metrics.Summary,
+			Name:      RespSizeBytes,
+			Help:      "Summary. HTTP request sizes in bytes",
+			Labels:    labels,
+		},
+	}
 	return gateway
+}
+
+//AddMetricValue 添加metric采集的值
+func (g *Gateway) AddMetricValue(metricValue []*metrics.MetricValue) {
+	g.metricValue = append(g.metricValue, metricValue...)
 }
 
 //SwaggerAuthCheck swagger权限检测
@@ -124,16 +159,30 @@ func (g *Gateway) Auth(f func(client plugins.Client, ctx plugins.Context, token,
 
 //Run 启动
 func (g *Gateway) Run(port int) error {
+	//启动metrics
+	if err := metrics.Init(&metrics.MetricOpts{
+		NameSpace:     g.cfg.GetClusterName(),
+		SystemName:    strings.Replace(g.name, "/", "_", -1),
+		MetricsValues: g.metricValue,
+	}); err != nil {
+		panic(err.Error())
+	}
+	//启动接口
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(g.cors())
 	router.Use(g.logger())
+	router.Use(metricMiddleware)
 	for url, f := range g.customGet {
 		router.GET(url, f)
 	}
 	for url, f := range g.customPost {
 		router.POST(url, f)
 	}
+	if g.cfg.GetRunmode() == "trace" {
+		pprof.Register(router)
+	}
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	router.GET("/swagger/*any", g.getSwagger)
 	router.POST("/api/*router", g.routerPostAndPutResolution)
 	router.PUT("/api/*router", g.routerPostAndPutResolution)

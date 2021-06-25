@@ -12,11 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	customerror "github.com/tang-go/go-dog/error"
 	"github.com/tang-go/go-dog/header"
 	"github.com/tang-go/go-dog/jaeger"
 	"github.com/tang-go/go-dog/log"
+	"github.com/tang-go/go-dog/metrics"
 	"github.com/tang-go/go-dog/pkg/client"
 	"github.com/tang-go/go-dog/pkg/codec"
 	"github.com/tang-go/go-dog/pkg/config"
@@ -30,6 +33,12 @@ import (
 	"github.com/tang-go/go-dog/recover"
 	"github.com/tang-go/go-dog/serviceinfo"
 )
+
+type MetricOpts struct {
+	NameSpace     string                 // 必填
+	SystemName    string                 // 必填
+	MetricsValues []*metrics.MetricValue // 必填
+}
 
 //API api路由组件
 type API struct {
@@ -166,6 +175,8 @@ type Service struct {
 	close int32
 	//api注册拦截器
 	apiRegIntercept func(gate, group, url string, level int8, isAuth bool, explain string)
+	//meterics统计的数组
+	metricValue []*metrics.MetricValue
 	//等待
 	wait sync.WaitGroup
 }
@@ -257,6 +268,30 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 		Explain: service.cfg.GetExplain(),
 		Time:    time.Now().Format("2006-01-02 15:04:05"),
 	}
+	//metrics采集
+	service.metricValue = []*metrics.MetricValue{
+		{
+			ValueType: metrics.Counter,
+			Name:      ReqCount,
+			Help:      "Counter. Total number of RPC requests made",
+			Labels:    []string{Name, Method, Address, Err},
+		}, {
+			ValueType: metrics.Histogram,
+			Name:      ReqDuration,
+			Help:      "Histogram. RPC request latencies in seconds",
+			Labels:    []string{Name, Method, Address, Err},
+		}, {
+			ValueType: metrics.Summary,
+			Name:      ReqSizeBytes,
+			Help:      "Summary. RPC request sizes in bytes",
+			Labels:    []string{Name, Method, Address, Err},
+		}, {
+			ValueType: metrics.Summary,
+			Name:      RespSizeBytes,
+			Help:      "Summary. RPC request sizes in bytes",
+			Labels:    []string{Name, Method, Address, Err},
+		},
+	}
 	return service
 }
 
@@ -310,6 +345,11 @@ func (s *Service) APIRegIntercept(f func(gate, group, url string, level int8, is
 	s.apiRegIntercept = f
 }
 
+//AddMetricValue 添加metric采集的值
+func (s *Service) AddMetricValue(metricValue []*metrics.MetricValue) {
+	s.metricValue = append(s.metricValue, metricValue...)
+}
+
 //RegisterAPI 注册API方法--注册给网管
 func (s *Service) registerAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
@@ -345,6 +385,14 @@ func (s *Service) Auth(fun func(ctx plugins.Context, method, token string) error
 //Run 启动服务
 func (s *Service) Run() error {
 	c := make(chan os.Signal)
+	//启动metrics
+	if err := metrics.Init(&metrics.MetricOpts{
+		NameSpace:     s.cfg.GetClusterName(),
+		SystemName:    strings.Replace(s.name, "/", "_", -1),
+		MetricsValues: s.metricValue,
+	}); err != nil {
+		panic(err.Error())
+	}
 	//监听指定信号
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
@@ -372,10 +420,12 @@ func (s *Service) runHTTP() error {
 	router := gin.New()
 	router.Use(s.cors())
 	router.Use(s.logger())
-
-	router.GET("/metrics", s.metrics)
+	if s.cfg.GetRunmode() == "trace" {
+		pprof.Register(router)
+	}
 	router.GET("/apis", s.getAPI)
 	router.GET("/rpc", s.getRPC)
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	httpport := fmt.Sprintf(":%d", s.cfg.GetHTTPPort())
 	s.register.RegisterHTTPService(context.Background(), s.api)
 	err := router.Run(httpport)
@@ -383,11 +433,6 @@ func (s *Service) runHTTP() error {
 		panic(err.Error())
 	}
 	return nil
-}
-
-//metrics 监控
-func (s *Service) metrics(c *gin.Context) {
-	c.JSON(http.StatusOK, "metrics")
 }
 
 //getAPI 方法api信息
@@ -445,7 +490,7 @@ func (s *Service) cors() gin.HandlerFunc {
 	}
 }
 
-//_RunTCP 启动TCP
+//runTCP 启动TCP
 func (s *Service) runTCP() error {
 	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.cfg.GetRPCPort()))
 	if err != nil {
@@ -466,9 +511,8 @@ func (s *Service) runTCP() error {
 	}
 }
 
-//_Log 日志
-func (s *Service) log(address, name, method string, respone *header.Response) func() {
-	start := time.Now()
+//log 日志
+func (s *Service) log(start time.Time, address, name, method string, respone *header.Response) func() {
 	return func() {
 		if respone.Error != nil {
 			log.Infof("| %s | %s | %13v | %s | %s ",
@@ -490,20 +534,51 @@ func (s *Service) log(address, name, method string, respone *header.Response) fu
 	}
 }
 
+func (s *Service) metricMiddleware(start time.Time, address, name, method string, request *header.Request, respone *header.Response) func() {
+	return func() {
+		labelValues := map[string]string{Name: name, Method: method, Address: address, Err: ""}
+		if respone.Error != nil {
+			labelValues[Err] = respone.Error.Error()
+		}
+
+		metric, err := metrics.GetManager().GetMetric(ReqCount)
+		if err == nil && metric != nil {
+			metric.IncWithLabel(labelValues)
+		}
+
+		metric, err = metrics.GetManager().GetMetric(ReqSizeBytes)
+		if err == nil && metric != nil {
+			metric.ObserveWithLabel(labelValues, float64(len(request.Arg)))
+		}
+
+		metric, err = metrics.GetManager().GetMetric(RespSizeBytes)
+		if err == nil && metric != nil {
+			metric.ObserveWithLabel(labelValues, float64(len(respone.Reply)))
+		}
+
+		metric, err = metrics.GetManager().GetMetric(ReqDuration)
+		if err == nil && metric != nil {
+			metric.ObserveWithLabel(labelValues, time.Since(start).Seconds())
+		}
+	}
+}
+
 // ServeConn 拦截一个链接
 func (s *Service) serveConn(conn net.Conn) {
 	serviceRPC := rpc.NewServiceRPC(conn, s.codec)
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
 			defer recover.Recover()
+			start := time.Now()
 			rep := new(header.Response)
 			rep.ID = req.ID
 			rep.Method = req.Method
 			rep.Name = req.Name
 			rep.Code = req.Code
 			if s.GetCfg().GetRunmode() == "trace" || s.GetCfg().GetRunmode() == "debug" || s.GetCfg().GetRunmode() == "info" {
-				defer s.log(req.Address, req.Name, req.Method, rep)()
+				defer s.log(start, req.Address, req.Name, req.Method, rep)()
 			}
+			defer s.metricMiddleware(start, req.Address, req.Name, req.Method, req, rep)()
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
 				rep.Error = customerror.EnCodeError(customerror.InternalServerError, "服务器关闭")
