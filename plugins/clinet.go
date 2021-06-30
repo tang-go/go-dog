@@ -14,6 +14,8 @@ const (
 
 //Client 客户端
 type Client interface {
+	//GetLimit 获取限流插件
+	GetLimit() Limit
 
 	//GetCodec 获取编码插件
 	GetCodec() Codec
