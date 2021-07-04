@@ -80,18 +80,18 @@ func (pointer *Router) analysisStruct(index *int, name string, class interface{}
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	required := "false"
 	if t.Kind() != reflect.Struct {
 		tgs := map[string]string{
 			"type":        t.Kind().String(),
 			"description": t.Kind().String(),
-			"required":    required,
+			"required":    "false",
 		}
 		explain[strings.ToLower(t.Name())] = tgs
 		return explain
 	}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
+		required := "false"
 		if t.Field(i).Tag.Get("required") == "true" {
 			required = "true"
 		}

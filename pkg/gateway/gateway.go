@@ -275,12 +275,10 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 			c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, fmt.Sprintf("传入参数%v类型错误", value)))
 			return
 		}
-		re, ok3 := vali["required"]
 		required := false
-		if ok3 {
-			if re == "true" {
-				required = true
-			}
+		re, ok3 := vali["required"]
+		if ok3 && re == "true" {
+			required = true
 		}
 		data := c.Query(key)
 		if data == "" {
@@ -723,7 +721,6 @@ func createPostAndPutAPI(kind, tags, summary, name string, isAuth bool, request,
 		Required:    true,
 	}
 	requestName := strings.Replace(tags+"."+name+"."+kind+".Request", "/", ".", -1)
-	log.Traceln(request)
 	requestProperties := createDefinitions(requestName, request)
 	definitions = append(definitions, requestProperties...)
 
@@ -785,12 +782,10 @@ func createGetAndDeleteAPI(kind, tags, summary, name string, isAuth bool, reques
 		if vali, ok := value.(map[string]interface{}); ok {
 			des, ok1 := vali["description"]
 			tp, ok2 := vali["type"]
-			re, ok3 := vali["required"]
 			required := false
-			if ok3 {
-				if re == "true" {
-					required = true
-				}
+			re, ok3 := vali["required"]
+			if ok3 && re == "true" {
+				required = true
 			}
 			if ok1 == true && ok2 == true {
 				api.Parameters = append(api.Parameters, Parameters{
