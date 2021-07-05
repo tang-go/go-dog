@@ -228,8 +228,8 @@ func (g *Gateway) getSwagger(c *gin.Context) {
 
 //routerGetAndDeleteResolution get/delete路由解析
 func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
-	url := c.Request.Method + "/api" + c.Param("router")
-	apiservice, ok := g.discovery.GetAPIByURL(url)
+	url := "/api" + c.Param("router")
+	apiservice, ok := g.discovery.GetAPIByURL(c.Request.Method + url)
 	if !ok {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由URL错误"))
 		return
@@ -370,9 +370,8 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 // routerPostAndPutResolution post/put路由解析
 func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 	//路由解析
-	url := c.Request.Method + c.Request.URL.String()
-	log.Traceln(url)
-	apiservice, ok := g.discovery.GetAPIByURL(url)
+	url := c.Request.URL.String()
+	apiservice, ok := g.discovery.GetAPIByURL(c.Request.Method + url)
 	if !ok {
 		c.JSON(http.StatusNotFound, customerror.EnCodeError(http.StatusNotFound, "路由URL错误"))
 		return

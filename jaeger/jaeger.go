@@ -74,7 +74,7 @@ func (j *Jaeger) StartSpan(ctx plugins.Context, operationName string) (opentraci
 
 //Request 请求
 func (j *Jaeger) Request(ctx plugins.Context, servicename, method string, request interface{}) {
-	if j.cfg.GetRunmode() == "trace" && j.cfg.GetJaeger() == "" {
+	if j.cfg.GetRunmode() == "trace" && j.cfg.GetJaeger() != "" {
 		span, err := j.StartSpan(ctx, servicename+"."+method)
 		if err == nil {
 			ctx.SetShare("Span", span)
@@ -85,7 +85,7 @@ func (j *Jaeger) Request(ctx plugins.Context, servicename, method string, reques
 
 //Respone 响应
 func (j *Jaeger) Respone(ctx plugins.Context, servicename, method string, respone interface{}, err error) {
-	if j.cfg.GetRunmode() == "trace" && j.cfg.GetJaeger() == "" {
+	if j.cfg.GetRunmode() == "trace" && j.cfg.GetJaeger() != "" {
 		if span, ok := ctx.GetShareByKey("Span").(opentracing.Span); ok {
 			span.Finish()
 		}
