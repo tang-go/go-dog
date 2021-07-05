@@ -43,7 +43,7 @@ type Gateway struct {
 	customGet             map[string]func(c *gin.Context)
 	customPost            map[string]func(c *gin.Context)
 	swaggerAuthCheck      func(token string) error
-	authfunc              func(client plugins.Client, ctx plugins.Context, token, url string) error
+	authfunc              func(ctx plugins.Context, token, url string) error
 	getRequestIntercept   func(c plugins.Context, url string, request []byte) ([]byte, bool, error)
 	getResponseIntercept  func(c plugins.Context, url string, request []byte, response []byte)
 	postRequestIntercept  func(c plugins.Context, url string, request []byte) ([]byte, bool, error)
@@ -153,7 +153,7 @@ func (g *Gateway) GetCfg() plugins.Cfg {
 }
 
 //Auth 验证权限
-func (g *Gateway) Auth(f func(client plugins.Client, ctx plugins.Context, token, url string) error) {
+func (g *Gateway) Auth(f func(ctx plugins.Context, token, url string) error) {
 	g.authfunc = f
 }
 
@@ -306,6 +306,7 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 	ctx.SetIsTest(isTest)
 	ctx.SetTraceID(traceID)
 	ctx.SetURL(url)
+	ctx.SetClient(g.GetClient())
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
 	//开启追踪
 	if span, err := g.jaeger.StartSpan(ctx, url); err == nil {
@@ -320,7 +321,7 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 		}
 		//验证权限
 		if g.authfunc != nil {
-			if err := g.authfunc(g.GetClient(), ctx, token, url); err != nil {
+			if err := g.authfunc(ctx, token, url); err != nil {
 				log.Traceln(err.Error())
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不正确"))
 				return
@@ -420,6 +421,7 @@ func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 	ctx.SetIsTest(isTest)
 	ctx.SetTraceID(traceID)
 	ctx.SetURL(url)
+	ctx.SetClient(g.GetClient())
 	ctx = context.WithTimeout(ctx, int64(time.Second*time.Duration(timeout)))
 	//开启追踪
 	if span, err := g.jaeger.StartSpan(ctx, url); err == nil {
@@ -434,7 +436,7 @@ func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 		}
 		//验证权限
 		if g.authfunc != nil {
-			if err := g.authfunc(g.GetClient(), ctx, token, url); err != nil {
+			if err := g.authfunc(ctx, token, url); err != nil {
 				log.Traceln(err.Error())
 				c.JSON(customerror.ParamError, customerror.EnCodeError(customerror.ParamError, "token不正确"))
 				return

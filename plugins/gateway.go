@@ -15,6 +15,7 @@ type Gateway interface {
 
 	//GetResponseIntercept 拦截get请求响应
 	GetResponseIntercept(f func(c Context, url string, request []byte, response []byte))
+
 	//PostRequestIntercept 拦截get请求
 	PostRequestIntercept(f func(c Context, url string, request []byte) ([]byte, bool, error))
 
@@ -34,7 +35,7 @@ type Gateway interface {
 	GetCfg() Cfg
 
 	//Auth 验证权限
-	Auth(f func(client Client, ctx Context, token, url string) error)
+	Auth(f func(ctx Context, token, url string) error)
 
 	//Run 启动
 	Run(port int) error
