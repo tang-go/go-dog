@@ -1,6 +1,7 @@
 package nsq
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -105,10 +106,13 @@ func (n *Nsq) DeferredPublish(topic string, delay time.Duration, msg []byte) err
 }
 
 //Consumer 创建消费者
-func (n *Nsq) Consumer(topic, channel string, f func(msg []byte)) error {
+func (n *Nsq) Consumer(topic, channel string, f func(msg []byte) error) error {
 	config := nsq.NewConfig()
+	config.MaxAttempts = 65534
 	config.LookupdPollInterval = time.Second
 	config.MaxInFlight = len(n.cfg.GetNsq())
+	topic = strings.Replace(topic, "/", "_", -1)
+	channel = strings.Replace(channel, "/", "_", -1)
 	consumer, err := nsq.NewConsumer(topic, channel, config)
 	if err != nil {
 		log.Errorf("创建消费者失败: %s", err.Error())
@@ -116,8 +120,13 @@ func (n *Nsq) Consumer(topic, channel string, f func(msg []byte)) error {
 	}
 	consumer.SetLogger(new(Logger), nsq.LogLevelInfo)
 	consumer.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) error {
-		f(message.Body)
-		message.Finish()
+		if err := f(message.Body); err != nil {
+			if !message.IsAutoResponseDisabled() {
+				message.RequeueWithoutBackoff(time.Second * 5)
+			}
+		} else {
+			message.Finish()
+		}
 		return nil
 	}))
 	//建立多个nsqd连接

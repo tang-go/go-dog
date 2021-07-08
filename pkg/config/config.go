@@ -247,6 +247,7 @@ func NewConfig() *Config {
 	c.DiscoveryModel = discoveryModel
 	c.initCfgModel()
 	c.initEnv()
+	c.initLog()
 	fmt.Println("************************************************")
 	fmt.Println("*                                              *")
 	fmt.Println("*             	   Cfg  Init                    *")
