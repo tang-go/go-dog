@@ -59,6 +59,9 @@ type RPC interface {
 	//NoAuth 需要不验证
 	NoAuth() RPC
 
+	//Level 等级
+	Level(level int8) RPC
+
 	//Class 对象
 	Class(class string) RPC
 
