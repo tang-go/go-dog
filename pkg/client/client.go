@@ -113,18 +113,11 @@ func (c *Client) GetCodec() plugins.Codec {
 	return c.codec
 }
 
-// //GetAllRPCService 获取所有RPC服务
-// func (c *Client) GetAllRPCService() (services []*serviceinfo.ServiceInfo) {
-// 	return c.discovery.GetAllRPCService()
-// }
-
-// //GetAllAPIService 获取所有API服务
-// func (c *Client) GetAllAPIService() (services []*serviceinfo.ServiceInfo) {
-// 	return c.discovery.GetAllAPIService()
-// }
-
 //Call 调用函数
-func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, method string, args interface{}, reply interface{}) error {
+func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, server string, class string, method string, args interface{}, reply interface{}) error {
+	if method != "" {
+		method = class + "." + method
+	}
 	defer recover.Recover()
 	if c.limit.IsLimit() {
 		return customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
@@ -134,7 +127,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	switch mode {
 	//随机模式
 	case plugins.RandomMode:
-		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
+		service, err := c.selector.RandomMode(c.discovery, c.fusing, server, method)
 		if err != nil {
 			log.Traceln(err.Error())
 			return err
@@ -148,7 +141,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
 		//客户端发起请求
-		err = client.Call(ctx, name, method, args, reply)
+		err = client.Call(ctx, server, method, args, reply)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -159,7 +152,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 	//遍历模式
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
-		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
+		e = c.selector.RangeMode(c.discovery, c.fusing, server, method, func(service *serviceinfo.ServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				log.Traceln(err.Error())
@@ -168,7 +161,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 			}
 			//请求统计添加
 			c.fusing.AddMethod(service.Key, method)
-			err = client.Call(ctx, name, method, args, reply)
+			err = client.Call(ctx, server, method, args, reply)
 			if err != nil {
 				//添加错误
 				log.Traceln(err.Error())
@@ -181,7 +174,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		return e
 	//hash模式
 	case plugins.HashMode:
-		service, err := c.selector.HashMode(c.discovery, c.fusing, name, method)
+		service, err := c.selector.HashMode(c.discovery, c.fusing, server, method)
 		if err != nil {
 			log.Traceln(err.Error())
 			return err
@@ -195,7 +188,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
 		//客户端发起请求
-		err = client.Call(ctx, name, method, args, reply)
+		err = client.Call(ctx, server, method, args, reply)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -205,7 +198,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		return nil
 	//默认方式
 	default:
-		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
+		service, err := c.selector.Custom(c.discovery, c.fusing, server, method)
 		if err != nil {
 			log.Traceln(err.Error())
 			return err
@@ -219,7 +212,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
 		//客户端发起请求
-		err = client.Call(ctx, name, method, args, reply)
+		err = client.Call(ctx, server, method, args, reply)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -231,7 +224,10 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, name string, metho
 }
 
 //SendRequest 发生请求
-func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string, method string, code string, args []byte) (reply []byte, e error) {
+func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, server string, class string, method string, code string, args []byte) (reply []byte, e error) {
+	if method != "" {
+		method = class + "." + method
+	}
 	defer recover.Recover()
 	if c.limit.IsLimit() {
 		return nil, customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
@@ -241,7 +237,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	switch mode {
 	//随机模式
 	case plugins.RandomMode:
-		service, err := c.selector.RandomMode(c.discovery, c.fusing, name, method)
+		service, err := c.selector.RandomMode(c.discovery, c.fusing, server, method)
 		if err != nil {
 			log.Traceln(err.Error())
 			return nil, err
@@ -255,7 +251,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
 		//客户端发起请求
-		res, err := client.SendRequest(ctx, name, method, code, args)
+		res, err := client.SendRequest(ctx, server, method, code, args)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -267,7 +263,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 	case plugins.RangeMode:
 		var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
 		var res []byte
-		e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
+		e = c.selector.RangeMode(c.discovery, c.fusing, server, method, func(service *serviceinfo.ServiceInfo) bool {
 			client, err := c.managerclient.GetClient(service)
 			if err != nil {
 				e = err
@@ -277,7 +273,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 			}
 			//请求统计添加
 			c.fusing.AddMethod(service.Key, method)
-			res, err = client.SendRequest(ctx, name, method, code, args)
+			res, err = client.SendRequest(ctx, server, method, code, args)
 			if err != nil {
 				//添加错误
 				log.Traceln(err.Error())
@@ -290,7 +286,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		return res, e
 	//hash模式
 	case plugins.HashMode:
-		service, err := c.selector.HashMode(c.discovery, c.fusing, name, method)
+		service, err := c.selector.HashMode(c.discovery, c.fusing, server, method)
 		if err != nil {
 			return nil, err
 		}
@@ -303,7 +299,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
 		//客户端发起请求
-		res, err := client.SendRequest(ctx, name, method, code, args)
+		res, err := client.SendRequest(ctx, server, method, code, args)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -313,7 +309,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		return res, nil
 	//默认方式
 	default:
-		service, err := c.selector.Custom(c.discovery, c.fusing, name, method)
+		service, err := c.selector.Custom(c.discovery, c.fusing, server, method)
 		if err != nil {
 			log.Traceln(err.Error())
 			return nil, err
@@ -327,7 +323,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
 		//客户端发起请求
-		res, err := client.SendRequest(ctx, name, method, code, args)
+		res, err := client.SendRequest(ctx, server, method, code, args)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -339,7 +335,10 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, name string
 }
 
 //Broadcast 广播
-func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args interface{}, reply interface{}) error {
+func (c *Client) Broadcast(ctx plugins.Context, server string, class string, method string, args interface{}, reply interface{}) error {
+	if method != "" {
+		method = class + "." + method
+	}
 	defer recover.Recover()
 	if c.limit.IsLimit() {
 		return customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
@@ -347,7 +346,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 	c.wait.Add(1)
 	defer c.wait.Done()
 	var e error = customerror.EnCodeError(customerror.InternalServerError, "没有服务可用")
-	e = c.selector.RangeMode(c.discovery, c.fusing, name, method, func(service *serviceinfo.ServiceInfo) bool {
+	e = c.selector.RangeMode(c.discovery, c.fusing, server, method, func(service *serviceinfo.ServiceInfo) bool {
 		client, err := c.managerclient.GetClient(service)
 		if err != nil {
 			e = err
@@ -357,7 +356,7 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 		}
 		//请求统计添加
 		c.fusing.AddMethod(service.Key, method)
-		err = client.Call(context.WithTimeout(ctx, int64(time.Second*5)), name, method, args, reply)
+		err = client.Call(context.WithTimeout(ctx, int64(time.Second*5)), server, method, args, reply)
 		if err != nil {
 			//添加错误
 			log.Traceln(err.Error())
@@ -374,7 +373,10 @@ func (c *Client) Broadcast(ctx plugins.Context, name string, method string, args
 }
 
 //CallByAddress 指定地址调用
-func (c *Client) CallByAddress(ctx plugins.Context, address string, name string, method string, args interface{}, reply interface{}) error {
+func (c *Client) CallByAddress(ctx plugins.Context, address string, server string, class string, method string, args interface{}, reply interface{}) error {
+	if method != "" {
+		method = class + "." + method
+	}
 	defer recover.Recover()
 	if c.limit.IsLimit() {
 		return customerror.EnCodeError(customerror.ClientLimitError, "超过了每秒最大流量")
@@ -382,7 +384,7 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 	c.wait.Add(1)
 	defer c.wait.Done()
 
-	service, err := c.selector.GetByAddress(c.discovery, address, c.fusing, name, method)
+	service, err := c.selector.GetByAddress(c.discovery, address, c.fusing, server, method)
 	if err != nil {
 		log.Traceln(err.Error())
 		return err
@@ -397,7 +399,7 @@ func (c *Client) CallByAddress(ctx plugins.Context, address string, name string,
 	//请求统计添加
 	c.fusing.AddMethod(service.Key, method)
 	//客户端发起请求
-	err = client.Call(ctx, name, method, args, reply)
+	err = client.Call(ctx, server, method, args, reply)
 	if err != nil {
 		//添加错误
 		log.Traceln(err.Error())

@@ -40,51 +40,58 @@ type MetricOpts struct {
 	MetricsValues []*metrics.MetricValue // 必填
 }
 
-//API api路由组件
-type API struct {
-	api *serviceinfo.API
-	s   *Service
+//HTTP api路由组件
+type HTTP struct {
+	api   *serviceinfo.API
+	s     *Service
+	class string
 }
 
-func newAPI(s *Service, api *serviceinfo.API) plugins.API {
-	return &API{
+func newHTTP(s *Service, api *serviceinfo.API) plugins.HTTP {
+	return &HTTP{
 		s:   s,
 		api: api,
 	}
 }
 
+//Class 对象
+func (a *HTTP) Class(class string) plugins.HTTP {
+	a.class = class
+	return a
+}
+
 //APIGroup APi组
-func (a *API) APIGroup(group string) plugins.API {
+func (a *HTTP) Group(group string) plugins.HTTP {
 	a.api.Group = group
 	return a
 }
 
-//APIAuth APi需要验证
-func (a *API) APIAuth() plugins.API {
+//Auth APi需要验证
+func (a *HTTP) Auth() plugins.HTTP {
 	a.api.IsAuth = true
 	return a
 }
 
-//APINoAuth APi需要不验证
-func (a *API) APINoAuth() plugins.API {
+//NoAuth APi需要不验证
+func (a *HTTP) NoAuth() plugins.HTTP {
 	a.api.IsAuth = false
 	return a
 }
 
-//APIVersion APi版本
-func (a *API) APIVersion(version string) plugins.API {
+//Version APi版本
+func (a *HTTP) Version(version string) plugins.HTTP {
 	a.api.Version = version
 	return a
 }
 
-//APILevel APi等级
-func (a *API) APILevel(level int8) plugins.API {
+//Level APi等级
+func (a *HTTP) Level(level int8) plugins.HTTP {
 	a.api.Level = level
 	return a
 }
 
 //GET APi GET路由
-func (a *API) GET(name string, path string, explain string, fn interface{}) {
+func (a *HTTP) GET(method string, path string, explain string, fn interface{}) {
 	a.api.Path = path
 	if a.api.Group == "" {
 		a.api.Group = a.s.name
@@ -95,11 +102,14 @@ func (a *API) GET(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
+	if a.class != "" {
+		method = a.class + "." + method
+	}
+	a.s.RegisterAPI(a.api.Gate, a.api.Group, method, a.api.Version, path, plugins.GET, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //DELETE APi DELETE路由
-func (a *API) DELETE(name string, path string, explain string, fn interface{}) {
+func (a *HTTP) DELETE(method string, path string, explain string, fn interface{}) {
 	a.api.Path = path
 	if a.api.Group == "" {
 		a.api.Group = a.s.name
@@ -110,11 +120,14 @@ func (a *API) DELETE(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.DELETE, a.api.Level, a.api.IsAuth, explain, fn)
+	if a.class != "" {
+		method = a.class + "." + method
+	}
+	a.s.RegisterAPI(a.api.Gate, a.api.Group, method, a.api.Version, path, plugins.DELETE, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //POST POST路由
-func (a *API) POST(name string, path string, explain string, fn interface{}) {
+func (a *HTTP) POST(method string, path string, explain string, fn interface{}) {
 	a.api.Path = path
 	if a.api.Group == "" {
 		a.api.Group = a.s.name
@@ -125,11 +138,14 @@ func (a *API) POST(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
+	if a.class != "" {
+		method = a.class + "." + method
+	}
+	a.s.RegisterAPI(a.api.Gate, a.api.Group, method, a.api.Version, path, plugins.POST, a.api.Level, a.api.IsAuth, explain, fn)
 }
 
 //PUT PUT路由
-func (a *API) PUT(name string, path string, explain string, fn interface{}) {
+func (a *HTTP) PUT(method string, path string, explain string, fn interface{}) {
 	a.api.Path = path
 	if a.api.Group == "" {
 		a.api.Group = a.s.name
@@ -140,7 +156,59 @@ func (a *API) PUT(name string, path string, explain string, fn interface{}) {
 	if a.api.Level <= 0 {
 		a.api.Level = 1
 	}
-	a.s.registerAPI(a.api.Gate, a.api.Group, name, a.api.Version, path, plugins.PUT, a.api.Level, a.api.IsAuth, explain, fn)
+	if a.class != "" {
+		method = a.class + "." + method
+	}
+	a.s.RegisterAPI(a.api.Gate, a.api.Group, method, a.api.Version, path, plugins.PUT, a.api.Level, a.api.IsAuth, explain, fn)
+}
+
+//RPC RPC注册
+type RPC struct {
+	method *serviceinfo.Method
+	s      *Service
+	class  string
+}
+
+func newRPC(s *Service, method *serviceinfo.Method) plugins.RPC {
+	return &RPC{
+		s:      s,
+		method: method,
+	}
+}
+
+//Class 对象
+func (a *RPC) Class(class string) plugins.RPC {
+	a.class = class
+	return a
+}
+
+//Auth 需要验证
+func (a *RPC) Auth() plugins.RPC {
+	a.method.IsAuth = true
+	return a
+}
+
+//NoAuth 需要不验证
+func (a *RPC) NoAuth() plugins.RPC {
+	a.method.IsAuth = false
+	return a
+}
+
+//Level 等级
+func (a *RPC) Level(level int8) plugins.RPC {
+	a.method.Level = level
+	return a
+}
+
+//PUT PUT路由
+func (a *RPC) Method(method string, explain string, fn interface{}) {
+	if a.method.Level <= 0 {
+		a.method.Level = 1
+	}
+	if a.class != "" {
+		method = a.class + "." + method
+	}
+	a.s.RegisterRPC(method, a.method.Level, a.method.IsAuth, explain, fn)
 }
 
 //Service 服务
@@ -315,8 +383,8 @@ func (s *Service) GetCodec() plugins.Codec {
 	return s.codec
 }
 
-//RPC 注册RPC方法
-func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn interface{}) {
+//RegisterRPC 注册RPC方法
+func (s *Service) RegisterRPC(name string, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(name, fn)
 	method := &serviceinfo.Method{
 		Name:     name,
@@ -334,10 +402,16 @@ func (s *Service) RPC(name string, level int8, isAuth bool, explain string, fn i
 }
 
 //HTTP 创建http
-func (s *Service) HTTP(gate string) plugins.API {
+func (s *Service) HTTP(gate string) plugins.HTTP {
 	api := new(serviceinfo.API)
 	api.Gate = gate
-	return newAPI(s, api)
+	return newHTTP(s, api)
+}
+
+//RPC 创建rpc
+func (s *Service) RPC() plugins.RPC {
+	method := new(serviceinfo.Method)
+	return newRPC(s, method)
 }
 
 //APIRegIntercept API注册拦截器
@@ -350,8 +424,8 @@ func (s *Service) AddMetricValue(metricValue []*metrics.MetricValue) {
 	s.metricValue = append(s.metricValue, metricValue...)
 }
 
-//RegisterAPI 注册API方法--注册给网管
-func (s *Service) registerAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
+//RegisterApi 注册API方法--注册给网管
+func (s *Service) RegisterAPI(gate, group, methodname, version, path string, kind plugins.HTTPKind, level int8, isAuth bool, explain string, fn interface{}) {
 	req, rep := s.router.RegisterByMethod(methodname, fn)
 	url := fmt.Sprintf("/api/%s/%s/%s", s.name, version, path)
 	api := &serviceinfo.API{

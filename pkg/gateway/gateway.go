@@ -348,7 +348,7 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 			return
 		}
 	}
-	back, err := g.GetClient().SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, "json", body)
+	back, err := g.GetClient().SendRequest(ctx, plugins.RandomMode, apiservice.Name, "", apiservice.Method.Name, "json", body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
 		c.JSON(http.StatusOK, e)
@@ -463,7 +463,7 @@ func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 			return
 		}
 	}
-	back, err := g.GetClient().SendRequest(ctx, plugins.RandomMode, apiservice.Name, apiservice.Method.Name, "json", body)
+	back, err := g.GetClient().SendRequest(ctx, plugins.RandomMode, apiservice.Name, "", apiservice.Method.Name, "json", body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
 		c.JSON(http.StatusOK, e)

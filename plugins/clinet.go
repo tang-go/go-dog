@@ -30,16 +30,16 @@ type Client interface {
 	GetFusing() Fusing
 
 	//Call 调用函数
-	Call(ctx Context, mode Mode, name string, method string, args interface{}, reply interface{}) error
+	Call(ctx Context, mode Mode, server string, class string, method string, args interface{}, reply interface{}) error
 
 	//Broadcast 广播
-	Broadcast(ctx Context, name string, method string, args interface{}, reply interface{}) error
+	Broadcast(ctx Context, server string, class string, method string, args interface{}, reply interface{}) error
 
 	//SendRequest 发生请求
-	SendRequest(ctx Context, mode Mode, name string, method string, code string, args []byte) (reply []byte, e error)
+	SendRequest(ctx Context, mode Mode, server string, class string, method string, code string, args []byte) (reply []byte, e error)
 
 	//CallByAddress 指定地址调用
-	CallByAddress(ctx Context, address string, name string, method string, args interface{}, reply interface{}) error
+	CallByAddress(ctx Context, address string, server string, class string, method string, args interface{}, reply interface{}) error
 
 	//Close 关闭
 	Close()
