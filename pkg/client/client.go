@@ -115,7 +115,7 @@ func (c *Client) GetCodec() plugins.Codec {
 
 //Call 调用函数
 func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, server string, class string, method string, args interface{}, reply interface{}) error {
-	if method != "" {
+	if class != "" {
 		method = class + "." + method
 	}
 	defer recover.Recover()
@@ -225,7 +225,7 @@ func (c *Client) Call(ctx plugins.Context, mode plugins.Mode, server string, cla
 
 //SendRequest 发生请求
 func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, server string, class string, method string, code string, args []byte) (reply []byte, e error) {
-	if method != "" {
+	if class != "" {
 		method = class + "." + method
 	}
 	defer recover.Recover()
@@ -336,7 +336,7 @@ func (c *Client) SendRequest(ctx plugins.Context, mode plugins.Mode, server stri
 
 //Broadcast 广播
 func (c *Client) Broadcast(ctx plugins.Context, server string, class string, method string, args interface{}, reply interface{}) error {
-	if method != "" {
+	if class != "" {
 		method = class + "." + method
 	}
 	defer recover.Recover()
@@ -374,7 +374,7 @@ func (c *Client) Broadcast(ctx plugins.Context, server string, class string, met
 
 //CallByAddress 指定地址调用
 func (c *Client) CallByAddress(ctx plugins.Context, address string, server string, class string, method string, args interface{}, reply interface{}) error {
-	if method != "" {
+	if class != "" {
 		method = class + "." + method
 	}
 	defer recover.Recover()
