@@ -10,14 +10,14 @@ import (
 func ExampleRouter(router plugins.Service, s *service.Service) {
 	shopGate := router.HTTP(define.ExampleGate)
 	{
-		shopNoAuth := shopGate.APINoAuth()
+		shopNoAuth := shopGate.NoAuth()
 		{
-			shopV1 := shopNoAuth.APIGroup("演示相关").APIVersion("v1")
+			shopV1 := shopNoAuth.Group("演示相关").Version("v1")
 			{
-				shopV1.APILevel(4).POST("Add", "add", "加法", s.Add)
-				shopV1.APILevel(4).PUT("Add", "add", "加法", s.Add)
-				shopV1.APILevel(4).GET("Add", "add", "加法", s.Add)
-				shopV1.APILevel(4).DELETE("Add", "add", "加法", s.Add)
+				shopV1.Level(4).POST("Add", "add", "加法", s.Add)
+				shopV1.Level(4).PUT("Add", "add", "加法", s.Add)
+				shopV1.Level(4).GET("Add", "add", "加法", s.Add)
+				shopV1.Level(4).DELETE("Add", "add", "加法", s.Add)
 			}
 		}
 	}

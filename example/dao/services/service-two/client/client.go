@@ -19,7 +19,7 @@ func NewServiceTwo() *ServiceTwo {
 //Add 添加
 func (s *ServiceTwo) Add(ctx plugins.Context, x, y int64) (z int64, err error) {
 	rsp := new(param.AddRsp)
-	err = ctx.GetClient().Call(ctx, plugins.RandomMode, define.ServiceTwo, "Add", &param.AddReq{
+	err = ctx.GetClient().Call(ctx, plugins.RandomMode, define.ServiceTwo, "", "Add", &param.AddReq{
 		X: x,
 		Y: y,
 	}, rsp)

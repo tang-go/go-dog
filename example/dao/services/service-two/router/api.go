@@ -7,5 +7,5 @@ import (
 
 //ExampleRouter 演示路由
 func ExampleRouter(router plugins.Service, s *service.Service) {
-	router.RPC("Add", 4, false, "加法", s.Add)
+	router.RPC().Level(4).NoAuth().Method("Add", "加法", s.Add)
 }
