@@ -161,8 +161,7 @@ func (g *Gateway) Auth(f func(ctx plugins.Context, token, url string) error) {
 func (g *Gateway) Run(port int) error {
 	//启动metrics
 	if err := metrics.Init(&metrics.MetricOpts{
-		NameSpace:     g.cfg.GetClusterName(),
-		SystemName:    strings.Replace(g.name, "/", "_", -1),
+		NameSpace:     strings.Replace(g.name, "/", "_", -1),
 		MetricsValues: g.metricValue,
 	}); err != nil {
 		panic(err.Error())
@@ -489,10 +488,17 @@ func (g *Gateway) validation(param []byte, tem map[string]interface{}) error {
 	if err := g.GetClient().GetCodec().DeCode("json", param, &p); err != nil {
 		return err
 	}
-	for key := range p {
-		if _, ok := tem[key]; !ok {
-			log.Traceln("模版", tem, "传入参数", p)
-			return fmt.Errorf("不存在值为%s的参数", key)
+	for key, value := range tem {
+		vali, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("传入参数错误")
+		}
+		re, ok3 := vali["required"]
+		if ok3 && re == "true" {
+			if _, ok := p[key]; !ok {
+				log.Traceln("模版", tem, "传入参数", p)
+				return fmt.Errorf("不存在值为%s的参数", key)
+			}
 		}
 	}
 	return nil
