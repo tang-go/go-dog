@@ -10,27 +10,30 @@ import (
 )
 
 const (
-	ReqCount      = "http_request_count"
-	ReqDuration   = "http_request_duration_seconds"
-	ReqSizeBytes  = "http_request_size_bytes"
-	RespSizeBytes = "http_response_size_bytes"
+	ReqCount      = "request_count"
+	ReqDuration   = "request_duration_seconds"
+	ReqSizeBytes  = "request_size_bytes"
+	RespSizeBytes = "response_size_bytes"
 )
 
 const (
 	Method = "method"
 	Path   = "path"
-	Status = "status"
+	Name   = "name"
+	Code   = "code"
 )
 
-func metricMiddleware(c *gin.Context) {
+var labels = []string{Name, Method, Path, Code}
+
+func (g *Gateway) MetricMiddleware(c *gin.Context) {
 	start := time.Now()
 	c.Next()
 
 	method := c.Request.Method
 	path := c.Request.URL.Path
-	status := strconv.Itoa(c.Writer.Status())
+	code := strconv.Itoa(c.Writer.Status())
 
-	labelValues := map[string]string{Method: method, Path: path, Status: status}
+	labelValues := map[string]string{Name: g.name, Method: method, Path: path, Code: code}
 
 	metric, err := metrics.GetManager().GetMetric(ReqCount)
 	if err == nil && metric != nil {

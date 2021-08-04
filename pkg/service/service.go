@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -342,22 +343,22 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 			ValueType: metrics.Counter,
 			Name:      ReqCount,
 			Help:      "Counter. Total number of RPC requests made",
-			Labels:    []string{Name, Method, Address, Err},
+			Labels:    labels,
 		}, {
 			ValueType: metrics.Histogram,
 			Name:      ReqDuration,
 			Help:      "Histogram. RPC request latencies in seconds",
-			Labels:    []string{Name, Method, Address, Err},
+			Labels:    labels,
 		}, {
 			ValueType: metrics.Summary,
 			Name:      ReqSizeBytes,
 			Help:      "Summary. RPC request sizes in bytes",
-			Labels:    []string{Name, Method, Address, Err},
+			Labels:    labels,
 		}, {
 			ValueType: metrics.Summary,
 			Name:      RespSizeBytes,
 			Help:      "Summary. RPC request sizes in bytes",
-			Labels:    []string{Name, Method, Address, Err},
+			Labels:    labels,
 		},
 	}
 	return service
@@ -462,7 +463,6 @@ func (s *Service) Run() error {
 	//启动metrics
 	if err := metrics.Init(&metrics.MetricOpts{
 		NameSpace:     s.cfg.GetClusterName(),
-		SystemName:    strings.Replace(s.name, "/", "_", -1),
 		MetricsValues: s.metricValue,
 	}); err != nil {
 		panic(err.Error())
@@ -610,9 +610,9 @@ func (s *Service) log(start time.Time, address, name, method string, respone *he
 
 func (s *Service) metricMiddleware(start time.Time, address, name, method string, request *header.Request, respone *header.Response) func() {
 	return func() {
-		labelValues := map[string]string{Name: name, Method: method, Address: address, Err: ""}
+		labelValues := map[string]string{Name: name, Method: method, Path: address, Code: "200"}
 		if respone.Error != nil {
-			labelValues[Err] = respone.Error.Error()
+			labelValues[Code] = strconv.Itoa(respone.Error.Code)
 		}
 
 		metric, err := metrics.GetManager().GetMetric(ReqCount)

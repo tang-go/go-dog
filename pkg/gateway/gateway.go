@@ -27,8 +27,10 @@ import (
 	"github.com/tang-go/go-dog/pkg/client"
 	"github.com/tang-go/go-dog/pkg/config"
 	"github.com/tang-go/go-dog/pkg/context"
-	consulRegister "github.com/tang-go/go-dog/pkg/discovery/consul"
+	consulDiscovery "github.com/tang-go/go-dog/pkg/discovery/consul"
 	nacosDiscovery "github.com/tang-go/go-dog/pkg/discovery/nacos"
+	consulRegister "github.com/tang-go/go-dog/pkg/register/consul"
+	nacosRegister "github.com/tang-go/go-dog/pkg/register/nacos"
 	"github.com/tang-go/go-dog/plugins"
 	"github.com/tang-go/go-dog/serviceinfo"
 )
@@ -49,6 +51,7 @@ type Gateway struct {
 	postRequestIntercept  func(c plugins.Context, url string, request []byte) ([]byte, bool, error)
 	postResponseIntercept func(c plugins.Context, url string, request []byte, response []byte)
 	discovery             plugins.Discovery
+	register              plugins.Register
 	metricValue           []*metrics.MetricValue
 }
 
@@ -58,12 +61,22 @@ func NewGateway(name string) *Gateway {
 	gateway.name = name
 	//初始化配置
 	gateway.cfg = config.NewConfig()
+	if gateway.register == nil {
+		//使用默认注册中心
+		if gateway.cfg.GetDiscoveryModel() == config.NacosDiscoveryModel {
+			gateway.register = nacosRegister.NewNacosRegister(gateway.cfg)
+		}
+		//使用consul
+		if gateway.cfg.GetDiscoveryModel() == config.ConsulDiscoveryModel {
+			gateway.register = consulRegister.NewConsulRegister(gateway.cfg)
+		}
+	}
 	//初始化服务发现
 	if gateway.cfg.GetModel() == config.NacosDiscoveryModel {
 		gateway.discovery = nacosDiscovery.NewDiscovery(gateway.cfg)
 	}
 	if gateway.cfg.GetDiscoveryModel() == config.ConsulDiscoveryModel {
-		gateway.discovery = consulRegister.NewDiscovery(gateway.cfg)
+		gateway.discovery = consulDiscovery.NewDiscovery(gateway.cfg)
 	}
 	gateway.discovery.WatchAPI(name)
 	//初始化rpc服务
@@ -75,7 +88,6 @@ func NewGateway(name string) *Gateway {
 	gateway.jaeger = jaeger.NewJaeger(name, gateway.cfg)
 
 	//默认监控
-	labels := []string{Method, Path, Status}
 	gateway.metricValue = []*metrics.MetricValue{
 		{
 			ValueType: metrics.Counter,
@@ -161,7 +173,7 @@ func (g *Gateway) Auth(f func(ctx plugins.Context, token, url string) error) {
 func (g *Gateway) Run(port int) error {
 	//启动metrics
 	if err := metrics.Init(&metrics.MetricOpts{
-		NameSpace:     strings.Replace(g.name, "/", "_", -1),
+		NameSpace:     g.cfg.GetClusterName(),
 		MetricsValues: g.metricValue,
 	}); err != nil {
 		panic(err.Error())
@@ -171,7 +183,7 @@ func (g *Gateway) Run(port int) error {
 	router := gin.New()
 	router.Use(g.cors())
 	router.Use(g.logger())
-	router.Use(metricMiddleware)
+	router.Use(g.MetricMiddleware)
 	for url, f := range g.customGet {
 		router.GET(url, f)
 	}
@@ -190,6 +202,14 @@ func (g *Gateway) Run(port int) error {
 	c := make(chan os.Signal)
 	//监听指定信号
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
+	//注册http服务
+	g.register.RegisterHTTPService(context.Background(), &serviceinfo.ServiceInfo{
+		Name:    g.name,
+		Address: g.cfg.GetHost(),
+		Port:    port,
+		Explain: g.cfg.GetExplain(),
+		Time:    time.Now().Format("2006-01-02 15:04:05"),
+	})
 	go func() {
 		httpport := fmt.Sprintf(":%d", port)
 		log.Tracef("网管启动 0.0.0.0:%d", port)
