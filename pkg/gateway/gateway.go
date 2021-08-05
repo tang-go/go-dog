@@ -91,24 +91,19 @@ func NewGateway(name string) *Gateway {
 	gateway.metricValue = []*metrics.MetricValue{
 		{
 			ValueType: metrics.Counter,
-			Name:      ReqCount,
-			Help:      "Counter. Total number of HTTP requests made",
-			Labels:    labels,
+			Name:      RequestQpsCount,
+			Help:      "Counter. total qps number of HTTP requests made",
+			Labels:    []string{Name, Method},
+		}, {
+			ValueType: metrics.Counter,
+			Name:      RequestTpsCount,
+			Help:      "Counter. total tps number of requests made",
+			Labels:    []string{Name, Method, Success, Code},
 		}, {
 			ValueType: metrics.Histogram,
-			Name:      ReqDuration,
-			Help:      "Histogram. HTTP request latencies in seconds",
-			Labels:    labels,
-		}, {
-			ValueType: metrics.Summary,
-			Name:      ReqSizeBytes,
-			Help:      "Summary. HTTP request sizes in bytes",
-			Labels:    labels,
-		}, {
-			ValueType: metrics.Summary,
-			Name:      RespSizeBytes,
-			Help:      "Summary. HTTP request sizes in bytes",
-			Labels:    labels,
+			Name:      RequestSeconds,
+			Help:      "Histogram. request latencies in seconds",
+			Labels:    []string{Name, Method, Success, Code},
 		},
 	}
 	return gateway
@@ -183,7 +178,7 @@ func (g *Gateway) Run(port int) error {
 	router := gin.New()
 	router.Use(g.cors())
 	router.Use(g.logger())
-	router.Use(g.MetricMiddleware)
+	router.Use(g.metricMiddleware)
 	for url, f := range g.customGet {
 		router.GET(url, f)
 	}
@@ -220,6 +215,7 @@ func (g *Gateway) Run(port int) error {
 	}()
 	msg := <-c
 	g.client.Close()
+	g.register.Cancellation()
 	return fmt.Errorf("收到kill信号:%s", msg)
 }
 

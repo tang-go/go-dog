@@ -1,17 +1,14 @@
 package service
 
 const (
-	ReqCount      = "request_count"
-	ReqDuration   = "request_duration_seconds"
-	ReqSizeBytes  = "request_size_bytes"
-	RespSizeBytes = "response_size_bytes"
+	RequestTpsCount = "request_tps_count"
+	RequestQpsCount = "request_qps_count"
+	RequestSeconds  = "request_seconds"
 )
 
 const (
-	Method = "method"
-	Path   = "path"
-	Name   = "name"
-	Code   = "code"
+	Method  = "method"
+	Name    = "name"
+	Success = "success"
+	Code    = "code"
 )
-
-var labels = []string{Name, Method, Path, Code}

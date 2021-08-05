@@ -341,24 +341,19 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 	service.metricValue = []*metrics.MetricValue{
 		{
 			ValueType: metrics.Counter,
-			Name:      ReqCount,
-			Help:      "Counter. Total number of RPC requests made",
-			Labels:    labels,
+			Name:      RequestQpsCount,
+			Help:      "Counter. total qps number of HTTP requests made",
+			Labels:    []string{Name, Method},
+		}, {
+			ValueType: metrics.Counter,
+			Name:      RequestTpsCount,
+			Help:      "Counter. total tps number of requests made",
+			Labels:    []string{Name, Method, Success, Code},
 		}, {
 			ValueType: metrics.Histogram,
-			Name:      ReqDuration,
-			Help:      "Histogram. RPC request latencies in seconds",
-			Labels:    labels,
-		}, {
-			ValueType: metrics.Summary,
-			Name:      ReqSizeBytes,
-			Help:      "Summary. RPC request sizes in bytes",
-			Labels:    labels,
-		}, {
-			ValueType: metrics.Summary,
-			Name:      RespSizeBytes,
-			Help:      "Summary. RPC request sizes in bytes",
-			Labels:    labels,
+			Name:      RequestSeconds,
+			Help:      "Histogram. request latencies in seconds",
+			Labels:    []string{Name, Method, Success, Code},
 		},
 	}
 	return service
@@ -586,7 +581,8 @@ func (s *Service) runTCP() error {
 }
 
 //log 日志
-func (s *Service) log(start time.Time, address, name, method string, respone *header.Response) func() {
+func (s *Service) log(address, name, method string, respone *header.Response) func() {
+	start := time.Now()
 	return func() {
 		if respone.Error != nil {
 			log.Infof("| %s | %s | %13v | %s | %s ",
@@ -608,29 +604,24 @@ func (s *Service) log(start time.Time, address, name, method string, respone *he
 	}
 }
 
-func (s *Service) metricMiddleware(start time.Time, address, name, method string, request *header.Request, respone *header.Response) func() {
+//metricMiddleware 采集指标
+func (s *Service) metricMiddleware(name, method string, request *header.Request, respone *header.Response) func() {
+	start := time.Now()
+	metric, err := metrics.GetManager().GetMetric(RequestQpsCount)
+	if err == nil && metric != nil {
+		metric.IncWithLabel(map[string]string{Name: name, Method: method})
+	}
 	return func() {
-		labelValues := map[string]string{Name: name, Method: method, Path: address, Code: "200"}
+		labelValues := map[string]string{Name: name, Method: method, Success: "true", Code: "0"}
 		if respone.Error != nil {
 			labelValues[Code] = strconv.Itoa(respone.Error.Code)
+			labelValues[Success] = "false"
 		}
-
-		metric, err := metrics.GetManager().GetMetric(ReqCount)
+		metric, err := metrics.GetManager().GetMetric(RequestTpsCount)
 		if err == nil && metric != nil {
 			metric.IncWithLabel(labelValues)
 		}
-
-		metric, err = metrics.GetManager().GetMetric(ReqSizeBytes)
-		if err == nil && metric != nil {
-			metric.ObserveWithLabel(labelValues, float64(len(request.Arg)))
-		}
-
-		metric, err = metrics.GetManager().GetMetric(RespSizeBytes)
-		if err == nil && metric != nil {
-			metric.ObserveWithLabel(labelValues, float64(len(respone.Reply)))
-		}
-
-		metric, err = metrics.GetManager().GetMetric(ReqDuration)
+		metric, err = metrics.GetManager().GetMetric(RequestSeconds)
 		if err == nil && metric != nil {
 			metric.ObserveWithLabel(labelValues, time.Since(start).Seconds())
 		}
@@ -643,16 +634,15 @@ func (s *Service) serveConn(conn net.Conn) {
 	serviceRPC.RegisterCallNotice(
 		func(req *header.Request) *header.Response {
 			defer recover.Recover()
-			start := time.Now()
 			rep := new(header.Response)
 			rep.ID = req.ID
 			rep.Method = req.Method
 			rep.Name = req.Name
 			rep.Code = req.Code
 			if s.GetCfg().GetRunmode() == "trace" || s.GetCfg().GetRunmode() == "debug" || s.GetCfg().GetRunmode() == "info" {
-				defer s.log(start, req.Address, req.Name, req.Method, rep)()
+				defer s.log(req.Address, req.Name, req.Method, rep)()
 			}
-			defer s.metricMiddleware(start, req.Address, req.Name, req.Method, req, rep)()
+			defer s.metricMiddleware(req.Name, req.Method, req, rep)()
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
 				rep.Error = customerror.EnCodeError(customerror.InternalServerError, "服务器关闭")
