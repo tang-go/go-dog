@@ -17,6 +17,16 @@ func Init(opts *MetricOpts) error {
 	if err != nil {
 		return err
 	}
+	for _, metricsValue := range defaultMetricsValues {
+		if f, ok := promTypeHandler[metricsValue.ValueType]; ok {
+			_, err := f(metricsValue)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("metrics init error, unknown valuetype:%s", metricsValue.ValueType)
+		}
+	}
 	for _, metricsValue := range opts.MetricsValues {
 		if f, ok := promTypeHandler[metricsValue.ValueType]; ok {
 			_, err := f(metricsValue)

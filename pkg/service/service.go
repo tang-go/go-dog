@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -337,25 +336,6 @@ func CreateService(name string, param ...interface{}) plugins.Service {
 		Explain: service.cfg.GetExplain(),
 		Time:    time.Now().Format("2006-01-02 15:04:05"),
 	}
-	//metrics采集
-	service.metricValue = []*metrics.MetricValue{
-		{
-			ValueType: metrics.Counter,
-			Name:      RequestQpsCount,
-			Help:      "Counter. total qps number of HTTP requests made",
-			Labels:    []string{Name, Method},
-		}, {
-			ValueType: metrics.Counter,
-			Name:      RequestTpsCount,
-			Help:      "Counter. total tps number of requests made",
-			Labels:    []string{Name, Method, Success, Code},
-		}, {
-			ValueType: metrics.Histogram,
-			Name:      RequestSeconds,
-			Help:      "Histogram. request latencies in seconds",
-			Labels:    []string{Name, Method, Success, Code},
-		},
-	}
 	return service
 }
 
@@ -604,30 +584,6 @@ func (s *Service) log(address, name, method string, respone *header.Response) fu
 	}
 }
 
-//metricMiddleware 采集指标
-func (s *Service) metricMiddleware(name, method string, request *header.Request, respone *header.Response) func() {
-	start := time.Now()
-	metric, err := metrics.GetManager().GetMetric(RequestQpsCount)
-	if err == nil && metric != nil {
-		metric.IncWithLabel(map[string]string{Name: name, Method: method})
-	}
-	return func() {
-		labelValues := map[string]string{Name: name, Method: method, Success: "true", Code: "0"}
-		if respone.Error != nil {
-			labelValues[Code] = strconv.Itoa(respone.Error.Code)
-			labelValues[Success] = "false"
-		}
-		metric, err := metrics.GetManager().GetMetric(RequestTpsCount)
-		if err == nil && metric != nil {
-			metric.IncWithLabel(labelValues)
-		}
-		metric, err = metrics.GetManager().GetMetric(RequestSeconds)
-		if err == nil && metric != nil {
-			metric.ObserveWithLabel(labelValues, time.Since(start).Seconds())
-		}
-	}
-}
-
 // ServeConn 拦截一个链接
 func (s *Service) serveConn(conn net.Conn) {
 	serviceRPC := rpc.NewServiceRPC(conn, s.codec)
@@ -642,7 +598,6 @@ func (s *Service) serveConn(conn net.Conn) {
 			if s.GetCfg().GetRunmode() == "trace" || s.GetCfg().GetRunmode() == "debug" || s.GetCfg().GetRunmode() == "info" {
 				defer s.log(req.Address, req.Name, req.Method, rep)()
 			}
-			defer s.metricMiddleware(req.Name, req.Method, req, rep)()
 			//服务器关闭了 直接关闭
 			if atomic.LoadInt32(&s.close) > 0 {
 				rep.Error = customerror.EnCodeError(customerror.InternalServerError, "服务器关闭")

@@ -86,26 +86,6 @@ func NewGateway(name string) *Gateway {
 	gateway.customGet = make(map[string]func(c *gin.Context))
 	//初始化链路追踪
 	gateway.jaeger = jaeger.NewJaeger(name, gateway.cfg)
-
-	//默认监控
-	gateway.metricValue = []*metrics.MetricValue{
-		{
-			ValueType: metrics.Counter,
-			Name:      RequestQpsCount,
-			Help:      "Counter. total qps number of HTTP requests made",
-			Labels:    []string{Name, Method},
-		}, {
-			ValueType: metrics.Counter,
-			Name:      RequestTpsCount,
-			Help:      "Counter. total tps number of requests made",
-			Labels:    []string{Name, Method, Success, Code},
-		}, {
-			ValueType: metrics.Histogram,
-			Name:      RequestSeconds,
-			Help:      "Histogram. request latencies in seconds",
-			Labels:    []string{Name, Method, Success, Code},
-		},
-	}
 	return gateway
 }
 
@@ -177,8 +157,6 @@ func (g *Gateway) Run(port int) error {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(g.cors())
-	router.Use(g.logger())
-	router.Use(g.metricMiddleware)
 	for url, f := range g.customGet {
 		router.GET(url, f)
 	}
@@ -190,10 +168,15 @@ func (g *Gateway) Run(port int) error {
 	}
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	router.GET("/swagger/*any", g.getSwagger)
-	router.POST("/api/*router", g.routerPostAndPutResolution)
-	router.PUT("/api/*router", g.routerPostAndPutResolution)
-	router.GET("/api/*router", g.routerGetAndDeleteResolution)
-	router.DELETE("/api/*router", g.routerGetAndDeleteResolution)
+	api := router.Group("/api")
+	{
+		api.Use(g.metricMiddleware)
+		api.Use(g.logger())
+		api.POST("/*router", g.routerPostAndPutResolution)
+		api.PUT("/*router", g.routerPostAndPutResolution)
+		api.GET("/*router", g.routerGetAndDeleteResolution)
+		api.DELETE("/*router", g.routerGetAndDeleteResolution)
+	}
 	c := make(chan os.Signal)
 	//监听指定信号
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
@@ -363,6 +346,7 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 			return
 		}
 	}
+	metrics.MetricRequestBytes(g.name, url, float64(len(body)))
 	back, err := g.GetClient().SendRequest(ctx, plugins.RandomMode, apiservice.Name, "", apiservice.Method.Name, "json", body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
@@ -380,6 +364,7 @@ func (g *Gateway) routerGetAndDeleteResolution(c *gin.Context) {
 		"body": resp,
 		"time": time.Now().Unix(),
 	})
+	metrics.MetricResponseBytes(g.name, url, float64(len(back)))
 	return
 }
 
@@ -478,6 +463,7 @@ func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 			return
 		}
 	}
+	metrics.MetricRequestBytes(g.name, url, float64(len(body)))
 	back, err := g.GetClient().SendRequest(ctx, plugins.RandomMode, apiservice.Name, "", apiservice.Method.Name, "json", body)
 	if err != nil {
 		e := customerror.DeCodeError(err)
@@ -495,6 +481,7 @@ func (g *Gateway) routerPostAndPutResolution(c *gin.Context) {
 		"body": resp,
 		"time": time.Now().Unix(),
 	})
+	metrics.MetricResponseBytes(g.name, url, float64(len(back)))
 	return
 }
 
