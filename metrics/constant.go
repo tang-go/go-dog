@@ -18,6 +18,8 @@ const (
 
 //默认系统指标
 const (
+	//运行服务名称
+	ServiceRun = "service_run"
 	//请求数
 	RequestCount = "request_count"
 	//请求响应数
@@ -42,6 +44,12 @@ const (
 
 //注册默认指标
 var defaultMetricsValues = []*MetricValue{
+	{
+		ValueType: Gauge,
+		Name:      ServiceRun,
+		Help:      "Counter. total run service count",
+		Labels:    []string{Name},
+	},
 	{
 		ValueType: Counter,
 		Name:      RequestCount,
@@ -122,5 +130,13 @@ func MetricRequestCount(name, method string) {
 	metric, err := GetManager().GetMetric(RequestCount)
 	if err == nil && metric != nil {
 		metric.IncWithLabel(map[string]string{Name: name, Method: method})
+	}
+}
+
+//MetricServiceRun 运行服务指标
+func MetricServiceRun(name string, count float64) {
+	metric, err := GetManager().GetMetric(ServiceRun)
+	if err == nil && metric != nil {
+		metric.AddWithLabel(map[string]string{Name: name}, count)
 	}
 }

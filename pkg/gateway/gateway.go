@@ -151,7 +151,8 @@ func (g *Gateway) Run(port int) error {
 		NameSpace:     g.cfg.GetClusterName(),
 		MetricsValues: g.metricValue,
 	}); err != nil {
-		panic(err.Error())
+		log.Errorln(err.Error())
+		return err
 	}
 	//启动接口
 	gin.SetMode(gin.ReleaseMode)
@@ -177,8 +178,9 @@ func (g *Gateway) Run(port int) error {
 		api.GET("/*router", g.routerGetAndDeleteResolution)
 		api.DELETE("/*router", g.routerGetAndDeleteResolution)
 	}
-	c := make(chan os.Signal)
 	//监听指定信号
+	c := make(chan os.Signal)
+	defer close(c)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
 	//注册http服务
 	g.register.RegisterHTTPService(context.Background(), &serviceinfo.ServiceInfo{
@@ -188,18 +190,24 @@ func (g *Gateway) Run(port int) error {
 		Explain: g.cfg.GetExplain(),
 		Time:    time.Now().Format("2006-01-02 15:04:05"),
 	})
+	metrics.MetricServiceRun(g.name, 1)
 	go func() {
 		httpport := fmt.Sprintf(":%d", port)
 		log.Tracef("网管启动 0.0.0.0:%d", port)
 		err := router.Run(httpport)
 		if err != nil {
-			panic(err.Error())
+			log.Errorln(err.Error())
 		}
+		c <- nil
 	}()
 	msg := <-c
 	g.client.Close()
 	g.register.Cancellation()
-	return fmt.Errorf("收到kill信号:%s", msg)
+	metrics.MetricServiceRun(g.name, -1)
+	if msg != nil {
+		return fmt.Errorf("收到kill信号:%s", msg)
+	}
+	return nil
 }
 
 //getSwagger 获取swagger

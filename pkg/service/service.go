@@ -434,32 +434,41 @@ func (s *Service) Auth(fun func(ctx plugins.Context, method, token string) error
 
 //Run 启动服务
 func (s *Service) Run() error {
-	c := make(chan os.Signal)
 	//启动metrics
 	if err := metrics.Init(&metrics.MetricOpts{
 		NameSpace:     s.cfg.GetClusterName(),
 		MetricsValues: s.metricValue,
 	}); err != nil {
-		panic(err.Error())
+		log.Errorln(err.Error())
+		return err
 	}
+	metrics.MetricServiceRun(s.name, 1)
 	//监听指定信号
+	c := make(chan os.Signal)
+	defer close(c)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		err := s.runTCP()
 		if err != nil {
-			panic(err.Error())
+			log.Errorln(err.Error())
 		}
+		c <- nil
 	}()
 	go func() {
 		err := s.runHTTP()
 		if err != nil {
-			panic(err.Error())
+			log.Errorln(err.Error())
 		}
+		c <- nil
 	}()
 	log.Infoln("服务启动成功...")
 	msg := <-c
 	s.Close()
-	return fmt.Errorf("收到kill信号:%s", msg)
+	metrics.MetricServiceRun(s.name, -1)
+	if msg == nil {
+		return fmt.Errorf("收到kill信号:%s", msg)
+	}
+	return nil
 }
 
 //_RunHTTP 启动HTTP
@@ -479,7 +488,8 @@ func (s *Service) runHTTP() error {
 	s.register.RegisterHTTPService(context.Background(), s.api)
 	err := router.Run(httpport)
 	if err != nil {
-		panic(err.Error())
+		log.Errorln(err.Error())
+		return err
 	}
 	return nil
 }
