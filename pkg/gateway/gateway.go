@@ -44,6 +44,9 @@ type Gateway struct {
 	jaeger                *jaeger.Jaeger
 	customGet             map[string]func(c *gin.Context)
 	customPost            map[string]func(c *gin.Context)
+	customDelete          map[string]func(c *gin.Context)
+	customPut             map[string]func(c *gin.Context)
+	customAny             map[string]func(c *gin.Context)
 	swaggerAuthCheck      func(token string) error
 	authfunc              func(ctx plugins.Context, token, url string) error
 	getRequestIntercept   func(c plugins.Context, url string, request []byte) ([]byte, bool, error)
@@ -84,6 +87,9 @@ func NewGateway(name string) *Gateway {
 	//初始化自定义请求
 	gateway.customPost = make(map[string]func(c *gin.Context))
 	gateway.customGet = make(map[string]func(c *gin.Context))
+	gateway.customPut = make(map[string]func(c *gin.Context))
+	gateway.customDelete = make(map[string]func(c *gin.Context))
+	gateway.customAny = make(map[string]func(c *gin.Context))
 	//初始化链路追踪
 	gateway.jaeger = jaeger.NewJaeger(name, gateway.cfg)
 	return gateway
@@ -119,14 +125,29 @@ func (g *Gateway) PostResponseIntercept(f func(c plugins.Context, url string, re
 	g.postResponseIntercept = f
 }
 
-//OpenCustomGet 开启自定义get请求
-func (g *Gateway) OpenCustomGet(url string, f func(c *gin.Context)) {
+//Get 开启自定义get请求
+func (g *Gateway) Get(url string, f func(c *gin.Context)) {
 	g.customGet[url] = f
 }
 
-//OpenCustomPost 开启自定义post请求
-func (g *Gateway) OpenCustomPost(url string, f func(c *gin.Context)) {
+//Post 开启自定义post请求
+func (g *Gateway) Post(url string, f func(c *gin.Context)) {
 	g.customPost[url] = f
+}
+
+//Delete 开启自定义delete请求
+func (g *Gateway) Delete(url string, f func(c *gin.Context)) {
+	g.customDelete[url] = f
+}
+
+//Put 开启自定义put请求
+func (g *Gateway) Put(url string, f func(c *gin.Context)) {
+	g.customPut[url] = f
+}
+
+//Any 开启自定义Any请求
+func (g *Gateway) Any(url string, f func(c *gin.Context)) {
+	g.customAny[url] = f
 }
 
 //GetClient 获取client
@@ -163,6 +184,15 @@ func (g *Gateway) Run(port int) error {
 	}
 	for url, f := range g.customPost {
 		router.POST(url, f)
+	}
+	for url, f := range g.customDelete {
+		router.DELETE(url, f)
+	}
+	for url, f := range g.customPut {
+		router.PUT(url, f)
+	}
+	for url, f := range g.customAny {
+		router.Any(url, f)
 	}
 	if g.cfg.GetRunmode() == "trace" {
 		pprof.Register(router)

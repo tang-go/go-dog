@@ -477,7 +477,6 @@ func (s *Service) runHTTP() error {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(s.cors())
-	router.Use(s.logger())
 	if s.cfg.GetRunmode() == "trace" {
 		pprof.Register(router)
 	}
