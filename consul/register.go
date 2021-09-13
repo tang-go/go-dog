@@ -64,7 +64,6 @@ func (r *Register) Register(info RegisterInstanceParam) error {
 			case <-timeTicker.C:
 				if err := r.client.Agent().PassTTL(check.CheckID, ""); err != nil {
 					log.Errorln(err.Error())
-					return
 				}
 			case <-r.ctx.Done():
 				log.Traceln("consul register exit")
